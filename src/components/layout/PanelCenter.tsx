@@ -36,7 +36,7 @@ export const PanelCenter: Component = () => {
       </div>
 
       <div class="h-[44px] md:h-[48px] glass-panel bg-surface border border-border rounded-lg md:rounded-xl flex items-center px-3 md:px-4 gap-3 md:gap-4 shrink-0 mt-1 md:mt-0">
-        <button onClick={togglePlay} class="text-white hover:text-primary transition-colors">
+        <button onClick={togglePlay} class="text-white transition-colors">
           <Show when={projectStore.isPlaying} fallback={<Play class="w-4 h-4 md:w-5 md:h-5 fill-current" />}>
             <Pause class="w-4 h-4 md:w-5 md:h-5 fill-current" />
           </Show>

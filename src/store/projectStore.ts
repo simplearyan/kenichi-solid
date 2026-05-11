@@ -15,6 +15,7 @@ export interface ProjectState {
   showLeftPanel: boolean;
   showRightPanel: boolean;
   showTimelinePanel: boolean;
+  mobileTab: "left" | "right" | "timeline";
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -32,6 +33,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   showLeftPanel: true,
   showRightPanel: true,
   showTimelinePanel: true,
+  mobileTab: "left",
 });
 
 export const togglePlay = () => setProjectStore("isPlaying", (p) => !p);

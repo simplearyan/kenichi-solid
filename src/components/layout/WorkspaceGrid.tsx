@@ -53,29 +53,36 @@ export const WorkspaceGrid: Component<Props> = (props) => {
         `}
       </style>
 
-      <Show when={projectStore.showLeftPanel}>
-        <div class="panel-left-area hidden md:flex flex-col min-w-0 min-h-0">
-          {props.leftPanel}
-        </div>
-      </Show>
-
       <div class="panel-center-area flex flex-col min-w-0 min-h-0 flex-[0_0_45vh] md:flex-none">
         {props.centerPanel}
       </div>
 
-      <Show when={projectStore.showRightPanel}>
-        <div class="panel-right-area hidden md:flex flex-col min-w-0 min-h-0">
-          {props.rightPanel}
-        </div>
-      </Show>
+      <div id="mobile-tabs" class="md:hidden flex items-center bg-surface border border-border rounded-xl p-1 shrink-0 mt-1 mb-1 shadow-sm">
+        <button 
+          onClick={() => setProjectStore('mobileTab', 'left')}
+          class={`mobile-tab-btn flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${projectStore.mobileTab === 'left' ? 'bg-[#262626] text-white' : 'text-neutral-500 hover:text-white'}`}
+        >Media</button>
+        <button 
+          onClick={() => setProjectStore('mobileTab', 'right')}
+          class={`mobile-tab-btn flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${projectStore.mobileTab === 'right' ? 'bg-[#262626] text-white' : 'text-neutral-500 hover:text-white'}`}
+        >Settings</button>
+        <button 
+          onClick={() => setProjectStore('mobileTab', 'timeline')}
+          class={`mobile-tab-btn flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${projectStore.mobileTab === 'timeline' ? 'bg-[#262626] text-white' : 'text-neutral-500 hover:text-white'}`}
+        >Timeline</button>
+      </div>
 
-      <Show when={projectStore.showTimelinePanel}>
-        <div class="panel-timeline-area hidden md:flex flex-col min-w-0 min-h-0">
-          {props.timelinePanel}
-        </div>
-      </Show>
+      <div class={`panel-left-area flex-col min-w-0 min-h-0 ${projectStore.mobileTab === 'left' ? 'flex flex-1' : 'hidden'} ${projectStore.showLeftPanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
+        {props.leftPanel}
+      </div>
 
-      {/* Mobile Tabs Logic would go here */}
+      <div class={`panel-right-area flex-col min-w-0 min-h-0 ${projectStore.mobileTab === 'right' ? 'flex flex-1' : 'hidden'} ${projectStore.showRightPanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
+        {props.rightPanel}
+      </div>
+
+      <div class={`panel-timeline-area flex-col min-w-0 min-h-0 ${projectStore.mobileTab === 'timeline' ? 'flex flex-1' : 'hidden'} ${projectStore.showTimelinePanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
+        {props.timelinePanel}
+      </div>
     </div>
   );
 };
