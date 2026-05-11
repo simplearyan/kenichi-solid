@@ -114,18 +114,32 @@ export class Renderer {
     if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
       this.resize(targetWidth, targetHeight);
     }
+    
+    this.renderFrame(this.ctx as any, targetWidth, targetHeight, projectStore.currentTime);
+  }
 
-    this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(0, 0, targetWidth, targetHeight);
+  public renderFrame(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, targetWidth: number, targetHeight: number, time: number) {
+    if (!ctx) return;
 
-    const time = projectStore.currentTime;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+    let baseW = 1920;
+    let baseH = 1080;
+    if (projectStore.aspectRatio === '9/16') {
+      baseW = 1080;
+      baseH = 1920;
+    } else if (projectStore.aspectRatio === '1/1') {
+      baseW = 1080;
+      baseH = 1080;
+    }
 
     // Apply global proxy scale so internal rendering always acts like baseW x baseH space
     const globalScaleX = targetWidth / baseW;
     const globalScaleY = targetHeight / baseH;
 
-    this.ctx.save();
-    this.ctx.scale(globalScaleX, globalScaleY);
+    ctx.save();
+    ctx.scale(globalScaleX, globalScaleY);
 
     const W = baseW;
     const H = baseH;
@@ -225,61 +239,61 @@ export class Renderer {
             this.applyChromaKey(bCtx, bCvs.width, bCvs.height, layer.chromaColor, layer.chromaTolerance);
           }
 
-          this.ctx.save();
-          this.ctx.globalAlpha = animAlpha;
+          ctx.save();
+          ctx.globalAlpha = animAlpha;
           
-          this.ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
-          this.ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
-          this.ctx.scale(layer.scale * animScale, layer.scale * animScale);
+          ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
+          ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
+          ctx.scale(layer.scale * animScale, layer.scale * animScale);
           
           let filterStr = '';
           if (layer.brightness !== 1) filterStr += `brightness(${layer.brightness}) `;
           if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
-          if (filterStr) this.ctx.filter = filterStr.trim();
+          if (filterStr) ctx.filter = filterStr.trim();
 
-          this.ctx.drawImage(bCvs, -bCvs.width/2, -bCvs.height/2);
-          this.ctx.restore();
+          ctx.drawImage(bCvs, -bCvs.width/2, -bCvs.height/2);
+          ctx.restore();
         }
       }
 
       if (isVisible && layer.type === 'text') {
-        this.ctx.save();
-        this.ctx.globalAlpha = animAlpha;
+        ctx.save();
+        ctx.globalAlpha = animAlpha;
         
-        this.ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
-        this.ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
-        this.ctx.scale(layer.scale * animScale, layer.scale * animScale);
+        ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
+        ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
+        ctx.scale(layer.scale * animScale, layer.scale * animScale);
 
         const text = layer.text || layer.textContent || 'HELLO WORLD';
-        this.ctx.font = `${layer.fontWeight || '700'} ${layer.fontSize || 120}px "${layer.fontFamily || 'Inter'}"`;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
+        ctx.font = `${layer.fontWeight || '700'} ${layer.fontSize || 120}px "${layer.fontFamily || 'Inter'}"`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         
         if (layer.dropShadow) {
-          this.ctx.shadowColor = 'rgba(0,0,0,0.8)';
-          this.ctx.shadowBlur = 15;
-          this.ctx.shadowOffsetX = 0;
-          this.ctx.shadowOffsetY = 5;
+          ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          ctx.shadowBlur = 15;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 5;
         }
 
         if (layer.letterSpacing) {
-           this.ctx.letterSpacing = `${layer.letterSpacing}px`;
+           (ctx as any).letterSpacing = `${layer.letterSpacing}px`;
         }
 
-        this.ctx.fillStyle = layer.textColor || layer.fillColor || '#ffffff';
-        this.ctx.fillText(text, 0, 0);
+        ctx.fillStyle = layer.textColor || layer.fillColor || '#ffffff';
+        ctx.fillText(text, 0, 0);
 
         if (layer.strokeWidth) {
-          this.ctx.lineWidth = layer.strokeWidth;
-          this.ctx.strokeStyle = layer.strokeColor || '#000000';
-          this.ctx.strokeText(text, 0, 0);
+          ctx.lineWidth = layer.strokeWidth;
+          ctx.strokeStyle = layer.strokeColor || '#000000';
+          ctx.strokeText(text, 0, 0);
         }
 
-        this.ctx.restore();
+        ctx.restore();
       }
     }
 
-    this.ctx.restore(); // Restore global scale
+    ctx.restore(); // Restore global scale
   }
 }
 

@@ -108,6 +108,8 @@ export interface ProjectState {
   srcCropX: number;
   srcCropY: number;
   srcCropScale: number;
+  
+  exportModalOpen: boolean;
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -143,6 +145,8 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   srcCropX: 0,
   srcCropY: 0,
   srcCropScale: 1.0,
+  
+  exportModalOpen: false,
 });
 
 import { audioEngine } from '../engine/AudioEngine';

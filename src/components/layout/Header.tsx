@@ -62,7 +62,10 @@ export const Header: Component = () => {
       </div>
 
       <div class="flex items-center gap-2">
-        <button class="px-3 md:px-4 py-1 rounded bg-primary hover:bg-primaryHover text-background text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(5,213,144,0.2)]">
+        <button 
+          onClick={() => setProjectStore('exportModalOpen', true)}
+          class="px-3 md:px-4 py-1 rounded bg-primary hover:bg-primaryHover text-background text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(5,213,144,0.2)]"
+        >
           <Download class="w-3.5 h-3.5" /> Export
         </button>
       </div>

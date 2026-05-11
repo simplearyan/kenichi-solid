@@ -6,6 +6,7 @@ import { PanelCenter } from './components/layout/PanelCenter';
 import { PanelRight } from './components/layout/PanelRight';
 import { PanelTimeline } from './components/layout/PanelTimeline';
 import { SourceModal } from './components/modals/SourceModal';
+import { ExportModal } from './components/modals/ExportModal';
 import { projectStore } from './store/projectStore';
 
 const App: Component = () => {
@@ -25,6 +26,10 @@ const App: Component = () => {
 
       <Show when={projectStore.sourceModalOpen}>
         <SourceModal />
+      </Show>
+
+      <Show when={projectStore.exportModalOpen}>
+        <ExportModal />
       </Show>
     </div>
   );
