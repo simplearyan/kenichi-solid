@@ -1,6 +1,6 @@
 import { Show, onMount, onCleanup, type Component } from 'solid-js';
-import { MonitorPlay, Play, Pause, Volume2 } from 'lucide-solid';
-import { projectStore, togglePlay } from '../../store/projectStore';
+import { MonitorPlay, Play, Pause, Volume2, VolumeX } from 'lucide-solid';
+import { projectStore, togglePlay, setProjectStore } from '../../store/projectStore';
 import { renderer } from '../../engine/Renderer';
 
 export const PanelCenter: Component = () => {
@@ -71,9 +71,18 @@ export const PanelCenter: Component = () => {
           {projectStore.duration.toFixed(1)}s
         </div>
 
-        <button class="hidden sm:block text-neutral-400 hover:text-white transition-colors shrink-0 pl-2 border-l border-border">
-          <Volume2 class="w-4 h-4 md:w-4 md:h-4" />
-        </button>
+        <div class="hidden sm:flex items-center gap-2 shrink-0 pl-2 border-l border-border">
+          <button onClick={() => setProjectStore('globalMuted', !projectStore.globalMuted)} class="text-neutral-400 hover:text-white transition-colors" title="Global Mute">
+            {projectStore.globalMuted ? <VolumeX class="w-4 h-4 md:w-4 md:h-4 text-red-400" /> : <Volume2 class="w-4 h-4 md:w-4 md:h-4" />}
+          </button>
+          <input 
+            type="range" min="0" max="1" step="0.01" 
+            value={projectStore.globalVolume}
+            onInput={(e) => setProjectStore('globalVolume', parseFloat(e.currentTarget.value))}
+            class="w-16 h-1 accent-primary cursor-pointer"
+            title="Global Volume"
+          />
+        </div>
       </div>
     </main>
   );

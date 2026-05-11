@@ -16,6 +16,8 @@ export interface TrackState {
   name: string;
   hidden: boolean;
   locked: boolean;
+  volume: number;
+  muted: boolean;
 }
 
 export interface LayerState {
@@ -60,6 +62,15 @@ export interface LayerState {
   strokeWidth?: number;
   fontSize?: number;
   fontFamily?: string;
+  fontWeight?: string;
+  letterSpacing?: number;
+  dropShadow?: boolean;
+
+  animIn?: string;
+  animInDuration?: number;
+  animOut?: string;
+  animOutDuration?: number;
+  animLoop?: string;
 }
 
 export interface ProjectState {
@@ -69,6 +80,7 @@ export interface ProjectState {
   pixelsPerSecond: number;
   isPlaying: boolean;
   globalMuted: boolean;
+  globalVolume: number;
   activeLayerId: string | null;
   activeTrackId: string | null;
   tracks: TrackState[];
@@ -105,9 +117,10 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   pixelsPerSecond: 50,
   isPlaying: false,
   globalMuted: false,
+  globalVolume: 1,
   activeLayerId: null,
   activeTrackId: null,
-  tracks: [{ id: 'track_1', name: 'Track 1', hidden: false, locked: false }],
+  tracks: [{ id: 'track_1', name: 'Track 1', hidden: false, locked: false, volume: 1, muted: false }],
   layers: [],
   mediaPool: {},
   
@@ -198,7 +211,7 @@ export const updateSourceModalState = (updates: Partial<ProjectState>) => {
 
 export const addTrack = () => {
   const id = `track_${Date.now()}`;
-  setProjectStore('tracks', (t) => [...t, { id, name: `Track ${t.length + 1}`, hidden: false, locked: false }]);
+  setProjectStore('tracks', (t) => [...t, { id, name: `Track ${t.length + 1}`, hidden: false, locked: false, volume: 1, muted: false }]);
   setProjectStore('activeTrackId', id);
 };
 
@@ -224,7 +237,7 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
   if (!targetTrackId) {
     targetTrackId = `track_${Date.now()}`;
     const prefix = layer.type.charAt(0).toUpperCase() + layer.type.slice(1);
-    setProjectStore('tracks', (t) => [...t, { id: targetTrackId as string, name: `${prefix} Track`, hidden: false, locked: false }]);
+    setProjectStore('tracks', (t) => [...t, { id: targetTrackId as string, name: `${prefix} Track`, hidden: false, locked: false, volume: 1, muted: false }]);
   }
 
   const newLayer = { ...layer, id, trackId: targetTrackId };

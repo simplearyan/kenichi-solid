@@ -30,7 +30,7 @@ export const PanelRight: Component = () => {
   };
 
   return (
-    <div class="hidden md:flex w-[280px] lg:w-[320px] h-full glass-panel bg-surface border border-border rounded-xl flex-col overflow-hidden shrink-0 relative">
+    <div class="hidden md:flex w-full h-full glass-panel bg-surface border border-border rounded-xl flex-col overflow-hidden shrink-0 relative">
       <div ref={resizerRef} class="resizer resizer-l" id="resizer-right"></div>
       
       <div class="h-12 border-b border-border bg-[#1a1a1a] flex items-center p-1 shrink-0">
@@ -54,11 +54,11 @@ export const PanelRight: Component = () => {
 
       <div class="flex-1 overflow-y-auto custom-scrollbar">
         <Show when={projectStore.rightPanelTab === 'layers'}>
-          <div class="flex flex-col p-2 gap-1">
+          <div class="flex flex-col-reverse p-2 gap-1">
             <Show when={projectStore.layers.length === 0}>
               <div class="text-xs text-neutral-500 text-center py-8">No layers yet.</div>
             </Show>
-            <For each={[...projectStore.layers].reverse()}>
+            <For each={projectStore.layers}>
               {(layer) => (
                 <div 
                   class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border ${projectStore.activeLayerId === layer.id ? 'bg-primary/10 border-primary/30' : 'bg-[#1a1a1a] border-transparent hover:bg-[#222]'}`}
@@ -197,6 +197,124 @@ export const PanelRight: Component = () => {
                     </div>
                   </div>
                 </Show>
+
+                {/* Text Formatting Section */}
+                <Show when={activeLayer()?.type === 'text'}>
+                  <div class="space-y-4">
+                    <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-2">
+                      <div class="w-1 h-3 bg-indigo-500 rounded-full"></div> Text Formatting
+                    </h3>
+                    
+                    <div class="space-y-3">
+                      <div class="space-y-1">
+                        <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Content</label>
+                        <input type="text" value={activeLayer()?.text || activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('text', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
+                      </div>
+                      
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Font Family</label>
+                          <select value={activeLayer()?.fontFamily} onChange={(e) => handlePropChange('fontFamily', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                            <option value="Inter">Inter</option>
+                            <option value="Space Grotesk">Space Grotesk</option>
+                            <option value="Montserrat">Montserrat</option>
+                            <option value="Outfit">Outfit</option>
+                            <option value="Plus Jakarta Sans">Plus Jakarta</option>
+                            <option value="Rubik">Rubik</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Playfair Display">Playfair Display</option>
+                            <option value="Barlow Condensed">Barlow Cond</option>
+                            <option value="JetBrains Mono">JetBrains Mono</option>
+                          </select>
+                        </div>
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Weight</label>
+                          <select value={activeLayer()?.fontWeight} onChange={(e) => handlePropChange('fontWeight', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                            <option value="400">Regular</option>
+                            <option value="500">Medium</option>
+                            <option value="600">SemiBold</option>
+                            <option value="700">Bold</option>
+                            <option value="800">ExtraBold</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Size</label>
+                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
+                        </div>
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Spacing</label>
+                          <input type="number" step="1" value={activeLayer()?.letterSpacing} onInput={(e) => handlePropChange('letterSpacing', parseFloat(e.currentTarget.value))} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between p-2 bg-[#1a1a1a] border border-[#333] rounded-lg">
+                        <label class="text-xs text-white font-medium">Text Color</label>
+                        <input type="color" value={activeLayer()?.textColor || activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('textColor', e.currentTarget.value)} class="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
+                      </div>
+                      
+                      <div class="flex items-center justify-between p-2 bg-[#1a1a1a] border border-[#333] rounded-lg">
+                        <label class="text-xs text-white font-medium">Drop Shadow</label>
+                        <input type="checkbox" checked={activeLayer()?.dropShadow} onChange={(e) => handlePropChange('dropShadow', e.currentTarget.checked)} class="accent-indigo-500" />
+                      </div>
+                    </div>
+                  </div>
+                </Show>
+
+                {/* Animation FX Section */}
+                <div class="space-y-4">
+                  <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-2">
+                    <div class="w-1 h-3 bg-pink-500 rounded-full"></div> Animation FX
+                  </h3>
+                  
+                  <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="space-y-1">
+                        <label class="text-[10px] text-neutral-500 uppercase tracking-wider">In Anim</label>
+                        <select value={activeLayer()?.animIn || 'none'} onChange={(e) => handlePropChange('animIn', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                          <option value="none">None</option>
+                          <option value="fade">Fade In</option>
+                          <option value="slideLeft">Slide Left</option>
+                          <option value="zoomIn">Zoom In</option>
+                          <option value="rotateIn">Rotate In</option>
+                        </select>
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Duration</label>
+                        <input type="number" step="0.1" min="0.1" max="5.0" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
+                      </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                      <div class="space-y-1">
+                        <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Out Anim</label>
+                        <select value={activeLayer()?.animOut || 'none'} onChange={(e) => handlePropChange('animOut', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                          <option value="none">None</option>
+                          <option value="fade">Fade Out</option>
+                          <option value="slideRight">Slide Right</option>
+                          <option value="zoomOut">Zoom Out</option>
+                          <option value="rotateOut">Rotate Out</option>
+                        </select>
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Duration</label>
+                        <input type="number" step="0.1" min="0.1" max="5.0" value={activeLayer()?.animOutDuration || 1.0} onInput={(e) => handlePropChange('animOutDuration', parseFloat(e.currentTarget.value))} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
+                      </div>
+                    </div>
+
+                    <div class="space-y-1">
+                      <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Loop Anim</label>
+                      <select value={activeLayer()?.animLoop || 'none'} onChange={(e) => handlePropChange('animLoop', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                        <option value="none">None</option>
+                        <option value="pulse">Pulse</option>
+                        <option value="wiggle">Wiggle</option>
+                        <option value="float">Float</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 
               </div>
             </Show>

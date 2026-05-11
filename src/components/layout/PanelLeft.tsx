@@ -80,7 +80,12 @@ export const PanelLeft: Component = () => {
       fadeOut: 0,
       echo: false,
       echoDelay: 0.5,
-      echoFeedback: 0.5
+      echoFeedback: 0.5,
+      animIn: 'none',
+      animInDuration: 1.0,
+      animOut: 'none',
+      animOutDuration: 1.0,
+      animLoop: 'none'
     });
     const layerState = projectStore.layers.find(l => l.id === layerId);
     if (layerState) layerRegistry.instantiate(layerState);
@@ -153,7 +158,49 @@ export const PanelLeft: Component = () => {
 
         <Show when={projectStore.leftPanelTab === 'text'}>
           <div class="flex flex-col gap-3 h-full">
-            <button class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm">
+            <button onClick={() => {
+              addLayer({
+                name: 'New Text',
+                type: 'text',
+                mediaId: '',
+                startTime: projectStore.currentTime,
+                duration: 5.0,
+                inPoint: 0,
+                hidden: false,
+                locked: false,
+                scale: 1,
+                rotation: 0,
+                posX: 0,
+                posY: 0,
+                radius: 0,
+                brightness: 1,
+                contrast: 1,
+                chromaKey: false,
+                chromaColor: '#00ff00',
+                chromaTolerance: 0.1,
+                colorReplace: false,
+                replaceFromColor: '#ff0000',
+                replaceToColor: '#0000ff',
+                volume: 1,
+                fadeIn: 0,
+                fadeOut: 0,
+                echo: false,
+                echoDelay: 0.5,
+                echoFeedback: 0.5,
+                text: 'HELLO WORLD',
+                fontFamily: 'Inter',
+                fontSize: 120,
+                textColor: '#ffffff',
+                fontWeight: '800',
+                letterSpacing: 0,
+                dropShadow: true,
+                animIn: 'none',
+                animInDuration: 1.0,
+                animOut: 'none',
+                animOutDuration: 1.0,
+                animLoop: 'none'
+              });
+            }} class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm">
               <Type class="w-4 h-4" /> Add Text Layer
             </button>
             <div class="flex-1 flex flex-col items-center justify-center text-neutral-600 gap-2 text-center px-4 pointer-events-none">

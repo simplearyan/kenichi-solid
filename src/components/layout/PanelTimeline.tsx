@@ -1,5 +1,5 @@
 import { onMount, onCleanup, For, Show, createEffect, type Component } from 'solid-js';
-import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Music, Plus } from 'lucide-solid';
+import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Music, Plus, Volume2, VolumeX } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack } from '../../store/projectStore';
 import { layerRegistry } from '../../engine/LayerRegistry';
 import { setupResizer } from '../../utils/resizer';
@@ -214,11 +214,14 @@ export const PanelTimeline: Component = () => {
                     <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 text-neutral-500 transition-opacity"><Trash2 class="w-3 h-3" /></button>
                   </div>
                   <div class="flex items-center gap-2 mt-1">
-                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-neutral-500 hover:text-white">
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-neutral-500 hover:text-white" title="Toggle Visibility">
                       {track.hidden ? <EyeOff class="w-3 h-3" /> : <Eye class="w-3 h-3" />}
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { locked: !track.locked }); }} class="text-neutral-500 hover:text-white">
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { locked: !track.locked }); }} class="text-neutral-500 hover:text-white" title="Toggle Lock">
                       {track.locked ? <Lock class="w-3 h-3" /> : <Unlock class="w-3 h-3" />}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { muted: !track.muted }); }} class="text-neutral-500 hover:text-white" title="Toggle Mute">
+                      {track.muted ? <VolumeX class="w-3 h-3 text-red-400" /> : <Volume2 class="w-3 h-3" />}
                     </button>
                   </div>
                 </div>
@@ -254,9 +257,20 @@ export const PanelTimeline: Component = () => {
                 {(track) => (
                   <div class="h-12 border-b border-[#2a2a2a] relative w-full shrink-0">
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
-                      {(layer) => (
+                      {(layer) => {
+                        const getLayerColor = () => {
+                          if (projectStore.activeLayerId === layer.id) return 'bg-[#05d590] border-white z-20 shadow-[0_0_15px_rgba(5,213,144,0.3)]';
+                          switch (layer.type) {
+                            case 'video': return 'bg-blue-600 border-blue-400 hover:border-white';
+                            case 'audio': return 'bg-emerald-600 border-emerald-400 hover:border-white';
+                            case 'image': return 'bg-purple-600 border-purple-400 hover:border-white';
+                            case 'text': return 'bg-orange-600 border-orange-400 hover:border-white';
+                            default: return 'bg-gray-600 border-gray-400 hover:border-white';
+                          }
+                        };
+                        return (
                         <div 
-                          class={`absolute top-1 bottom-1 rounded shadow-md group ${projectStore.activeLayerId === layer.id ? 'bg-[#05d590] border border-white z-20' : 'bg-[#1e1e1e] border border-[#333] hover:border-neutral-500'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                          class={`absolute top-1 bottom-1 rounded shadow-md group border transition-all ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
                           style={{ 
                             left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
                             width: `${layer.duration * projectStore.pixelsPerSecond}px` 
@@ -282,7 +296,8 @@ export const PanelTimeline: Component = () => {
                             onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
                           ></div>
                         </div>
-                      )}
+                        );
+                      }}
                     </For>
                   </div>
                 )}

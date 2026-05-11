@@ -86,11 +86,19 @@ export class Renderer {
   render() {
     if (!this.ctx || !this.canvas) return;
     
-    let targetWidth = 1920;
-    let targetHeight = 1080;
-    let arRatio = 16/9;
-    if (projectStore.aspectRatio === '9/16') arRatio = 9/16;
-    if (projectStore.aspectRatio === '1/1') arRatio = 1;
+    let baseW = 1920;
+    let baseH = 1080;
+    if (projectStore.aspectRatio === '9/16') {
+      baseW = 1080;
+      baseH = 1920;
+    } else if (projectStore.aspectRatio === '1/1') {
+      baseW = 1080;
+      baseH = 1080;
+    }
+
+    let targetWidth = baseW;
+    let targetHeight = baseH;
+    let arRatio = baseW / baseH;
     
     if (projectStore.proxyRes === '480') {
       targetHeight = 480;
@@ -99,8 +107,8 @@ export class Renderer {
       targetHeight = 720;
       targetWidth = Math.round(720 * arRatio);
     } else {
-      targetHeight = 1080;
-      targetWidth = Math.round(1080 * arRatio);
+      targetHeight = baseH;
+      targetWidth = baseW;
     }
     
     if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
@@ -112,15 +120,15 @@ export class Renderer {
 
     const time = projectStore.currentTime;
 
-    // Apply global proxy scale so internal rendering always acts like 1920x1080 space
-    const globalScaleX = targetWidth / 1920;
-    const globalScaleY = targetHeight / 1080;
+    // Apply global proxy scale so internal rendering always acts like baseW x baseH space
+    const globalScaleX = targetWidth / baseW;
+    const globalScaleY = targetHeight / baseH;
 
     this.ctx.save();
     this.ctx.scale(globalScaleX, globalScaleY);
 
-    const W = 1920;
-    const H = 1080;
+    const W = baseW;
+    const H = baseH;
 
     for (let i = 0; i < projectStore.layers.length; i++) {
       const layer = projectStore.layers[i];
@@ -130,13 +138,18 @@ export class Renderer {
       const localTime = time - layer.startTime + layer.inPoint;
 
       const nodes = layerRegistry.get(layer.id);
-      if (!nodes) continue;
+      if (layer.type !== 'text' && !nodes) continue;
 
       // Sync Audio/Video Playback
       if (layer.type === 'video' || layer.type === 'audio') {
-        const media = layer.type === 'video' ? nodes.videoEl : nodes.audioEl;
-        if (media) {
-          media.volume = projectStore.globalMuted ? 0 : Math.max(0, Math.min(1, layer.volume));
+        const media = layer.type === 'video' ? nodes?.videoEl : nodes?.audioEl;
+        const track = projectStore.tracks.find(t => t.id === layer.trackId);
+        
+        if (media && track) {
+          const trackVol = track.muted ? 0 : track.volume;
+          const globalVol = projectStore.globalMuted ? 0 : projectStore.globalVolume;
+          media.volume = Math.max(0, Math.min(1, layer.volume * trackVol * globalVol));
+          
           if (isVisible) {
             if (Math.abs(media.currentTime - localTime) > 0.1) {
               media.currentTime = localTime;
@@ -152,14 +165,54 @@ export class Renderer {
         }
       }
 
+      // Evaluate Keyframeless Animations
+      let animAlpha = 1;
+      let animScale = 1;
+      let animRot = 0;
+      let animX = 0;
+      let animY = 0;
+      
+      const layerTime = time - layer.startTime; // Time since layer start
+
+      if (isVisible) {
+        // In Animation
+        if (layer.animIn && layer.animIn !== 'none' && layerTime < (layer.animInDuration || 1)) {
+          let p = layerTime / (layer.animInDuration || 1);
+          p = 1 - Math.pow(1 - p, 3); // easeOutCubic
+          
+          if (layer.animIn === 'fade') animAlpha = p;
+          else if (layer.animIn === 'slideLeft') { animX = -W * (1 - p); animAlpha = p; }
+          else if (layer.animIn === 'zoomIn') { animScale = p; animAlpha = p; }
+          else if (layer.animIn === 'rotateIn') { animRot = (1 - p) * Math.PI; animScale = p; animAlpha = p; }
+        }
+
+        // Out Animation
+        let timeFromEnd = layer.duration - layerTime;
+        if (layer.animOut && layer.animOut !== 'none' && timeFromEnd < (layer.animOutDuration || 1)) {
+          let p = timeFromEnd / (layer.animOutDuration || 1);
+          p = 1 - Math.pow(1 - p, 3); // easeOutCubic (reversed since it's going backwards from end)
+          
+          if (layer.animOut === 'fade') animAlpha *= p;
+          else if (layer.animOut === 'slideRight') { animX += W * (1 - p); animAlpha *= p; }
+          else if (layer.animOut === 'zoomOut') { animScale *= p; animAlpha *= p; }
+          else if (layer.animOut === 'rotateOut') { animRot += (1 - p) * Math.PI; animScale *= p; animAlpha *= p; }
+        }
+
+        // Loop Animation
+        if (layer.animLoop && layer.animLoop !== 'none') {
+          if (layer.animLoop === 'pulse') animScale *= 1 + Math.sin(layerTime * Math.PI * 2) * 0.05;
+          else if (layer.animLoop === 'wiggle') animRot += Math.sin(layerTime * Math.PI * 4) * 0.05;
+          else if (layer.animLoop === 'float') animY += Math.sin(layerTime * Math.PI * 2) * 20;
+        }
+      }
+
       // Visual Rendering
       if (isVisible && (layer.type === 'video' || layer.type === 'image')) {
-        const sourceMedia = layer.type === 'video' ? nodes.videoEl : nodes.imgEl;
-        const bCtx = nodes.bufferCtx;
-        const bCvs = nodes.bufferCanvas;
+        const sourceMedia = layer.type === 'video' ? nodes?.videoEl : nodes?.imgEl;
+        const bCtx = nodes?.bufferCtx;
+        const bCvs = nodes?.bufferCanvas;
 
         if (sourceMedia && bCtx && bCvs && bCvs.width > 0 && bCvs.height > 0) {
-          // 1. Draw to offscreen buffer
           bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
           
           if (layer.type === 'video' && (sourceMedia as HTMLVideoElement).readyState >= 2) {
@@ -168,30 +221,61 @@ export class Renderer {
              bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
           }
 
-          // 2. Apply Pixel FX Proxy
           if (layer.chromaKey) {
             this.applyChromaKey(bCtx, bCvs.width, bCvs.height, layer.chromaColor, layer.chromaTolerance);
           }
 
-          // 3. Draw onto main canvas with transforms
           this.ctx.save();
+          this.ctx.globalAlpha = animAlpha;
           
-          // Move to center of screen + custom position
-          this.ctx.translate(W/2 + layer.posX, H/2 + layer.posY);
-          this.ctx.rotate((layer.rotation * Math.PI) / 180);
-          this.ctx.scale(layer.scale, layer.scale);
+          this.ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
+          this.ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
+          this.ctx.scale(layer.scale * animScale, layer.scale * animScale);
           
-          // Apply brightness/contrast
           let filterStr = '';
           if (layer.brightness !== 1) filterStr += `brightness(${layer.brightness}) `;
           if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
           if (filterStr) this.ctx.filter = filterStr.trim();
 
-          // Draw the buffer centered
           this.ctx.drawImage(bCvs, -bCvs.width/2, -bCvs.height/2);
-
           this.ctx.restore();
         }
+      }
+
+      if (isVisible && layer.type === 'text') {
+        this.ctx.save();
+        this.ctx.globalAlpha = animAlpha;
+        
+        this.ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
+        this.ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
+        this.ctx.scale(layer.scale * animScale, layer.scale * animScale);
+
+        const text = layer.text || layer.textContent || 'HELLO WORLD';
+        this.ctx.font = `${layer.fontWeight || '700'} ${layer.fontSize || 120}px "${layer.fontFamily || 'Inter'}"`;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        if (layer.dropShadow) {
+          this.ctx.shadowColor = 'rgba(0,0,0,0.8)';
+          this.ctx.shadowBlur = 15;
+          this.ctx.shadowOffsetX = 0;
+          this.ctx.shadowOffsetY = 5;
+        }
+
+        if (layer.letterSpacing) {
+           this.ctx.letterSpacing = `${layer.letterSpacing}px`;
+        }
+
+        this.ctx.fillStyle = layer.textColor || layer.fillColor || '#ffffff';
+        this.ctx.fillText(text, 0, 0);
+
+        if (layer.strokeWidth) {
+          this.ctx.lineWidth = layer.strokeWidth;
+          this.ctx.strokeStyle = layer.strokeColor || '#000000';
+          this.ctx.strokeText(text, 0, 0);
+        }
+
+        this.ctx.restore();
       }
     }
 
