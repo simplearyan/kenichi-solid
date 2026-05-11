@@ -1,5 +1,5 @@
-import { Show, type Component, type JSX } from 'solid-js';
-import { projectStore } from '../../store/projectStore';
+import { type Component, type JSX } from 'solid-js';
+import { projectStore, setProjectStore } from '../../store/projectStore';
 
 interface Props {
   leftPanel: JSX.Element;

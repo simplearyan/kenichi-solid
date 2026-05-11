@@ -208,7 +208,7 @@ export const PanelRight: Component = () => {
                     <div class="space-y-3">
                       <div class="space-y-1">
                         <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Content</label>
-                        <input type="text" value={activeLayer()?.text || activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('text', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
+                        <input type="text" value={activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('textContent', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none" />
                       </div>
                       
                       <div class="grid grid-cols-2 gap-2">
@@ -252,7 +252,7 @@ export const PanelRight: Component = () => {
 
                       <div class="flex items-center justify-between p-2 bg-[#1a1a1a] border border-[#333] rounded-lg">
                         <label class="text-xs text-white font-medium">Text Color</label>
-                        <input type="color" value={activeLayer()?.textColor || activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('textColor', e.currentTarget.value)} class="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
+                        <input type="color" value={activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-8 h-8 rounded cursor-pointer bg-transparent border-none" />
                       </div>
                       
                       <div class="flex items-center justify-between p-2 bg-[#1a1a1a] border border-[#333] rounded-lg">

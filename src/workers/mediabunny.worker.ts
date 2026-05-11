@@ -1,3 +1,4 @@
+/// <reference lib="webworker" />
 import {
     Output,
     BufferTarget,
@@ -102,7 +103,7 @@ self.onmessage = async (e: MessageEvent) => {
                 frameRate: config.fps,
                 codec: codec,
                 bitrate: config.bitrate || 6000000
-            });
+            } as any);
             await output.addVideoTrack(videoSource);
 
             if (config.hasAudio) {
@@ -111,7 +112,7 @@ self.onmessage = async (e: MessageEvent) => {
                     numberOfChannels: 2,
                     codec: 'aac',
                     bitrate: 192000
-                });
+                } as any);
                 await output.addAudioTrack(audioSource);
             }
 
@@ -146,7 +147,7 @@ self.onmessage = async (e: MessageEvent) => {
                 }
 
                 if (target && target.buffer) {
-                    self.postMessage({ type: 'COMPLETE', data: target.buffer }, [target.buffer]);
+                    (self as any).postMessage({ type: 'COMPLETE', data: target.buffer }, [target.buffer]);
                 } else {
                     throw new Error("Export failed: Buffer empty after finalize.");
                 }

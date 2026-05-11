@@ -263,7 +263,7 @@ export class Renderer {
         ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
         ctx.scale(layer.scale * animScale, layer.scale * animScale);
 
-        const text = layer.text || layer.textContent || 'HELLO WORLD';
+        const text = layer.textContent || 'HELLO WORLD';
         ctx.font = `${layer.fontWeight || '700'} ${layer.fontSize || 120}px "${layer.fontFamily || 'Inter'}"`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -279,7 +279,7 @@ export class Renderer {
            (ctx as any).letterSpacing = `${layer.letterSpacing}px`;
         }
 
-        ctx.fillStyle = layer.textColor || layer.fillColor || '#ffffff';
+        ctx.fillStyle = layer.fillColor || '#ffffff';
         ctx.fillText(text, 0, 0);
 
         if (layer.strokeWidth) {

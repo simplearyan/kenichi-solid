@@ -2,7 +2,7 @@ export const setupResizer = (
   resizerEl: HTMLElement,
   type: 'left' | 'right' | 'timeline'
 ) => {
-  resizerEl.addEventListener('mousedown', (e) => {
+  resizerEl.addEventListener('mousedown', () => {
     const workspaceGrid = document.getElementById('workspace-grid');
     if (!workspaceGrid) return;
 

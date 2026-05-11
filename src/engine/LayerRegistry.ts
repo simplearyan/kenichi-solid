@@ -1,5 +1,5 @@
 import { projectStore, type LayerState } from '../store/projectStore';
-import { audioEngine } from './AudioEngine';
+
 
 export interface LayerNodes {
   videoEl?: HTMLVideoElement;

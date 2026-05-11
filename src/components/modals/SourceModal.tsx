@@ -1,5 +1,5 @@
 import { Show, createSignal, onMount, onCleanup, createEffect, type Component } from 'solid-js';
-import { X, Play, Pause, Square, ZoomIn, ZoomOut, Maximize, Navigation, CheckCircle } from 'lucide-solid';
+import { X, Play, Pause, ZoomIn, Maximize, Navigation, CheckCircle } from 'lucide-solid';
 import { projectStore, closeSourceModal, updateSourceModalState, addLayer } from '../../store/projectStore';
 import { layerRegistry } from '../../engine/LayerRegistry';
 

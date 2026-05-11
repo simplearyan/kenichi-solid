@@ -1,5 +1,5 @@
 import { Show, onMount, For, type Component } from 'solid-js';
-import { Plus, Inbox, Type, Square, Circle, Shapes, Music, Image as ImageIcon, Film, Eye, Trash2, Maximize } from 'lucide-solid';
+import { Plus, Inbox, Type, Square, Circle, Shapes, Music, Image as ImageIcon, Film, Trash2, Maximize } from 'lucide-solid';
 import { projectStore, setProjectStore, addMediaToPool, removeMediaFromPool, openSourceModal, addLayer } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
 import { generatePeaks } from '../../utils/AudioUtils';
@@ -187,10 +187,10 @@ export const PanelLeft: Component = () => {
                 echo: false,
                 echoDelay: 0.5,
                 echoFeedback: 0.5,
-                text: 'HELLO WORLD',
+                textContent: 'HELLO WORLD',
                 fontFamily: 'Inter',
                 fontSize: 120,
-                textColor: '#ffffff',
+                fillColor: '#ffffff',
                 fontWeight: '800',
                 letterSpacing: 0,
                 dropShadow: true,
