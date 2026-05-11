@@ -6,49 +6,49 @@ import { setupResizer } from '../../utils/resizer';
 
 const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props) => {
   let canvasRef!: HTMLCanvasElement;
-  
+
   createEffect(() => {
     const layer = props.layer;
     const pxPerSec = props.pixelsPerSecond;
     if (layer.type !== 'audio' && layer.type !== 'video') return;
     if (!layer.mediaId || !canvasRef) return;
-    
+
     const media = projectStore.mediaPool[layer.mediaId];
     if (!media || !media.peaks) return;
 
     const ctx = canvasRef.getContext('2d');
     if (!ctx) return;
-    
+
     // Resize internal resolution to match DOM size
     canvasRef.width = layer.duration * pxPerSec;
     const w = canvasRef.width;
     const h = canvasRef.height;
-    ctx.clearRect(0,0,w,h);
-    
-    const duration = layer.duration; 
+    ctx.clearRect(0, 0, w, h);
+
+    const duration = layer.duration;
     const inPoint = layer.inPoint;
     const totalDuration = media.duration || 1;
-    
+
     const startIdx = Math.floor((inPoint / totalDuration) * media.peaks.length);
     const endIdx = Math.floor(((inPoint + duration) / totalDuration) * media.peaks.length);
-    
+
     const visiblePeaks = media.peaks.slice(startIdx, endIdx);
-    if(visiblePeaks.length === 0) return;
+    if (visiblePeaks.length === 0) return;
 
     ctx.fillStyle = '#ffffff';
     ctx.globalAlpha = 0.4;
     const barWidth = Math.max(1, w / visiblePeaks.length);
-    
-    for(let i=0; i<visiblePeaks.length; i++) {
+
+    for (let i = 0; i < visiblePeaks.length; i++) {
       const ph = visiblePeaks[i] * h * 0.75;
-      ctx.fillRect(i * barWidth, h/2 - ph/2, Math.max(1, barWidth - 1), ph);
+      ctx.fillRect(i * barWidth, h / 2 - ph / 2, Math.max(1, barWidth - 1), ph);
     }
   });
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      height={40} 
+    <canvas
+      ref={canvasRef}
+      height={40}
       class="absolute inset-0 w-full h-full pointer-events-none"
     ></canvas>
   );
@@ -57,6 +57,13 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
 export const PanelTimeline: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
   let timelineAreaRef: HTMLDivElement | undefined;
+  let trackListRef: HTMLDivElement | undefined;
+
+  const handleTimelineScroll = () => {
+    if (trackListRef && timelineAreaRef) {
+      trackListRef.scrollTop = timelineAreaRef.scrollTop;
+    }
+  };
 
   let isDragging = false;
   let dragType: 'scrub' | 'move' | 'trim-left' | 'trim-right' | null = null;
@@ -106,7 +113,6 @@ export const PanelTimeline: Component = () => {
       } else if (dragType === 'trim-right') {
         let newDur = dragStartDuration + dt;
         if (newDur < 0.1) newDur = 0.1;
-        // Todo: Check max media duration bound
         updateLayer(dragLayerId, { duration: newDur });
       }
     }
@@ -130,6 +136,9 @@ export const PanelTimeline: Component = () => {
   });
 
   const startScrub = (e: MouseEvent) => {
+    // Pause playback on scrub start
+    if (projectStore.isPlaying) setProjectStore('isPlaying', false);
+
     // Only seek if clicking empty space or ruler, not clips
     if ((e.target as HTMLElement).closest('.timeline-clip')) return;
 
@@ -140,9 +149,9 @@ export const PanelTimeline: Component = () => {
     let t = x / projectStore.pixelsPerSecond;
     if (t < 0) t = 0;
     if (t > projectStore.duration) t = projectStore.duration;
-    
+
     setProjectStore('currentTime', t);
-    
+
     isDragging = true;
     dragType = 'scrub';
     dragStartX = e.clientX;
@@ -151,6 +160,9 @@ export const PanelTimeline: Component = () => {
 
   const startLayerDrag = (e: MouseEvent, layerId: string, type: 'move' | 'trim-left' | 'trim-right') => {
     e.stopPropagation();
+    // Pause playback on drag start
+    if (projectStore.isPlaying) setProjectStore('isPlaying', false);
+
     const layer = projectStore.layers.find(l => l.id === layerId);
     if (!layer) return;
 
@@ -170,7 +182,7 @@ export const PanelTimeline: Component = () => {
   };
 
 
-  
+
   const tickConfig = () => {
     const pps = projectStore.pixelsPerSecond;
     if (pps < 5) return { label: 120, minor: 30 };
@@ -191,12 +203,12 @@ export const PanelTimeline: Component = () => {
   return (
     <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
       <div ref={resizerRef} class="resizer resizer-t" id="resizer-timeline"></div>
-      
+
       <div class="h-10 border-b border-border bg-[#1a1a1a] flex items-center px-4 justify-between shrink-0">
         <div class="flex items-center gap-4 text-neutral-400">
           <button class="hover:text-white transition-colors" title="Split"><Scissors class="w-4 h-4" /></button>
           <button class="hover:text-white transition-colors" title="Copy"><Copy class="w-4 h-4" /></button>
-          <button onClick={() => { if(projectStore.activeLayerId) { layerRegistry.remove(projectStore.activeLayerId); removeLayer(projectStore.activeLayerId); } }} class="hover:text-red-400 transition-colors" title="Delete Clip"><Trash2 class="w-4 h-4" /></button>
+          <button onClick={() => { if (projectStore.activeLayerId) { layerRegistry.remove(projectStore.activeLayerId); removeLayer(projectStore.activeLayerId); } }} class="hover:text-red-400 transition-colors" title="Delete Clip"><Trash2 class="w-4 h-4" /></button>
           <div class="w-px h-4 bg-[#333] mx-1"></div>
           <button onClick={addTrack} class="hover:text-green-400 transition-colors" title="Add Track"><Plus class="w-4 h-4" /></button>
           <button onClick={() => {
@@ -210,43 +222,43 @@ export const PanelTimeline: Component = () => {
           </div>
           <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-1.5" title="Track Height">
-            <button 
-              onClick={() => setProjectStore('trackHeight', h => Math.max(32, h - 8))} 
+            <button
+              onClick={() => setProjectStore('trackHeight', h => Math.max(32, h - 8))}
               class="p-1 hover:bg-white/10 rounded transition-colors"
             >
               <Plus class="w-3.5 h-3.5 rotate-45" />
             </button>
-            <button 
-              onClick={() => setProjectStore('trackHeight', h => Math.min(120, h + 8))} 
+            <button
+              onClick={() => setProjectStore('trackHeight', h => Math.min(120, h + 8))}
               class="p-1 hover:bg-white/10 rounded transition-colors"
             >
               <Plus class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
-        
+
         <div class="flex items-center gap-1">
-          <button 
-            onClick={() => setProjectStore('layout', 'layout-default')} 
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-default' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+          <button
+            onClick={() => setProjectStore('layout', 'layout-default')}
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-default' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
             title="Standard Layout"
           ><LayoutGrid class="w-4 h-4" /></button>
-          
-          <button 
-            onClick={() => setProjectStore('layout', 'layout-wide-left')} 
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-left' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+
+          <button
+            onClick={() => setProjectStore('layout', 'layout-wide-left')}
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-left' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
             title="Expand Left"
           ><PanelLeftOpen class="w-4 h-4" /></button>
-          
-          <button 
-            onClick={() => setProjectStore('layout', 'layout-wide-right')} 
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-right' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+
+          <button
+            onClick={() => setProjectStore('layout', 'layout-wide-right')}
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-right' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
             title="Expand Right"
           ><PanelRightOpen class="w-4 h-4" /></button>
-          
-          <button 
-            onClick={() => setProjectStore('layout', 'layout-full')} 
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-full' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+
+          <button
+            onClick={() => setProjectStore('layout', 'layout-full')}
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-full' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
             title="Full Width"
           ><Maximize2 class="w-4 h-4" /></button>
 
@@ -259,12 +271,12 @@ export const PanelTimeline: Component = () => {
         <div class="w-[100px] md:w-[140px] bg-surface border-r border-border flex flex-col shrink-0 z-10 overflow-y-hidden">
           <div class="h-8 border-b border-border bg-[#1e1e1e] shrink-0 flex items-center justify-center">
             <span class="text-[10px] font-bold text-neutral-500">TRACKS</span>
-          </div> 
-          <div class="flex-1 overflow-y-auto custom-scrollbar no-scrollbar-x pointer-events-none">
+          </div>
+          <div ref={trackListRef} class="flex-1 overflow-y-hidden no-scrollbar">
             <For each={projectStore.tracks}>
               {(track) => (
-                <div 
-                  class={`border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group ${projectStore.activeTrackId === track.id ? 'bg-[#2a2a2a]' : 'hover:bg-[#1f1f1f]'}`} 
+                <div
+                  class={`border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group ${projectStore.activeTrackId === track.id ? 'bg-[#2a2a2a]' : 'hover:bg-[#1f1f1f]'}`}
                   style={{ height: `${projectStore.trackHeight}px` }}
                   onClick={() => setProjectStore('activeTrackId', track.id)}
                 >
@@ -289,22 +301,22 @@ export const PanelTimeline: Component = () => {
           </div>
         </div>
 
-        <div ref={timelineAreaRef} class="flex-1 relative overflow-x-auto overflow-y-auto custom-scrollbar">
+        <div ref={timelineAreaRef} class="flex-1 relative overflow-x-auto overflow-y-auto custom-scrollbar" onScroll={handleTimelineScroll}>
           <div 
             class="relative min-h-full" 
             style={{ width: `${Math.max(1000, projectStore.duration * projectStore.pixelsPerSecond + 500)}px` }}
             onMouseDown={startScrub}
           >
-            
+
             {/* Ruler */}
             <div class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 w-full pointer-events-none text-[9px] font-medium text-neutral-500 overflow-hidden select-none">
-              <For each={Array.from({length: Math.ceil(projectStore.duration / tickConfig().minor) + 1})}>
+              <For each={Array.from({ length: Math.ceil(projectStore.duration / tickConfig().minor) + 1 })}>
                 {(_, i) => {
                   const time = i() * tickConfig().minor;
                   const isMajor = Math.abs(time % tickConfig().label) < 0.001 || Math.abs(time % tickConfig().label - tickConfig().label) < 0.001;
                   return (
-                    <div 
-                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-neutral-700 h-full' : 'border-neutral-800 h-1/2'} transition-all`} 
+                    <div
+                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-neutral-700 h-full' : 'border-neutral-800 h-1/2'} transition-all`}
                       style={{ left: `${time * projectStore.pixelsPerSecond}px` }}
                     >
                       <Show when={isMajor}>
@@ -327,7 +339,7 @@ export const PanelTimeline: Component = () => {
             <div class="w-full flex flex-col relative z-10">
               <For each={projectStore.tracks}>
                 {(track) => (
-                  <div 
+                  <div
                     class="border-b border-[#2a2a2a] relative w-full shrink-0"
                     style={{ height: `${projectStore.trackHeight}px` }}
                   >
@@ -336,7 +348,7 @@ export const PanelTimeline: Component = () => {
                         const getLayerColor = () => {
                           const isActive = projectStore.activeLayerId === layer.id;
                           let cls = isActive ? 'z-20 border-white/90 ring-1 ring-white/10' : 'border-white/10';
-                          
+
                           switch (layer.type) {
                             case 'video': cls += ' bg-[#2563eb] hover:bg-[#3b82f6]'; break;
                             case 'audio': cls += ' bg-[#059669] hover:bg-[#10b981]'; break;
@@ -347,33 +359,33 @@ export const PanelTimeline: Component = () => {
                           return cls;
                         };
                         return (
-                        <div 
-                          class={`timeline-clip absolute top-1 bottom-1 rounded shadow-lg group border transition-all duration-150 ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
-                          style={{ 
-                            left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
-                            width: `${layer.duration * projectStore.pixelsPerSecond}px` 
-                          }}
-                          onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
-                        >
-                          <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none z-10 relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                            {layer.name}
+                          <div
+                            class={`timeline-clip absolute top-1 bottom-1 rounded shadow-lg group border transition-[background-color,border-color,box-shadow,opacity] duration-150 ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                            style={{
+                              left: `${layer.startTime * projectStore.pixelsPerSecond}px`,
+                              width: `${layer.duration * projectStore.pixelsPerSecond}px`
+                            }}
+                            onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
+                          >
+                            <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none z-10 relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                              {layer.name}
+                            </div>
+
+                            {/* Waveform */}
+                            <Show when={layer.type === 'audio' || layer.type === 'video'}>
+                              <TrackWaveform layer={layer} pixelsPerSecond={projectStore.pixelsPerSecond} />
+                            </Show>
+
+                            {/* Trimming Handles */}
+                            <div
+                              class="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
+                              onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
+                            ></div>
+                            <div
+                              class="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
+                              onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
+                            ></div>
                           </div>
-                          
-                          {/* Waveform */}
-                          <Show when={layer.type === 'audio' || layer.type === 'video'}>
-                             <TrackWaveform layer={layer} pixelsPerSecond={projectStore.pixelsPerSecond} />
-                          </Show>
-                          
-                          {/* Trimming Handles */}
-                          <div 
-                            class="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
-                            onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
-                          ></div>
-                          <div 
-                            class="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
-                            onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
-                          ></div>
-                        </div>
                         );
                       }}
                     </For>

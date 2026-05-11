@@ -37,14 +37,14 @@ export class Renderer {
       }
 
       this.render();
-      
+
       this.frameCount++;
       if (time - this.fpsLastTime >= 1000) {
         setProjectStore('fps', this.frameCount);
         this.frameCount = 0;
         this.fpsLastTime = time;
       }
-      
+
       this.reqAnimFrameId = requestAnimationFrame(loop);
     };
     this.reqAnimFrameId = requestAnimationFrame(loop);
@@ -60,24 +60,24 @@ export class Renderer {
     if (!w || !h) return;
     const imgData = ctx.getImageData(0, 0, w, h);
     const data = imgData.data;
-    
+
     // Hex to RGB
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return;
     const tr = parseInt(result[1], 16);
     const tg = parseInt(result[2], 16);
     const tb = parseInt(result[3], 16);
-    
+
     const maxDist = 442; // sqrt(255^2 * 3)
     const threshold = tolerance * maxDist;
 
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i];
-      const g = data[i+1];
-      const b = data[i+2];
-      const dist = Math.sqrt((r-tr)**2 + (g-tg)**2 + (b-tb)**2);
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const dist = Math.sqrt((r - tr) ** 2 + (g - tg) ** 2 + (b - tb) ** 2);
       if (dist < threshold) {
-        data[i+3] = 0; // Transparent
+        data[i + 3] = 0; // Transparent
       }
     }
     ctx.putImageData(imgData, 0, 0);
@@ -85,7 +85,7 @@ export class Renderer {
 
   render() {
     if (!this.canvas || projectStore.isExporting) return;
-    
+
     let baseW = 1920;
     let baseH = 1080;
     if (projectStore.aspectRatio === '9/16') {
@@ -99,7 +99,7 @@ export class Renderer {
     let targetWidth = baseW;
     let targetHeight = baseH;
     let arRatio = baseW / baseH;
-    
+
     if (projectStore.proxyRes === '480') {
       targetHeight = 480;
       targetWidth = Math.round(480 * arRatio);
@@ -110,11 +110,11 @@ export class Renderer {
       targetHeight = baseH;
       targetWidth = baseW;
     }
-    
+
     if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
       this.resize(targetWidth, targetHeight);
     }
-    
+
     this.renderFrame(this.ctx as any, targetWidth, targetHeight, projectStore.currentTime);
   }
 
@@ -158,18 +158,19 @@ export class Renderer {
       if (layer.type === 'video' || layer.type === 'audio') {
         const media = layer.type === 'video' ? nodes?.videoEl : nodes?.audioEl;
         const track = projectStore.tracks.find(t => t.id === layer.trackId);
-        
+
         if (media && track) {
           const trackVol = track.muted ? 0 : track.volume;
           const globalVol = projectStore.globalMuted ? 0 : projectStore.globalVolume;
           media.volume = Math.max(0, Math.min(1, layer.volume * trackVol * globalVol));
-          
+
           if (isVisible) {
-            if (Math.abs(media.currentTime - localTime) > 0.1) {
+            // Use a wider tolerance (250ms) to avoid jitter during playback
+            if (Math.abs(media.currentTime - localTime) > 0.25) {
               media.currentTime = localTime;
             }
             if (projectStore.isPlaying) {
-              if (media.paused) media.play().catch(()=>{});
+              if (media.paused) media.play().catch(() => { });
             } else {
               if (!media.paused) media.pause();
             }
@@ -185,7 +186,7 @@ export class Renderer {
       let animRot = 0;
       let animX = 0;
       let animY = 0;
-      
+
       const layerTime = time - layer.startTime; // Time since layer start
 
       if (isVisible) {
@@ -193,7 +194,7 @@ export class Renderer {
         if (layer.animIn && layer.animIn !== 'none' && layerTime < (layer.animInDuration || 1)) {
           let p = layerTime / (layer.animInDuration || 1);
           p = 1 - Math.pow(1 - p, 3); // easeOutCubic
-          
+
           if (layer.animIn === 'fade') animAlpha = p;
           else if (layer.animIn === 'slideLeft') { animX = -W * (1 - p); animAlpha = p; }
           else if (layer.animIn === 'zoomIn') { animScale = p; animAlpha = p; }
@@ -205,7 +206,7 @@ export class Renderer {
         if (layer.animOut && layer.animOut !== 'none' && timeFromEnd < (layer.animOutDuration || 1)) {
           let p = timeFromEnd / (layer.animOutDuration || 1);
           p = 1 - Math.pow(1 - p, 3); // easeOutCubic (reversed since it's going backwards from end)
-          
+
           if (layer.animOut === 'fade') animAlpha *= p;
           else if (layer.animOut === 'slideRight') { animX += W * (1 - p); animAlpha *= p; }
           else if (layer.animOut === 'zoomOut') { animScale *= p; animAlpha *= p; }
@@ -229,11 +230,11 @@ export class Renderer {
         if (sourceMedia && bCtx && bCvs && bCvs.width > 0 && bCvs.height > 0) {
           ctx.save();
           ctx.globalAlpha = animAlpha;
-          
-          ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
+
+          ctx.translate(W / 2 + layer.posX + animX, H / 2 + layer.posY + animY);
           ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
           ctx.scale(layer.scale * animScale, layer.scale * animScale);
-          
+
           let filterStr = '';
           if (layer.brightness !== 1) filterStr += `brightness(${layer.brightness}) `;
           if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
@@ -246,9 +247,9 @@ export class Renderer {
               bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
               bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
               this.applyChromaKey(bCtx, bCvs.width, bCvs.height, layer.chromaColor, layer.chromaTolerance);
-              ctx.drawImage(bCvs, -bCvs.width/2, -bCvs.height/2);
+              ctx.drawImage(bCvs, -bCvs.width / 2, -bCvs.height / 2);
             } else {
-              ctx.drawImage(sourceMedia, -bCvs.width/2, -bCvs.height/2, bCvs.width, bCvs.height);
+              ctx.drawImage(sourceMedia, -bCvs.width / 2, -bCvs.height / 2, bCvs.width, bCvs.height);
             }
           }
           ctx.restore();
@@ -258,8 +259,8 @@ export class Renderer {
       if (isVisible && layer.type === 'text') {
         ctx.save();
         ctx.globalAlpha = animAlpha;
-        
-        ctx.translate(W/2 + layer.posX + animX, H/2 + layer.posY + animY);
+
+        ctx.translate(W / 2 + layer.posX + animX, H / 2 + layer.posY + animY);
         ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
         ctx.scale(layer.scale * animScale, layer.scale * animScale);
 
@@ -267,7 +268,7 @@ export class Renderer {
         ctx.font = `${layer.fontWeight || '700'} ${layer.fontSize || 120}px "${layer.fontFamily || 'Inter'}"`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
+
         if (layer.dropShadow) {
           ctx.shadowColor = 'rgba(0,0,0,0.8)';
           ctx.shadowBlur = 15;
@@ -276,7 +277,7 @@ export class Renderer {
         }
 
         if (layer.letterSpacing) {
-           (ctx as any).letterSpacing = `${layer.letterSpacing}px`;
+          (ctx as any).letterSpacing = `${layer.letterSpacing}px`;
         }
 
         ctx.fillStyle = layer.fillColor || '#ffffff';
