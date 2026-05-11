@@ -1,5 +1,5 @@
 import { onMount, onCleanup, For, Show, createEffect, type Component } from 'solid-js';
-import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX, PanelLeftOpen, PanelRightOpen, Maximize2, LayoutGrid } from 'lucide-solid';
+import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX, PanelLeftOpen, PanelRightOpen, Maximize2, LayoutGrid, FoldVertical, UnfoldVertical, LocateFixed } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack } from '../../store/projectStore';
 import { audioEngine } from '../../engine/AudioEngine';
 import { layerRegistry } from '../../engine/LayerRegistry';
@@ -59,14 +59,38 @@ export const PanelTimeline: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
   let timelineAreaRef: HTMLDivElement | undefined;
   let trackListRef: HTMLDivElement | undefined;
+  
+  createEffect(() => {
+    // Only auto-scroll if toggle is on
+    if (!projectStore.followPlayhead || !timelineAreaRef) return;
+    
+    // We only want to auto-scroll if playing or if specifically jumping
+    // Access signals to track them
+    const pxPerSec = projectStore.pixelsPerSecond;
+    const playheadPx = projectStore.currentTime * pxPerSec;
+    const isPlaying = projectStore.isPlaying;
+    
+    if (isPlaying) {
+      const viewportWidth = timelineAreaRef.clientWidth;
+      const stopThreshold = viewportWidth * 0.8;
+      
+      // Continuous smooth scroll: if playhead is past 80%, scroll clips to keep it there
+      if (playheadPx > stopThreshold) {
+        timelineAreaRef.scrollLeft = playheadPx - stopThreshold;
+      } else if (playheadPx < timelineAreaRef.scrollLeft) {
+        // If playhead was manually moved or restarted behind the current view
+        timelineAreaRef.scrollLeft = 0;
+      }
+    }
+  });
 
   const handleTimelineScroll = () => {
     if (trackListRef && timelineAreaRef) {
       trackListRef.scrollTop = timelineAreaRef.scrollTop;
       
-      // If we are playing, scrolling can cause main-thread jitter.
-      // We signal the renderer to be extra aggressive about syncing for the next few frames.
-      if (projectStore.isPlaying) {
+      // CRITICAL: Only reset audio engine on manual scroll.
+      // Resetting 60fps during auto-scroll causes massive flicker and audio stutters.
+      if (projectStore.isPlaying && !projectStore.followPlayhead) {
         audioEngine.reset(projectStore.currentTime);
       }
     }
@@ -183,20 +207,25 @@ export const PanelTimeline: Component = () => {
     dragStartInPoint = layer.inPoint;
   };
 
+  const zoomIn = () => {
+    setProjectStore('pixelsPerSecond', p => Math.min(500, p + 10));
+  };
+  const zoomOut = () => {
+    setProjectStore('pixelsPerSecond', p => Math.max(10, p - 10));
+  };
+
   const setZoom = (e: Event) => {
     const val = parseFloat((e.target as HTMLInputElement).value);
     setProjectStore('pixelsPerSecond', val);
   };
 
-
-
   const tickConfig = () => {
     const pps = projectStore.pixelsPerSecond;
-    if (pps < 5) return { label: 120, minor: 30 };
-    if (pps < 10) return { label: 60, minor: 15 };
-    if (pps < 25) return { label: 10, minor: 2 };
-    if (pps < 50) return { label: 5, minor: 1 };
-    if (pps < 100) return { label: 2, minor: 0.5 };
+    if (pps < 10) return { label: 120, minor: 30 };
+    if (pps < 20) return { label: 60, minor: 15 };
+    if (pps < 40) return { label: 10, minor: 2 };
+    if (pps < 80) return { label: 5, minor: 1 };
+    if (pps < 150) return { label: 2, minor: 0.5 };
     return { label: 1, minor: 0.1 };
   };
 
@@ -222,26 +251,37 @@ export const PanelTimeline: Component = () => {
             layerRegistry.clear();
             projectStore.layers.forEach(l => layerRegistry.instantiate(l));
           }} class="hover:text-cyan-400 transition-colors" title="Refresh Engine"><RefreshCcw class="w-4 h-4" /></button>
+          <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-2" title="Timeline Zoom">
-            <ZoomOut class="w-3.5 h-3.5" />
-            <input type="range" min="2" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary" />
-            <ZoomIn class="w-3.5 h-3.5" />
+            <button onClick={zoomOut} class="hover:text-white transition-colors p-1" title="Zoom Out"><ZoomOut class="w-3.5 h-3.5" /></button>
+            <input type="range" min="10" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary" />
+            <button onClick={zoomIn} class="hover:text-white transition-colors p-1" title="Zoom In"><ZoomIn class="w-3.5 h-3.5" /></button>
           </div>
           <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-1.5" title="Track Height">
             <button
               onClick={() => setProjectStore('trackHeight', h => Math.max(32, h - 8))}
-              class="p-1 hover:bg-white/10 rounded transition-colors"
+              class="p-1 hover:bg-white/10 rounded transition-colors text-neutral-400 hover:text-white"
+              title="Decrease Track Height"
             >
-              <Plus class="w-3.5 h-3.5 rotate-45" />
+              <FoldVertical class="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setProjectStore('trackHeight', h => Math.min(120, h + 8))}
-              class="p-1 hover:bg-white/10 rounded transition-colors"
+              class="p-1 hover:bg-white/10 rounded transition-colors text-neutral-400 hover:text-white"
+              title="Increase Track Height"
             >
-              <Plus class="w-3.5 h-3.5" />
+              <UnfoldVertical class="w-3.5 h-3.5" />
             </button>
           </div>
+          <div class="w-px h-4 bg-[#333] mx-1"></div>
+          <button
+            onClick={() => setProjectStore('followPlayhead', p => !p)}
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.followPlayhead ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
+            title="Follow Playhead"
+          >
+            <LocateFixed class="w-4 h-4" />
+          </button>
         </div>
 
         <div class="flex items-center gap-1">
@@ -266,7 +306,7 @@ export const PanelTimeline: Component = () => {
           <button
             onClick={() => setProjectStore('layout', 'layout-full')}
             class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-full' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
-            title="Full Width"
+            title="Theater Mode"
           ><Maximize2 class="w-4 h-4" /></button>
 
           <div class="w-px h-4 bg-[#333] mx-1"></div>
