@@ -316,7 +316,10 @@ export const PanelTimeline: Component = () => {
           >
 
             {/* Ruler */}
-            <div class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 w-full pointer-events-none text-[9px] font-medium text-neutral-500 overflow-hidden select-none">
+            <div 
+              class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 pointer-events-none text-[9px] font-medium text-neutral-500 select-none"
+              style={{ width: `${projectStore.duration * projectStore.pixelsPerSecond + 1000}px` }}
+            >
               <For each={Array.from({ length: Math.ceil(projectStore.duration / tickConfig().minor) + 1 })}>
                 {(_, i) => {
                   const time = i() * tickConfig().minor;
