@@ -35,12 +35,12 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
     const visiblePeaks = media.peaks.slice(startIdx, endIdx);
     if(visiblePeaks.length === 0) return;
 
-    ctx.fillStyle = '#000000';
-    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.4;
     const barWidth = Math.max(1, w / visiblePeaks.length);
     
     for(let i=0; i<visiblePeaks.length; i++) {
-      const ph = visiblePeaks[i] * h * 0.7;
+      const ph = visiblePeaks[i] * h * 0.75;
       ctx.fillRect(i * barWidth, h/2 - ph/2, Math.max(1, barWidth - 1), ph);
     }
   });
@@ -203,11 +203,25 @@ export const PanelTimeline: Component = () => {
             layerRegistry.clear();
             projectStore.layers.forEach(l => layerRegistry.instantiate(l));
           }} class="hover:text-cyan-400 transition-colors" title="Refresh Engine"><RefreshCcw class="w-4 h-4" /></button>
-          <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-2" title="Timeline Zoom">
             <ZoomOut class="w-3.5 h-3.5" />
             <input type="range" min="2" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary" />
             <ZoomIn class="w-3.5 h-3.5" />
+          </div>
+          <div class="w-px h-4 bg-[#333] mx-1"></div>
+          <div class="flex items-center gap-1.5" title="Track Height">
+            <button 
+              onClick={() => setProjectStore('trackHeight', h => Math.max(32, h - 8))} 
+              class="p-1 hover:bg-white/10 rounded transition-colors"
+            >
+              <Plus class="w-3.5 h-3.5 rotate-45" />
+            </button>
+            <button 
+              onClick={() => setProjectStore('trackHeight', h => Math.min(120, h + 8))} 
+              class="p-1 hover:bg-white/10 rounded transition-colors"
+            >
+              <Plus class="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
         
@@ -249,7 +263,11 @@ export const PanelTimeline: Component = () => {
           <div class="flex-1 overflow-y-auto custom-scrollbar no-scrollbar-x pointer-events-none">
             <For each={projectStore.tracks}>
               {(track) => (
-                <div class={`h-12 border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group ${projectStore.activeTrackId === track.id ? 'bg-[#2a2a2a]' : 'hover:bg-[#1f1f1f]'}`} onClick={() => setProjectStore('activeTrackId', track.id)}>
+                <div 
+                  class={`border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group ${projectStore.activeTrackId === track.id ? 'bg-[#2a2a2a]' : 'hover:bg-[#1f1f1f]'}`} 
+                  style={{ height: `${projectStore.trackHeight}px` }}
+                  onClick={() => setProjectStore('activeTrackId', track.id)}
+                >
                   <div class="flex items-center justify-between">
                     <span class="text-[11px] text-white font-medium truncate w-full block">{track.name}</span>
                     <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 text-neutral-500 transition-opacity"><Trash2 class="w-3 h-3" /></button>
@@ -305,25 +323,28 @@ export const PanelTimeline: Component = () => {
             <div class="w-full flex flex-col relative z-10">
               <For each={projectStore.tracks}>
                 {(track) => (
-                  <div class="h-12 border-b border-[#2a2a2a] relative w-full shrink-0">
+                  <div 
+                    class="border-b border-[#2a2a2a] relative w-full shrink-0"
+                    style={{ height: `${projectStore.trackHeight}px` }}
+                  >
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
                       {(layer) => {
                         const getLayerColor = () => {
                           const isActive = projectStore.activeLayerId === layer.id;
-                          let cls = isActive ? 'z-20 border-white ring-2 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'border-white/10';
+                          let cls = isActive ? 'z-20 border-white/90 ring-1 ring-white/10' : 'border-white/10';
                           
                           switch (layer.type) {
-                            case 'video': cls += ' bg-[#2563eb] hover:border-white/40'; break;
-                            case 'audio': cls += ' bg-[#059669] hover:border-white/40'; break;
-                            case 'image': cls += ' bg-[#7c3aed] hover:border-white/40'; break;
-                            case 'text': cls += ' bg-[#d97706] hover:border-white/40'; break;
-                            default: cls += ' bg-[#4b5563] hover:border-white/40';
+                            case 'video': cls += ' bg-[#2563eb] hover:bg-[#3b82f6]'; break;
+                            case 'audio': cls += ' bg-[#059669] hover:bg-[#10b981]'; break;
+                            case 'image': cls += ' bg-[#7c3aed] hover:bg-[#8b5cf6]'; break;
+                            case 'text': cls += ' bg-[#d97706] hover:bg-[#f59e0b]'; break;
+                            default: cls += ' bg-[#4b5563] hover:bg-[#6b7280]';
                           }
                           return cls;
                         };
                         return (
                         <div 
-                          class={`absolute top-1 bottom-1 rounded-md shadow-lg group border transition-all duration-200 ease-out ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                          class={`absolute top-1 bottom-1 rounded shadow-lg group border transition-all duration-150 ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
                           style={{ 
                             left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
                             width: `${layer.duration * projectStore.pixelsPerSecond}px` 

@@ -111,6 +111,7 @@ export interface ProjectState {
   
   exportModalOpen: boolean;
   isExporting: boolean;
+  trackHeight: number;
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -149,6 +150,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   
   exportModalOpen: false,
   isExporting: false,
+  trackHeight: 48,
 });
 
 import { audioEngine } from '../engine/AudioEngine';
