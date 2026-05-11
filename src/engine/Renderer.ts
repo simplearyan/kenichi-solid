@@ -84,7 +84,7 @@ export class Renderer {
   }
 
   render() {
-    if (!this.ctx || !this.canvas) return;
+    if (!this.canvas || projectStore.isExporting) return;
     
     let baseW = 1920;
     let baseH = 1080;
@@ -227,18 +227,6 @@ export class Renderer {
         const bCvs = nodes?.bufferCanvas;
 
         if (sourceMedia && bCtx && bCvs && bCvs.width > 0 && bCvs.height > 0) {
-          bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
-          
-          if (layer.type === 'video' && (sourceMedia as HTMLVideoElement).readyState >= 2) {
-             bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
-          } else if (layer.type === 'image') {
-             bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
-          }
-
-          if (layer.chromaKey) {
-            this.applyChromaKey(bCtx, bCvs.width, bCvs.height, layer.chromaColor, layer.chromaTolerance);
-          }
-
           ctx.save();
           ctx.globalAlpha = animAlpha;
           
@@ -251,7 +239,18 @@ export class Renderer {
           if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
           if (filterStr) ctx.filter = filterStr.trim();
 
-          ctx.drawImage(bCvs, -bCvs.width/2, -bCvs.height/2);
+          const canDraw = layer.type === 'image' || (layer.type === 'video' && (sourceMedia as HTMLVideoElement).readyState >= 2);
+
+          if (canDraw) {
+            if (layer.chromaKey) {
+              bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
+              bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
+              this.applyChromaKey(bCtx, bCvs.width, bCvs.height, layer.chromaColor, layer.chromaTolerance);
+              ctx.drawImage(bCvs, -bCvs.width/2, -bCvs.height/2);
+            } else {
+              ctx.drawImage(sourceMedia, -bCvs.width/2, -bCvs.height/2, bCvs.width, bCvs.height);
+            }
+          }
           ctx.restore();
         }
       }

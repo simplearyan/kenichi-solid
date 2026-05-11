@@ -15,6 +15,7 @@ export const ExportModal: Component = () => {
 
   const handleExport = async () => {
     setIsExporting(true);
+    setProjectStore('isExporting', true);
     setExportError('');
     setProgress(0);
     setStatusText('Starting export...');
@@ -50,6 +51,7 @@ export const ExportModal: Component = () => {
       setStatusText('Error');
     } finally {
       setIsExporting(false);
+      setProjectStore('isExporting', false);
     }
   };
 

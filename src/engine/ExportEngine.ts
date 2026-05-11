@@ -137,10 +137,13 @@ export const exportProject = async (config: ExportConfig, onProgress: (progress:
          const nodes = layerRegistry.get(layer.id);
          if (nodes && nodes.videoEl) {
            const localT = t - layer.startTime + layer.inPoint;
-           if (Math.abs(nodes.videoEl.currentTime - localT) > 0.05) {
+           if (Math.abs(nodes.videoEl.currentTime - localT) > 0.001) {
              nodes.videoEl.currentTime = localT;
              promises.push(new Promise(r => {
-               const handler = () => { nodes.videoEl!.removeEventListener('seeked', handler); r(true); };
+               const handler = () => { 
+                 nodes.videoEl!.removeEventListener('seeked', handler); 
+                 requestAnimationFrame(() => r(true)); 
+               };
                nodes.videoEl!.addEventListener('seeked', handler);
                setTimeout(() => { nodes.videoEl!.removeEventListener('seeked', handler); r(true); }, 500);
              }));
@@ -149,6 +152,10 @@ export const exportProject = async (config: ExportConfig, onProgress: (progress:
       }
     }
     await Promise.all(promises);
+
+    // CRITICAL: Yield to the browser rendering pipeline to flush textures to the GPU
+    // This gives low-end PCs enough time to properly decode the frame and make it available for drawImage
+    await new Promise(r => setTimeout(r, 25));
 
     renderer.renderFrame(ctx, targetW, targetH, t);
     

@@ -46,11 +46,9 @@ class LayerRegistryManager {
       }
       
       if (media.type === 'video' || media.type === 'image') {
-        const cvs = document.createElement('canvas');
-        cvs.width = media.origW || 1920;
-        cvs.height = media.origH || 1080;
-        nodes.bufferCanvas = cvs;
-        nodes.bufferCtx = cvs.getContext('2d', { willReadFrequently: true });
+        const cvs = new OffscreenCanvas(media.origW || 1920, media.origH || 1080);
+        nodes.bufferCanvas = cvs as unknown as HTMLCanvasElement;
+        nodes.bufferCtx = cvs.getContext('2d', { willReadFrequently: true }) as any;
       }
     }
     
