@@ -1,5 +1,5 @@
 import { onMount, onCleanup, For, Show, createEffect, type Component } from 'solid-js';
-import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX } from 'lucide-solid';
+import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX, PanelLeftOpen, PanelRightOpen, Maximize2, LayoutGrid } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack } from '../../store/projectStore';
 import { layerRegistry } from '../../engine/LayerRegistry';
 import { setupResizer } from '../../utils/resizer';
@@ -169,8 +169,21 @@ export const PanelTimeline: Component = () => {
     setProjectStore('pixelsPerSecond', val);
   };
 
-  const steps = () => Math.ceil(projectStore.duration);
 
+  
+  const tickConfig = () => {
+    const pps = projectStore.pixelsPerSecond;
+    if (pps < 20) return { label: 10, minor: 2 };
+    if (pps < 50) return { label: 5, minor: 1 };
+    if (pps < 100) return { label: 2, minor: 0.5 };
+    return { label: 1, minor: 0.1 };
+  };
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  };
   return (
     <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
       <div ref={resizerRef} class="resizer resizer-t" id="resizer-timeline"></div>
@@ -194,9 +207,33 @@ export const PanelTimeline: Component = () => {
           </div>
         </div>
         
-        <div class="flex items-center gap-2">
-          {/* Layout controls omitted for brevity, keeping X button */}
-          <button onClick={() => setProjectStore('showTimelinePanel', false)} class="hidden md:block text-neutral-500 hover:text-white transition-colors ml-2"><X class="w-4 h-4" /></button>
+        <div class="flex items-center gap-1">
+          <button 
+            onClick={() => setProjectStore('layout', 'layout-default')} 
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-default' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+            title="Standard Layout"
+          ><LayoutGrid class="w-4 h-4" /></button>
+          
+          <button 
+            onClick={() => setProjectStore('layout', 'layout-wide-left')} 
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-left' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+            title="Expand Left"
+          ><PanelLeftOpen class="w-4 h-4" /></button>
+          
+          <button 
+            onClick={() => setProjectStore('layout', 'layout-wide-right')} 
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-right' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+            title="Expand Right"
+          ><PanelRightOpen class="w-4 h-4" /></button>
+          
+          <button 
+            onClick={() => setProjectStore('layout', 'layout-full')} 
+            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-full' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`} 
+            title="Full Width"
+          ><Maximize2 class="w-4 h-4" /></button>
+
+          <div class="w-px h-4 bg-[#333] mx-1"></div>
+          <button onClick={() => setProjectStore('showTimelinePanel', false)} class="hidden md:block text-neutral-500 hover:text-white transition-colors ml-1"><X class="w-4 h-4" /></button>
         </div>
       </div>
 
@@ -234,13 +271,22 @@ export const PanelTimeline: Component = () => {
           <div class="relative min-h-full" style={{ width: `${Math.max(1000, projectStore.duration * projectStore.pixelsPerSecond + 500)}px` }}>
             
             {/* Ruler */}
-            <div class="h-8 border-b border-border bg-[#1e1e1e] sticky top-0 z-20 w-full pointer-events-none text-[10px] text-neutral-500 overflow-hidden">
-              <For each={Array.from({length: steps() + 5})}>
-                {(_, i) => (
-                  <div class="absolute top-0 bottom-0 border-l border-[#333] pl-1" style={{ left: `${i() * projectStore.pixelsPerSecond}px` }}>
-                    {i()}s
-                  </div>
-                )}
+            <div class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 w-full pointer-events-none text-[9px] font-medium text-neutral-500 overflow-hidden select-none">
+              <For each={Array.from({length: Math.ceil(projectStore.duration / tickConfig().minor) + 1})}>
+                {(_, i) => {
+                  const time = i() * tickConfig().minor;
+                  const isMajor = time % tickConfig().label === 0;
+                  return (
+                    <div 
+                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-neutral-700 h-full' : 'border-neutral-800 h-1/2'} transition-all`} 
+                      style={{ left: `${time * projectStore.pixelsPerSecond}px` }}
+                    >
+                      <Show when={isMajor}>
+                        <span class="pl-1.5 pt-1 block text-neutral-400 font-bold">{formatTime(time)}</span>
+                      </Show>
+                    </div>
+                  );
+                }}
               </For>
             </div>
 

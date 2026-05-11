@@ -33,12 +33,21 @@ export const WorkspaceGrid: Component<Props> = (props) => {
               display: grid !important;
               grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w);
               grid-template-rows: minmax(0, 1fr) var(--timeline-h);
-              gap: 0.75rem; padding: 0.75rem;
-              transition: grid-template-columns 0.2s ease, grid-template-rows 0.2s ease;
+              --row-gap: 0.75rem;
+              --col-gap: 0.75rem;
+              gap: var(--row-gap) var(--col-gap);
+              padding: 0.75rem;
+              transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                          grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                          gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            #workspace-grid.hide-left { --left-w: 0px; }
-            #workspace-grid.hide-right { --right-w: 0px; }
-            #workspace-grid.hide-timeline { --timeline-h: 0px; }
+            #workspace-grid.hide-left { --left-w: 0px !important; }
+            #workspace-grid.hide-right { --right-w: 0px !important; }
+            #workspace-grid.hide-timeline { 
+              --timeline-h: 0px !important; 
+              --row-gap: 0px !important;
+            }
+            #workspace-grid.hide-timeline .panel-timeline-area { display: none !important; }
 
             .layout-default { grid-template-areas: "left center right" "left timeline right"; }
             .layout-wide-left { grid-template-areas: "left center right" "timeline timeline right"; }
