@@ -1,5 +1,5 @@
 export class AudioEngine {
-  private ctx: AudioContext | null = null;
+  public ctx: AudioContext | null = null;
 
   init() {
     if (!this.ctx) {

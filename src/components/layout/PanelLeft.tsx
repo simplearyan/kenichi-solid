@@ -1,7 +1,8 @@
 import { Show, onMount, For, type Component } from 'solid-js';
 import { Plus, Inbox, Type, Square, Circle, Shapes, Music, Image as ImageIcon, Film, Eye, Trash2 } from 'lucide-solid';
-import { projectStore, setProjectStore, addMediaToPool, removeMediaFromPool } from '../../store/projectStore';
+import { projectStore, setProjectStore, addMediaToPool, removeMediaFromPool, openSourceModal } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
+import { generatePeaks } from '../../utils/AudioUtils';
 
 export const PanelLeft: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
@@ -32,15 +33,18 @@ export const PanelLeft: Component = () => {
       } else {
         const tempMedia = document.createElement(isAudio ? 'audio' : 'video');
         tempMedia.src = url;
-        tempMedia.onloadedmetadata = () => {
+        tempMedia.onloadedmetadata = async () => {
           let safeDur = tempMedia.duration;
           if (!isFinite(safeDur) || isNaN(safeDur)) safeDur = 10.0;
+          
+          const peaks = await generatePeaks(url);
           
           addMediaToPool({
             id, file, url, name: file.name, type: isAudio ? 'audio' : 'video',
             duration: safeDur,
             origW: isAudio ? 0 : (tempMedia as HTMLVideoElement).videoWidth,
-            origH: isAudio ? 0 : (tempMedia as HTMLVideoElement).videoHeight
+            origH: isAudio ? 0 : (tempMedia as HTMLVideoElement).videoHeight,
+            peaks
           });
         };
       }
@@ -96,7 +100,7 @@ export const PanelLeft: Component = () => {
                           <button class="p-1.5 bg-[#2a2a2a] hover:bg-primary text-neutral-300 hover:text-black rounded transition-colors" title="Add to Timeline">
                             <Plus class="w-3 h-3" />
                           </button>
-                          <button class="p-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-neutral-300 hover:text-white rounded transition-colors" title="Preview & Trim">
+                          <button onClick={() => openSourceModal(media.id)} class="p-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-neutral-300 hover:text-white rounded transition-colors" title="Preview & Trim">
                             <Eye class="w-3 h-3" />
                           </button>
                           <button onClick={() => removeMediaFromPool(media.id)} class="p-1.5 bg-[#2a2a2a] hover:bg-red-500 text-neutral-300 hover:text-white rounded transition-colors" title="Delete Media">

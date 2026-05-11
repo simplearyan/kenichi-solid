@@ -9,6 +9,7 @@ export interface MediaItem {
   duration: number;
   origW?: number;
   origH?: number;
+  peaks?: number[];
 }
 
 export interface ProjectState {
@@ -27,6 +28,15 @@ export interface ProjectState {
   showRightPanel: boolean;
   showTimelinePanel: boolean;
   mobileTab: "left" | "right" | "timeline";
+  
+  // Source Modal State
+  sourceModalOpen: boolean;
+  sourceMediaId: string | null;
+  srcIn: number;
+  srcOut: number;
+  srcCropX: number;
+  srcCropY: number;
+  srcCropScale: number;
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -45,6 +55,14 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   showRightPanel: true,
   showTimelinePanel: true,
   mobileTab: "left",
+  
+  sourceModalOpen: false,
+  sourceMediaId: null,
+  srcIn: 0,
+  srcOut: 0,
+  srcCropX: 0,
+  srcCropY: 0,
+  srcCropScale: 1.0,
 });
 
 export const togglePlay = () => setProjectStore("isPlaying", (p) => !p);
@@ -63,5 +81,30 @@ export const removeMediaFromPool = (id: string) => {
       URL.revokeObjectURL(state.mediaPool[id].url);
       delete state.mediaPool[id];
     }
+  }));
+};
+
+export const openSourceModal = (id: string) => {
+  setProjectStore(produce((state) => {
+    const media = state.mediaPool[id];
+    if (media) {
+      state.sourceMediaId = id;
+      state.sourceModalOpen = true;
+      state.srcIn = 0;
+      state.srcOut = media.duration;
+      state.srcCropX = 0;
+      state.srcCropY = 0;
+      state.srcCropScale = 1.0;
+    }
+  }));
+};
+
+export const closeSourceModal = () => {
+  setProjectStore("sourceModalOpen", false);
+};
+
+export const updateSourceModalState = (updates: Partial<ProjectState>) => {
+  setProjectStore(produce((state) => {
+    Object.assign(state, updates);
   }));
 };

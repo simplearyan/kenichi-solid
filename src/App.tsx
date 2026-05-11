@@ -1,10 +1,12 @@
-import { type Component } from 'solid-js';
+import { type Component, Show } from 'solid-js';
 import { Header } from './components/layout/Header';
 import { WorkspaceGrid } from './components/layout/WorkspaceGrid';
 import { PanelLeft } from './components/layout/PanelLeft';
 import { PanelCenter } from './components/layout/PanelCenter';
 import { PanelRight } from './components/layout/PanelRight';
 import { PanelTimeline } from './components/layout/PanelTimeline';
+import { SourceModal } from './components/modals/SourceModal';
+import { projectStore } from './store/projectStore';
 
 const App: Component = () => {
   return (
@@ -20,6 +22,10 @@ const App: Component = () => {
         rightPanel={<PanelRight />}
         timelinePanel={<PanelTimeline />}
       />
+
+      <Show when={projectStore.sourceModalOpen}>
+        <SourceModal />
+      </Show>
     </div>
   );
 };
