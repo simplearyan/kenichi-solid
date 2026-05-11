@@ -1,6 +1,7 @@
 import { onMount, onCleanup, For, Show, createEffect, type Component } from 'solid-js';
 import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX, PanelLeftOpen, PanelRightOpen, Maximize2, LayoutGrid } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack } from '../../store/projectStore';
+import { audioEngine } from '../../engine/AudioEngine';
 import { layerRegistry } from '../../engine/LayerRegistry';
 import { setupResizer } from '../../utils/resizer';
 
@@ -62,6 +63,12 @@ export const PanelTimeline: Component = () => {
   const handleTimelineScroll = () => {
     if (trackListRef && timelineAreaRef) {
       trackListRef.scrollTop = timelineAreaRef.scrollTop;
+      
+      // If we are playing, scrolling can cause main-thread jitter.
+      // We signal the renderer to be extra aggressive about syncing for the next few frames.
+      if (projectStore.isPlaying) {
+        audioEngine.reset(projectStore.currentTime);
+      }
     }
   };
 

@@ -1,5 +1,6 @@
 import { projectStore, setCurrentTime, setProjectStore } from '../store/projectStore';
 import { layerRegistry } from './LayerRegistry';
+import { audioEngine } from './AudioEngine';
 
 export class Renderer {
   private canvas: HTMLCanvasElement | null = null;
@@ -8,6 +9,9 @@ export class Renderer {
   private lastTime = performance.now();
   private fpsLastTime = performance.now();
   private frameCount = 0;
+  private visibilityMap = new Map<string, boolean>();
+  private wasPlaying = false;
+  private syncFramesRemaining = 0;
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -29,12 +33,34 @@ export class Renderer {
       this.lastTime = time;
 
       if (projectStore.isPlaying) {
-        let newTime = projectStore.currentTime + dt;
-        if (newTime >= projectStore.duration) {
-          newTime = 0; // Loop back
+        if (!this.wasPlaying) {
+          // Playback just started, sync hardware clock
+          audioEngine.startClock(projectStore.currentTime);
         }
-        setCurrentTime(newTime);
+        
+        const preciseTime = audioEngine.getPreciseTime();
+        if (preciseTime !== null) {
+          if (preciseTime >= projectStore.duration) {
+            audioEngine.startClock(0);
+            setCurrentTime(0);
+          } else {
+            setCurrentTime(preciseTime);
+            audioEngine.updateVolumes();
+          }
+        } else {
+          // Fallback to software clock if audio context failed
+          let newTime = projectStore.currentTime + dt;
+          if (newTime >= projectStore.duration) {
+            newTime = 0; // Loop back
+          }
+          setCurrentTime(newTime);
+        }
+      } else if (this.wasPlaying) {
+        // Transition from play -> stop
+        audioEngine.stopPlayback();
       }
+      
+      this.wasPlaying = projectStore.isPlaying;
 
       this.render();
 
@@ -115,10 +141,18 @@ export class Renderer {
       this.resize(targetWidth, targetHeight);
     }
 
-    this.renderFrame(this.ctx as any, targetWidth, targetHeight, projectStore.currentTime);
+    const playbackStarted = projectStore.isPlaying && !this.wasPlaying;
+    if (playbackStarted) {
+      this.syncFramesRemaining = 60; // Increased to 1s to ensure stability during warm-up
+    }
+    this.wasPlaying = projectStore.isPlaying;
+    
+    if (this.syncFramesRemaining > 0) this.syncFramesRemaining--;
+
+    this.renderFrame(this.ctx as any, targetWidth, targetHeight, projectStore.currentTime, playbackStarted || this.syncFramesRemaining > 0);
   }
 
-  public renderFrame(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, targetWidth: number, targetHeight: number, time: number) {
+  public renderFrame(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, targetWidth: number, targetHeight: number, time: number, forceSync = false) {
     if (!ctx) return;
 
     ctx.fillStyle = '#000000';
@@ -157,28 +191,45 @@ export class Renderer {
       // Sync Audio/Video Playback
       if (layer.type === 'video' || layer.type === 'audio') {
         const media = layer.type === 'video' ? nodes?.videoEl : nodes?.audioEl;
-        const track = projectStore.tracks.find(t => t.id === layer.trackId);
-
-        if (media && track) {
-          const trackVol = track.muted ? 0 : track.volume;
-          const globalVol = projectStore.globalMuted ? 0 : projectStore.globalVolume;
-          media.volume = Math.max(0, Math.min(1, layer.volume * trackVol * globalVol));
+        
+        if (media) {
+          this.visibilityMap.set(layer.id, isVisible);
 
           if (isVisible) {
-            // Use a wider tolerance (250ms) to avoid jitter during playback
-            if (Math.abs(media.currentTime - localTime) > 0.25) {
-              media.currentTime = localTime;
-            }
-            if (projectStore.isPlaying) {
-              if (media.paused) media.play().catch(() => { });
-            } else {
+            const drift = media.currentTime - localTime;
+            const absDrift = Math.abs(drift);
+            
+            if (!projectStore.isPlaying) {
+              // SCRUBBING/IDLE: Hard seek visuals
+              if (absDrift > 0.05) media.currentTime = localTime;
+              media.playbackRate = 1.0;
               if (!media.paused) media.pause();
+            } else {
+              // PLAYING: Video visual sync only
+              if (absDrift > 0.3 || forceSync) {
+                media.currentTime = localTime;
+                media.playbackRate = 1.0;
+              } else if (absDrift > 0.02) {
+                const nudgeFactor = Math.min(0.05, absDrift * 0.2);
+                media.playbackRate = drift > 0 ? (1.0 - nudgeFactor) : (1.0 + nudgeFactor);
+              } else {
+                media.playbackRate = 1.0;
+              }
+
+              if (media.paused && layer.type === 'video') {
+                media.play().catch(() => { });
+              }
             }
           } else {
-            if (!media.paused) media.pause();
+            if (!media.paused) {
+              media.pause();
+              media.playbackRate = 1.0;
+            }
           }
         }
       }
+
+
 
       // Evaluate Keyframeless Animations
       let animAlpha = 1;

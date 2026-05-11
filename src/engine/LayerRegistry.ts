@@ -1,4 +1,6 @@
-import { projectStore, type LayerState } from '../store/projectStore';
+import { projectStore } from '../store/projectStore';
+import type { LayerState } from '../store/projectStore';
+import { audioEngine } from './AudioEngine';
 
 
 export interface LayerNodes {
@@ -30,15 +32,23 @@ class LayerRegistryManager {
         const v = document.createElement('video');
         v.src = media.url;
         v.playsInline = true;
+        v.muted = true; // Visuals only, audio handled by AudioEngine buffers
         v.load();
         nodes.videoEl = v;
         document.getElementById('hidden-media-container')?.appendChild(v);
+        
+        // Load buffer for audio engine
+        audioEngine.storeBuffer(layer.id, media.url);
       } else if (media.type === 'audio') {
         const a = document.createElement('audio');
         a.src = media.url;
+        a.muted = true; // Buffers only
         a.load();
         nodes.audioEl = a;
         document.getElementById('hidden-media-container')?.appendChild(a);
+
+        // Load buffer for audio engine
+        audioEngine.storeBuffer(layer.id, media.url);
       } else if (media.type === 'image') {
         const img = new Image();
         img.src = media.url;
@@ -51,8 +61,6 @@ class LayerRegistryManager {
         nodes.bufferCtx = cvs.getContext('2d', { willReadFrequently: true }) as any;
       }
     }
-    
-    // Todo: Handle text/shape instantiation if needed
     
     this.register(layer.id, nodes);
   }
