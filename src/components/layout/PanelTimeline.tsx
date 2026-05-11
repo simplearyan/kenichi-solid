@@ -289,8 +289,12 @@ export const PanelTimeline: Component = () => {
           </div>
         </div>
 
-        <div ref={timelineAreaRef} class="flex-1 relative overflow-x-auto overflow-y-auto custom-scrollbar" onMouseDown={startScrub}>
-          <div class="relative min-h-full" style={{ width: `${Math.max(1000, projectStore.duration * projectStore.pixelsPerSecond + 500)}px` }}>
+        <div ref={timelineAreaRef} class="flex-1 relative overflow-x-auto overflow-y-auto custom-scrollbar">
+          <div 
+            class="relative min-h-full" 
+            style={{ width: `${Math.max(1000, projectStore.duration * projectStore.pixelsPerSecond + 500)}px` }}
+            onMouseDown={startScrub}
+          >
             
             {/* Ruler */}
             <div class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 w-full pointer-events-none text-[9px] font-medium text-neutral-500 overflow-hidden select-none">
@@ -344,7 +348,7 @@ export const PanelTimeline: Component = () => {
                         };
                         return (
                         <div 
-                          class={`absolute top-1 bottom-1 rounded shadow-lg group border transition-all duration-150 ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                          class={`timeline-clip absolute top-1 bottom-1 rounded shadow-lg group border transition-all duration-150 ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
                           style={{ 
                             left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
                             width: `${layer.duration * projectStore.pixelsPerSecond}px` 
