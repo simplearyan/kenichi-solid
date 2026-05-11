@@ -1,6 +1,7 @@
 import { Show, createSignal, onMount, onCleanup, createEffect, type Component } from 'solid-js';
 import { X, Play, Pause, Square, ZoomIn, ZoomOut, Maximize, Navigation, CheckCircle } from 'lucide-solid';
-import { projectStore, closeSourceModal, updateSourceModalState } from '../../store/projectStore';
+import { projectStore, closeSourceModal, updateSourceModalState, addLayer } from '../../store/projectStore';
+import { layerRegistry } from '../../engine/LayerRegistry';
 
 export const SourceModal: Component = () => {
   let videoRef!: HTMLVideoElement;
@@ -199,15 +200,41 @@ export const SourceModal: Component = () => {
     const m = media();
     if (!m) return;
     
-    // We mock adding to timeline for now until layers are fully implemented
-    console.log("Adding to timeline", {
+    const layerId = addLayer({
+      name: m.name,
+      type: m.type,
       mediaId: m.id,
-      inPoint: projectStore.srcIn,
+      startTime: projectStore.currentTime,
       duration: projectStore.srcOut - projectStore.srcIn,
-      cropX: projectStore.srcCropX,
-      cropY: projectStore.srcCropY,
-      cropScale: projectStore.srcCropScale
+      inPoint: projectStore.srcIn,
+      hidden: false,
+      locked: false,
+      scale: projectStore.srcCropScale,
+      rotation: 0,
+      posX: projectStore.srcCropX,
+      posY: projectStore.srcCropY,
+      radius: 0,
+      brightness: 1,
+      contrast: 1,
+      chromaKey: false,
+      chromaColor: '#00ff00',
+      chromaTolerance: 0.1,
+      colorReplace: false,
+      replaceFromColor: '#ff0000',
+      replaceToColor: '#0000ff',
+      volume: 1,
+      fadeIn: 0,
+      fadeOut: 0,
+      echo: false,
+      echoDelay: 0.5,
+      echoFeedback: 0.5
     });
+    
+    const layerState = projectStore.layers.find(l => l.id === layerId);
+    if (layerState) {
+      layerRegistry.instantiate(layerState);
+    }
+    
     closeSourceModal();
   };
 

@@ -9,17 +9,62 @@ export interface MediaItem {
   duration: number;
   origW?: number;
   origH?: number;
+  origH?: number;
   peaks?: number[];
+}
+
+export interface LayerState {
+  id: string;
+  name: string;
+  type: 'video' | 'audio' | 'image' | 'text' | 'shape';
+  mediaId?: string;
+  
+  startTime: number;
+  duration: number;
+  inPoint: number;
+  
+  hidden: boolean;
+  locked: boolean;
+  
+  scale: number;
+  rotation: number;
+  posX: number;
+  posY: number;
+  radius: number;
+  
+  brightness: number;
+  contrast: number;
+  chromaKey: boolean;
+  chromaColor: string;
+  chromaTolerance: number;
+  colorReplace: boolean;
+  replaceFromColor: string;
+  replaceToColor: string;
+  
+  volume: number;
+  fadeIn: number;
+  fadeOut: number;
+  echo: boolean;
+  echoDelay: number;
+  echoFeedback: number;
+  
+  textContent?: string;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: number;
+  fontSize?: number;
+  fontFamily?: string;
 }
 
 export interface ProjectState {
   duration: number;
   currentTime: number;
+  pixelsPerSecond: number;
   isPlaying: boolean;
   globalMuted: boolean;
   activeLayerId: string | null;
-  layers: any[]; // Todo: Define Layer interface
-  mediaPool: Record<string, MediaItem>; // id -> media item
+  layers: LayerState[];
+  mediaPool: Record<string, MediaItem>;
   // UI State
   layout: "layout-default" | "layout-wide-left" | "layout-wide-right" | "layout-full";
   leftPanelTab: "pool" | "text" | "shapes";
@@ -42,6 +87,7 @@ export interface ProjectState {
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
   duration: 10,
   currentTime: 0,
+  pixelsPerSecond: 50,
   isPlaying: false,
   globalMuted: false,
   activeLayerId: null,
@@ -107,4 +153,21 @@ export const updateSourceModalState = (updates: Partial<ProjectState>) => {
   setProjectStore(produce((state) => {
     Object.assign(state, updates);
   }));
+};
+
+export const addLayer = (layer: Omit<LayerState, 'id'>) => {
+  const id = `l_${Date.now()}_${Math.random().toString(36).substring(2,9)}`;
+  const newLayer = { ...layer, id };
+  setProjectStore('layers', (prev) => [...prev, newLayer]);
+  setProjectStore('activeLayerId', id);
+  return id;
+};
+
+export const updateLayer = (id: string, updates: Partial<LayerState>) => {
+  setProjectStore('layers', (l) => l.id === id, updates);
+};
+
+export const removeLayer = (id: string) => {
+  setProjectStore('layers', (prev) => prev.filter(l => l.id !== id));
+  if (projectStore.activeLayerId === id) setProjectStore('activeLayerId', null);
 };
