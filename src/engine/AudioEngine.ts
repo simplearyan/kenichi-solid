@@ -8,6 +8,7 @@ export interface ActiveNode {
 
 export class AudioEngine {
   public ctx: AudioContext | null = null;
+  private urlCache = new Map<string, AudioBuffer>();
   private bufferRegistry = new Map<string, AudioBuffer>();
   private activeNodes: ActiveNode[] = [];
   
@@ -38,18 +39,25 @@ export class AudioEngine {
     return this.ctx;
   }
 
-  // --- Buffer Management ---
-
   async storeBuffer(id: string, url: string) {
     const ctx = this.init();
     if (!ctx) return;
+
+    // Check URL cache first to avoid redundant fetches
+    if (this.urlCache.has(url)) {
+      this.bufferRegistry.set(id, this.urlCache.get(url)!);
+      return;
+    }
     
     try {
+      console.log(`[AudioEngine] Fetching and decoding: ${url}`);
       const res = await fetch(url);
       const arrayBuffer = await res.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      
+      this.urlCache.set(url, audioBuffer);
       this.bufferRegistry.set(id, audioBuffer);
-      console.log(`[AudioEngine] Decoded buffer for ${id}`);
+      console.log(`[AudioEngine] Successfully stored buffer for ${id}`);
     } catch (e) {
       console.error(`[AudioEngine] Failed to decode ${id}`, e);
     }

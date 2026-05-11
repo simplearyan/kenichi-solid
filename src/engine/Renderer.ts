@@ -12,6 +12,7 @@ export class Renderer {
   private visibilityMap = new Map<string, boolean>();
   private wasPlaying = false;
   private syncFramesRemaining = 0;
+  private stallTracker = new Map<string, number>();
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -49,6 +50,9 @@ export class Renderer {
           }
         } else {
           // Fallback to software clock if audio context failed
+          // Attempt to re-init/resume if stalled
+          if (this.frameCount % 60 === 0) audioEngine.init();
+
           let newTime = projectStore.currentTime + dt;
           if (newTime >= projectStore.duration) {
             newTime = 0; // Loop back
@@ -294,6 +298,9 @@ export class Renderer {
           const canDraw = layer.type === 'image' || (layer.type === 'video' && (sourceMedia as HTMLVideoElement).readyState >= 2);
 
           if (canDraw) {
+            // Reset stall count for this layer
+            this.stallTracker.delete(layer.id);
+
             if (layer.chromaKey) {
               bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
               bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
@@ -301,6 +308,18 @@ export class Renderer {
               ctx.drawImage(bCvs, -bCvs.width / 2, -bCvs.height / 2);
             } else {
               ctx.drawImage(sourceMedia, -bCvs.width / 2, -bCvs.height / 2, bCvs.width, bCvs.height);
+            }
+          } else if (layer.type === 'video' && isVisible) {
+            // TRACK STALLS: If video is visible but not ready
+            const stallCount = (this.stallTracker.get(layer.id) || 0) + 1;
+            this.stallTracker.set(layer.id, stallCount);
+
+            // If stalled for > 120 frames (~2 seconds at 60fps), trigger auto-recovery
+            if (stallCount > 120) {
+              console.warn(`[Renderer] Auto-recovering stalled layer: ${layer.id}`);
+              layerRegistry.remove(layer.id);
+              layerRegistry.instantiate(layer);
+              this.stallTracker.delete(layer.id); // Reset after recovery attempt
             }
           }
           ctx.restore();
