@@ -35,13 +35,13 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
     const visiblePeaks = media.peaks.slice(startIdx, endIdx);
     if(visiblePeaks.length === 0) return;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.3;
-    const barWidth = w / visiblePeaks.length;
+    ctx.fillStyle = '#000000';
+    ctx.globalAlpha = 0.25;
+    const barWidth = Math.max(1, w / visiblePeaks.length);
     
     for(let i=0; i<visiblePeaks.length; i++) {
-      const ph = visiblePeaks[i] * h * 0.8;
-      ctx.fillRect(i * barWidth, h/2 - ph/2, Math.max(1, barWidth - 0.5), ph);
+      const ph = visiblePeaks[i] * h * 0.7;
+      ctx.fillRect(i * barWidth, h/2 - ph/2, Math.max(1, barWidth - 1), ph);
     }
   });
 
@@ -173,10 +173,12 @@ export const PanelTimeline: Component = () => {
   
   const tickConfig = () => {
     const pps = projectStore.pixelsPerSecond;
-    if (pps < 20) return { label: 10, minor: 2 };
-    if (pps < 50) return { label: 5, minor: 1 };
-    if (pps < 100) return { label: 2, minor: 0.5 };
-    return { label: 1, minor: 0.1 };
+    if (pps < 10) return { label: 120, minor: 60 };
+    if (pps < 25) return { label: 60, minor: 30 };
+    if (pps < 50) return { label: 10, minor: 5 };
+    if (pps < 80) return { label: 5, minor: 1 };
+    if (pps < 150) return { label: 2, minor: 1 };
+    return { label: 1, minor: 0.5 };
   };
 
   const formatTime = (seconds: number) => {
@@ -275,7 +277,7 @@ export const PanelTimeline: Component = () => {
               <For each={Array.from({length: Math.ceil(projectStore.duration / tickConfig().minor) + 1})}>
                 {(_, i) => {
                   const time = i() * tickConfig().minor;
-                  const isMajor = time % tickConfig().label === 0;
+                  const isMajor = Math.abs(time % tickConfig().label) < 0.001 || Math.abs(time % tickConfig().label - tickConfig().label) < 0.001;
                   return (
                     <div 
                       class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-neutral-700 h-full' : 'border-neutral-800 h-1/2'} transition-all`} 
@@ -305,25 +307,26 @@ export const PanelTimeline: Component = () => {
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
                       {(layer) => {
                         const getLayerColor = () => {
-                          if (projectStore.activeLayerId === layer.id) return 'bg-[#05d590] border-white z-20 shadow-[0_0_15px_rgba(5,213,144,0.3)]';
+                          const isActive = projectStore.activeLayerId === layer.id;
+                          if (isActive) return 'bg-[#05d590] border-white z-20 shadow-[0_0_20px_rgba(5,213,144,0.5)] scale-[1.02]';
                           switch (layer.type) {
-                            case 'video': return 'bg-blue-600 border-blue-400 hover:border-white';
-                            case 'audio': return 'bg-emerald-600 border-emerald-400 hover:border-white';
-                            case 'image': return 'bg-purple-600 border-purple-400 hover:border-white';
-                            case 'text': return 'bg-orange-600 border-orange-400 hover:border-white';
-                            default: return 'bg-gray-600 border-gray-400 hover:border-white';
+                            case 'video': return 'bg-[#2563eb] border-[#3b82f6]/30 hover:border-white/50';
+                            case 'audio': return 'bg-[#059669] border-[#10b981]/30 hover:border-white/50';
+                            case 'image': return 'bg-[#7c3aed] border-[#8b5cf6]/30 hover:border-white/50';
+                            case 'text': return 'bg-[#d97706] border-[#f59e0b]/30 hover:border-white/50';
+                            default: return 'bg-[#4b5563] border-[#6b7280]/30 hover:border-white/50';
                           }
                         };
                         return (
                         <div 
-                          class={`absolute top-1 bottom-1 rounded shadow-md group border transition-all ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                          class={`absolute top-1 bottom-1 rounded-md shadow-lg group border transition-all duration-200 ease-out ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
                           style={{ 
                             left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
                             width: `${layer.duration * projectStore.pixelsPerSecond}px` 
                           }}
                           onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
                         >
-                          <div class="px-2 py-1 text-[10px] text-white font-medium truncate pointer-events-none z-10 relative shadow-sm">
+                          <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none z-10 relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                             {layer.name}
                           </div>
                           
