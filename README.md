@@ -60,10 +60,10 @@ The **Kenichi Export Engine** is designed for pro-grade background rendering:
 
 ## 📸 Screenshots
 
-![Kenichi Studio UI](file:///C:/Users/aryan/.gemini/antigravity/brain/da1aecaa-2285-45b9-93b9-bd03cd51a5e2/media__1778471830828.png)
+![Kenichi Studio UI](./screenshots/Screenshot%202026-05-11%20114037.png)
 *Professional macOS-inspired dark mode interface.*
 
-![Timeline Editing](file:///C:/Users/aryan/.gemini/antigravity/brain/da1aecaa-2285-45b9-93b9-bd03cd51a5e2/media__1778472070516.png)
+![Timeline Editing](./screenshots/Screenshot%202026-05-11%20114603.png)
 *Multi-track timeline with Video, Audio, Image, and Text layers.*
 
 ## 🛠️ Getting Started
