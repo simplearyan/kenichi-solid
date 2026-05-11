@@ -1,11 +1,17 @@
-import { type Component } from 'solid-js';
+import { onMount, type Component } from 'solid-js';
 import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
+import { setupResizer } from '../../utils/resizer';
 
 export const PanelTimeline: Component = () => {
+  let resizerRef: HTMLDivElement | undefined;
+
+  onMount(() => {
+    if (resizerRef) setupResizer(resizerRef, 'timeline');
+  });
   return (
     <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
-      <div class="resizer resizer-t" id="resizer-timeline"></div>
+      <div ref={resizerRef} class="resizer resizer-t" id="resizer-timeline"></div>
       
       <div class="h-10 border-b border-border bg-[#1a1a1a] flex items-center px-4 justify-between shrink-0">
         <div class="flex items-center gap-4 text-neutral-400">

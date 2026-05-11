@@ -1,11 +1,17 @@
-import { Show, type Component } from 'solid-js';
+import { Show, onMount, type Component } from 'solid-js';
 import { ArrowUp, ArrowDown, Copy, Trash2, Sliders } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
+import { setupResizer } from '../../utils/resizer';
 
 export const PanelRight: Component = () => {
+  let resizerRef: HTMLDivElement | undefined;
+
+  onMount(() => {
+    if (resizerRef) setupResizer(resizerRef, 'right');
+  });
   return (
     <aside class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
-      <div class="resizer resizer-l" id="resizer-right"></div>
+      <div ref={resizerRef} class="resizer resizer-l" id="resizer-right"></div>
       
       <div class="flex border-b border-border px-2 pt-2 bg-[#1a1a1a]">
         <button 
