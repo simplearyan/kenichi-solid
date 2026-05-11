@@ -9,12 +9,18 @@ export interface MediaItem {
   duration: number;
   origW?: number;
   origH?: number;
-  origH?: number;
   peaks?: number[];
+}
+export interface TrackState {
+  id: string;
+  name: string;
+  hidden: boolean;
+  locked: boolean;
 }
 
 export interface LayerState {
   id: string;
+  trackId: string;
   name: string;
   type: 'video' | 'audio' | 'image' | 'text' | 'shape';
   mediaId?: string;
@@ -59,12 +65,20 @@ export interface LayerState {
 export interface ProjectState {
   duration: number;
   currentTime: number;
+  fps: number;
   pixelsPerSecond: number;
   isPlaying: boolean;
   globalMuted: boolean;
   activeLayerId: string | null;
+  activeTrackId: string | null;
+  tracks: TrackState[];
   layers: LayerState[];
   mediaPool: Record<string, MediaItem>;
+  
+  // Settings
+  proxyRes: string;
+  aspectRatio: string;
+  zoomMode: string;
   // UI State
   layout: "layout-default" | "layout-wide-left" | "layout-wide-right" | "layout-full";
   leftPanelTab: "pool" | "text" | "shapes";
@@ -87,12 +101,19 @@ export interface ProjectState {
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
   duration: 10,
   currentTime: 0,
+  fps: 0,
   pixelsPerSecond: 50,
   isPlaying: false,
   globalMuted: false,
   activeLayerId: null,
+  activeTrackId: null,
+  tracks: [{ id: 'track_1', name: 'Track 1', hidden: false, locked: false }],
   layers: [],
   mediaPool: {},
+  
+  proxyRes: "480",
+  aspectRatio: "16/9",
+  zoomMode: "fit",
   
   layout: "layout-default",
   leftPanelTab: "pool",
@@ -111,9 +132,29 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   srcCropScale: 1.0,
 });
 
-export const togglePlay = () => setProjectStore("isPlaying", (p) => !p);
+import { audioEngine } from '../engine/AudioEngine';
+
+export const togglePlay = () => {
+  setProjectStore("isPlaying", (p) => {
+    const next = !p;
+    if (next && audioEngine.ctx?.state === 'suspended') {
+      audioEngine.ctx.resume();
+    }
+    return next;
+  });
+};
 export const setCurrentTime = (time: number) => setProjectStore("currentTime", time);
 export const setLayout = (layout: ProjectState["layout"]) => setProjectStore("layout", layout);
+
+const recalcDuration = () => {
+  setProjectStore(produce(state => {
+    let max = 10;
+    for (const l of state.layers) {
+      if (l.startTime + l.duration > max) max = l.startTime + l.duration;
+    }
+    state.duration = max;
+  }));
+};
 
 export const addMediaToPool = (media: MediaItem) => {
   setProjectStore(produce((state) => {
@@ -155,19 +196,51 @@ export const updateSourceModalState = (updates: Partial<ProjectState>) => {
   }));
 };
 
-export const addLayer = (layer: Omit<LayerState, 'id'>) => {
+export const addTrack = () => {
+  const id = `track_${Date.now()}`;
+  setProjectStore('tracks', (t) => [...t, { id, name: `Track ${t.length + 1}`, hidden: false, locked: false }]);
+  setProjectStore('activeTrackId', id);
+};
+
+export const deleteTrack = (id: string) => {
+  setProjectStore('tracks', (t) => t.filter(x => x.id !== id));
+  setProjectStore('layers', (l) => l.filter(x => x.trackId !== id)); // Delete all clips in track
+  if (projectStore.activeTrackId === id) setProjectStore('activeTrackId', null);
+  recalcDuration();
+};
+
+export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
   const id = `l_${Date.now()}_${Math.random().toString(36).substring(2,9)}`;
-  const newLayer = { ...layer, id };
+  let targetTrackId = projectStore.activeTrackId;
+  
+  if (targetTrackId) {
+    // Check if the active track already contains a different media type
+    const trackLayers = projectStore.layers.filter(l => l.trackId === targetTrackId);
+    if (trackLayers.length > 0 && trackLayers[0].type !== layer.type) {
+      targetTrackId = null; // Force creating a new track
+    }
+  }
+
+  if (!targetTrackId) {
+    targetTrackId = `track_${Date.now()}`;
+    const prefix = layer.type.charAt(0).toUpperCase() + layer.type.slice(1);
+    setProjectStore('tracks', (t) => [...t, { id: targetTrackId as string, name: `${prefix} Track`, hidden: false, locked: false }]);
+  }
+
+  const newLayer = { ...layer, id, trackId: targetTrackId };
   setProjectStore('layers', (prev) => [...prev, newLayer]);
   setProjectStore('activeLayerId', id);
+  recalcDuration();
   return id;
 };
 
 export const updateLayer = (id: string, updates: Partial<LayerState>) => {
   setProjectStore('layers', (l) => l.id === id, updates);
+  recalcDuration();
 };
 
 export const removeLayer = (id: string) => {
   setProjectStore('layers', (prev) => prev.filter(l => l.id !== id));
   if (projectStore.activeLayerId === id) setProjectStore('activeLayerId', null);
+  recalcDuration();
 };

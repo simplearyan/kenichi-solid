@@ -1,8 +1,9 @@
 import { Show, onMount, For, type Component } from 'solid-js';
-import { Plus, Inbox, Type, Square, Circle, Shapes, Music, Image as ImageIcon, Film, Eye, Trash2 } from 'lucide-solid';
-import { projectStore, setProjectStore, addMediaToPool, removeMediaFromPool, openSourceModal } from '../../store/projectStore';
+import { Plus, Inbox, Type, Square, Circle, Shapes, Music, Image as ImageIcon, Film, Eye, Trash2, Maximize } from 'lucide-solid';
+import { projectStore, setProjectStore, addMediaToPool, removeMediaFromPool, openSourceModal, addLayer } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
 import { generatePeaks } from '../../utils/AudioUtils';
+import { layerRegistry } from '../../engine/LayerRegistry';
 
 export const PanelLeft: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
@@ -51,6 +52,40 @@ export const PanelLeft: Component = () => {
     });
     input.value = '';
   };
+  const handleDirectAdd = (media: any) => {
+    const layerId = addLayer({
+      name: media.name,
+      type: media.type,
+      mediaId: media.id,
+      startTime: projectStore.currentTime,
+      duration: media.duration,
+      inPoint: 0,
+      hidden: false,
+      locked: false,
+      scale: 1,
+      rotation: 0,
+      posX: 0,
+      posY: 0,
+      radius: 0,
+      brightness: 1,
+      contrast: 1,
+      chromaKey: false,
+      chromaColor: '#00ff00',
+      chromaTolerance: 0.1,
+      colorReplace: false,
+      replaceFromColor: '#ff0000',
+      replaceToColor: '#0000ff',
+      volume: 1,
+      fadeIn: 0,
+      fadeOut: 0,
+      echo: false,
+      echoDelay: 0.5,
+      echoFeedback: 0.5
+    });
+    const layerState = projectStore.layers.find(l => l.id === layerId);
+    if (layerState) layerRegistry.instantiate(layerState);
+  };
+
   return (
     <aside class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
       <div class="flex border-b border-border bg-[#1a1a1a] shrink-0">
@@ -97,13 +132,13 @@ export const PanelLeft: Component = () => {
                           <span class="text-[9px] text-neutral-500">{media.duration.toFixed(1)}s</span>
                         </div>
                         <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button class="p-1.5 bg-[#2a2a2a] hover:bg-primary text-neutral-300 hover:text-black rounded transition-colors" title="Add to Timeline">
-                            <Plus class="w-3 h-3" />
+                          <button onClick={() => handleDirectAdd(media)} class="p-1 rounded text-neutral-400 hover:text-white hover:bg-[#2a2a2a] transition-colors" title="Add to Timeline">
+                            <Plus class="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => openSourceModal(media.id)} class="p-1.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-neutral-300 hover:text-white rounded transition-colors" title="Preview & Trim">
-                            <Eye class="w-3 h-3" />
+                          <button onClick={() => openSourceModal(media.id)} class="p-1 rounded text-neutral-400 hover:text-white hover:bg-[#2a2a2a] transition-colors" title="Preview & Trim">
+                            <Maximize class="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => removeMediaFromPool(media.id)} class="p-1.5 bg-[#2a2a2a] hover:bg-red-500 text-neutral-300 hover:text-white rounded transition-colors" title="Delete Media">
+                          <button onClick={() => removeMediaFromPool(media.id)} class="p-1 rounded text-neutral-400 hover:text-red-400 hover:bg-[#2a2a2a] transition-colors" title="Remove Media">
                             <Trash2 class="w-3 h-3" />
                           </button>
                         </div>

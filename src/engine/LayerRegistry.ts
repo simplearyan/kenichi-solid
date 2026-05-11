@@ -7,13 +7,6 @@ export interface LayerNodes {
   imgEl?: HTMLImageElement;
   bufferCanvas?: HTMLCanvasElement;
   bufferCtx?: CanvasRenderingContext2D | null;
-  
-  // Audio Routing
-  sourceNode?: MediaElementAudioSourceNode;
-  gainNode?: GainNode;
-  echoDelayNode?: DelayNode;
-  echoFeedbackNode?: GainNode;
-  echoMixNode?: GainNode;
 }
 
 class LayerRegistryManager {
@@ -36,44 +29,20 @@ class LayerRegistryManager {
       if (media.type === 'video') {
         const v = document.createElement('video');
         v.src = media.url;
-        v.crossOrigin = 'anonymous';
         v.playsInline = true;
         v.load();
         nodes.videoEl = v;
+        document.getElementById('hidden-media-container')?.appendChild(v);
       } else if (media.type === 'audio') {
         const a = document.createElement('audio');
         a.src = media.url;
-        a.crossOrigin = 'anonymous';
         a.load();
         nodes.audioEl = a;
+        document.getElementById('hidden-media-container')?.appendChild(a);
       } else if (media.type === 'image') {
         const img = new Image();
         img.src = media.url;
-        img.crossOrigin = 'anonymous';
         nodes.imgEl = img;
-      }
-      
-      if (media.type === 'video' || media.type === 'audio') {
-        audioEngine.init();
-        if (audioEngine.ctx) {
-          const el = nodes.videoEl || nodes.audioEl!;
-          nodes.sourceNode = audioEngine.ctx.createMediaElementSource(el);
-          nodes.gainNode = audioEngine.ctx.createGain();
-          nodes.echoMixNode = audioEngine.ctx.createGain();
-          nodes.echoDelayNode = audioEngine.ctx.createDelay(5.0);
-          nodes.echoFeedbackNode = audioEngine.ctx.createGain();
-
-          nodes.sourceNode.connect(nodes.gainNode);
-          nodes.gainNode.connect(nodes.echoMixNode);
-          nodes.gainNode.connect(nodes.echoDelayNode);
-          nodes.echoDelayNode.connect(nodes.echoFeedbackNode);
-          nodes.echoFeedbackNode.connect(nodes.echoDelayNode);
-          nodes.echoDelayNode.connect(nodes.echoMixNode);
-          nodes.echoMixNode.connect(audioEngine.ctx.destination);
-          
-          nodes.gainNode.gain.value = layer.volume;
-          nodes.echoMixNode.gain.value = layer.echo ? 1.0 : 0.0;
-        }
       }
       
       if (media.type === 'video' || media.type === 'image') {
@@ -98,19 +67,15 @@ class LayerRegistryManager {
       nodes.videoEl.pause();
       nodes.videoEl.removeAttribute('src');
       nodes.videoEl.load();
+      nodes.videoEl.remove();
     }
     
     if (nodes.audioEl) {
       nodes.audioEl.pause();
       nodes.audioEl.removeAttribute('src');
       nodes.audioEl.load();
+      nodes.audioEl.remove();
     }
-
-    if (nodes.sourceNode) nodes.sourceNode.disconnect();
-    if (nodes.gainNode) nodes.gainNode.disconnect();
-    if (nodes.echoDelayNode) nodes.echoDelayNode.disconnect();
-    if (nodes.echoFeedbackNode) nodes.echoFeedbackNode.disconnect();
-    if (nodes.echoMixNode) nodes.echoMixNode.disconnect();
 
     this.registry.delete(id);
   }

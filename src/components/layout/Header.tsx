@@ -14,18 +14,29 @@ export const Header: Component = () => {
 
       <div class="hidden md:flex items-center gap-5">
         <div class="flex items-center gap-3 text-xs font-medium text-neutral-400">
-          <select id="resolution-select" class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors">
+          <select 
+            value={projectStore.proxyRes} 
+            onChange={(e) => setProjectStore('proxyRes', e.currentTarget.value)}
+            class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors"
+          >
             <option value="480">480p Proxy</option>
             <option value="720">720p HD</option>
-            <option value="original">Original</option>
+            <option value="1080">1080p FHD</option>
           </select>
-          <select id="aspect-ratio-select" class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors">
+          <select 
+            value={projectStore.aspectRatio} 
+            onChange={(e) => setProjectStore('aspectRatio', e.currentTarget.value)}
+            class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors"
+          >
             <option value="16/9">16:9 (Widescreen)</option>
             <option value="9/16">9:16 (Vertical)</option>
             <option value="1/1">1:1 (Square)</option>
-            <option value="original">Original AR</option>
           </select>
-          <select id="zoom-select" class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors">
+          <select 
+            value={projectStore.zoomMode} 
+            onChange={(e) => setProjectStore('zoomMode', e.currentTarget.value)}
+            class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors"
+          >
             <option value="fit">Fit</option>
             <option value="0.25">25%</option>
             <option value="0.5">50%</option>

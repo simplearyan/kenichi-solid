@@ -1,8 +1,58 @@
-import { onMount, onCleanup, For, type Component } from 'solid-js';
-import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock } from 'lucide-solid';
-import { projectStore, setProjectStore, updateLayer, removeLayer } from '../../store/projectStore';
+import { onMount, onCleanup, For, Show, createEffect, type Component } from 'solid-js';
+import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Music, Plus } from 'lucide-solid';
+import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack } from '../../store/projectStore';
 import { layerRegistry } from '../../engine/LayerRegistry';
 import { setupResizer } from '../../utils/resizer';
+
+const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props) => {
+  let canvasRef!: HTMLCanvasElement;
+  
+  createEffect(() => {
+    const layer = props.layer;
+    const pxPerSec = props.pixelsPerSecond;
+    if (layer.type !== 'audio' && layer.type !== 'video') return;
+    if (!layer.mediaId || !canvasRef) return;
+    
+    const media = projectStore.mediaPool[layer.mediaId];
+    if (!media || !media.peaks) return;
+
+    const ctx = canvasRef.getContext('2d');
+    if (!ctx) return;
+    
+    // Resize internal resolution to match DOM size
+    canvasRef.width = layer.duration * pxPerSec;
+    const w = canvasRef.width;
+    const h = canvasRef.height;
+    ctx.clearRect(0,0,w,h);
+    
+    const duration = layer.duration; 
+    const inPoint = layer.inPoint;
+    const totalDuration = media.duration || 1;
+    
+    const startIdx = Math.floor((inPoint / totalDuration) * media.peaks.length);
+    const endIdx = Math.floor(((inPoint + duration) / totalDuration) * media.peaks.length);
+    
+    const visiblePeaks = media.peaks.slice(startIdx, endIdx);
+    if(visiblePeaks.length === 0) return;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = 0.3;
+    const barWidth = w / visiblePeaks.length;
+    
+    for(let i=0; i<visiblePeaks.length; i++) {
+      const ph = visiblePeaks[i] * h * 0.8;
+      ctx.fillRect(i * barWidth, h/2 - ph/2, Math.max(1, barWidth - 0.5), ph);
+    }
+  });
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      height={40} 
+      class="absolute inset-0 w-full h-full pointer-events-none"
+    ></canvas>
+  );
+};
 
 export const PanelTimeline: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
@@ -80,6 +130,9 @@ export const PanelTimeline: Component = () => {
   });
 
   const startScrub = (e: MouseEvent) => {
+    // Only seek if clicking empty space or ruler, not clips
+    if ((e.target as HTMLElement).closest('.timeline-clip')) return;
+
     if (!timelineAreaRef) return;
     const rect = timelineAreaRef.getBoundingClientRect();
     const scrollLeft = timelineAreaRef.scrollLeft;
@@ -126,9 +179,13 @@ export const PanelTimeline: Component = () => {
         <div class="flex items-center gap-4 text-neutral-400">
           <button class="hover:text-white transition-colors" title="Split"><Scissors class="w-4 h-4" /></button>
           <button class="hover:text-white transition-colors" title="Copy"><Copy class="w-4 h-4" /></button>
-          <button onClick={() => { if(projectStore.activeLayerId) { layerRegistry.remove(projectStore.activeLayerId); removeLayer(projectStore.activeLayerId); } }} class="hover:text-red-400 transition-colors" title="Delete"><Trash2 class="w-4 h-4" /></button>
+          <button onClick={() => { if(projectStore.activeLayerId) { layerRegistry.remove(projectStore.activeLayerId); removeLayer(projectStore.activeLayerId); } }} class="hover:text-red-400 transition-colors" title="Delete Clip"><Trash2 class="w-4 h-4" /></button>
           <div class="w-px h-4 bg-[#333] mx-1"></div>
-          <button class="hover:text-cyan-400 transition-colors" title="Refresh Engine"><RefreshCcw class="w-4 h-4" /></button>
+          <button onClick={addTrack} class="hover:text-green-400 transition-colors" title="Add Track"><Plus class="w-4 h-4" /></button>
+          <button onClick={() => {
+            layerRegistry.clear();
+            projectStore.layers.forEach(l => layerRegistry.instantiate(l));
+          }} class="hover:text-cyan-400 transition-colors" title="Refresh Engine"><RefreshCcw class="w-4 h-4" /></button>
           <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-2" title="Timeline Zoom">
             <ZoomOut class="w-3.5 h-3.5" />
@@ -145,18 +202,23 @@ export const PanelTimeline: Component = () => {
 
       <div class="flex flex-1 overflow-hidden relative bg-background">
         <div class="w-[100px] md:w-[140px] bg-surface border-r border-border flex flex-col shrink-0 z-10 overflow-y-hidden">
-          <div class="h-8 border-b border-border bg-[#1e1e1e] shrink-0"></div> 
-          <div class="flex-1 overflow-y-auto custom-scrollbar no-scrollbar-x">
-            <For each={projectStore.layers}>
-              {(layer) => (
-                <div class={`h-12 border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer ${projectStore.activeLayerId === layer.id ? 'bg-primary/10' : ''}`} onClick={() => setProjectStore('activeLayerId', layer.id)}>
-                  <span class="text-xs text-white truncate w-full block">{layer.name}</span>
+          <div class="h-8 border-b border-border bg-[#1e1e1e] shrink-0 flex items-center justify-center">
+            <span class="text-[10px] font-bold text-neutral-500">TRACKS</span>
+          </div> 
+          <div class="flex-1 overflow-y-auto custom-scrollbar no-scrollbar-x pointer-events-none">
+            <For each={projectStore.tracks}>
+              {(track) => (
+                <div class={`h-12 border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group ${projectStore.activeTrackId === track.id ? 'bg-[#2a2a2a]' : 'hover:bg-[#1f1f1f]'}`} onClick={() => setProjectStore('activeTrackId', track.id)}>
+                  <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-white font-medium truncate w-full block">{track.name}</span>
+                    <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 text-neutral-500 transition-opacity"><Trash2 class="w-3 h-3" /></button>
+                  </div>
                   <div class="flex items-center gap-2 mt-1">
-                    <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-neutral-500 hover:text-white">
-                      {layer.hidden ? <EyeOff class="w-3 h-3" /> : <Eye class="w-3 h-3" />}
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-neutral-500 hover:text-white">
+                      {track.hidden ? <EyeOff class="w-3 h-3" /> : <Eye class="w-3 h-3" />}
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-neutral-500 hover:text-white">
-                      {layer.locked ? <Lock class="w-3 h-3" /> : <Unlock class="w-3 h-3" />}
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { locked: !track.locked }); }} class="text-neutral-500 hover:text-white">
+                      {track.locked ? <Lock class="w-3 h-3" /> : <Unlock class="w-3 h-3" />}
                     </button>
                   </div>
                 </div>
@@ -188,31 +250,40 @@ export const PanelTimeline: Component = () => {
 
             {/* Tracks */}
             <div class="w-full flex flex-col relative z-10">
-              <For each={projectStore.layers}>
-                {(layer) => (
+              <For each={projectStore.tracks}>
+                {(track) => (
                   <div class="h-12 border-b border-[#2a2a2a] relative w-full shrink-0">
-                    <div 
-                      class={`absolute top-1 bottom-1 rounded shadow-md group ${projectStore.activeLayerId === layer.id ? 'bg-primary border border-primary-foreground/30 z-20' : 'bg-[#3b82f6] border border-blue-400/30'} ${layer.locked ? 'opacity-50 pointer-events-none' : ''}`}
-                      style={{ 
-                        left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
-                        width: `${layer.duration * projectStore.pixelsPerSecond}px` 
-                      }}
-                      onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
-                    >
-                      <div class="px-2 py-1 text-[10px] text-white font-medium truncate pointer-events-none">
-                        {layer.name}
-                      </div>
-                      
-                      {/* Trimming Handles */}
-                      <div 
-                        class="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors"
-                        onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
-                      ></div>
-                      <div 
-                        class="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors"
-                        onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
-                      ></div>
-                    </div>
+                    <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
+                      {(layer) => (
+                        <div 
+                          class={`absolute top-1 bottom-1 rounded shadow-md group ${projectStore.activeLayerId === layer.id ? 'bg-[#05d590] border border-white z-20' : 'bg-[#1e1e1e] border border-[#333] hover:border-neutral-500'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                          style={{ 
+                            left: `${layer.startTime * projectStore.pixelsPerSecond}px`, 
+                            width: `${layer.duration * projectStore.pixelsPerSecond}px` 
+                          }}
+                          onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
+                        >
+                          <div class="px-2 py-1 text-[10px] text-white font-medium truncate pointer-events-none z-10 relative shadow-sm">
+                            {layer.name}
+                          </div>
+                          
+                          {/* Waveform */}
+                          <Show when={layer.type === 'audio' || layer.type === 'video'}>
+                             <TrackWaveform layer={layer} pixelsPerSecond={projectStore.pixelsPerSecond} />
+                          </Show>
+                          
+                          {/* Trimming Handles */}
+                          <div 
+                            class="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
+                            onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
+                          ></div>
+                          <div 
+                            class="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
+                            onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
+                          ></div>
+                        </div>
+                      )}
+                    </For>
                   </div>
                 )}
               </For>

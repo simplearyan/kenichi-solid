@@ -1,4 +1,4 @@
-import { projectStore, setCurrentTime } from '../store/projectStore';
+import { projectStore, setCurrentTime, setProjectStore } from '../store/projectStore';
 import { layerRegistry } from './LayerRegistry';
 
 export class Renderer {
@@ -6,6 +6,8 @@ export class Renderer {
   private ctx: CanvasRenderingContext2D | null = null;
   private reqAnimFrameId: number | null = null;
   private lastTime = performance.now();
+  private fpsLastTime = performance.now();
+  private frameCount = 0;
 
   init(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -35,6 +37,14 @@ export class Renderer {
       }
 
       this.render();
+      
+      this.frameCount++;
+      if (time - this.fpsLastTime >= 1000) {
+        setProjectStore('fps', this.frameCount);
+        this.frameCount = 0;
+        this.fpsLastTime = time;
+      }
+      
       this.reqAnimFrameId = requestAnimationFrame(loop);
     };
     this.reqAnimFrameId = requestAnimationFrame(loop);
@@ -75,13 +85,42 @@ export class Renderer {
 
   render() {
     if (!this.ctx || !this.canvas) return;
-    const W = this.canvas.width;
-    const H = this.canvas.height;
     
+    let targetWidth = 1920;
+    let targetHeight = 1080;
+    let arRatio = 16/9;
+    if (projectStore.aspectRatio === '9/16') arRatio = 9/16;
+    if (projectStore.aspectRatio === '1/1') arRatio = 1;
+    
+    if (projectStore.proxyRes === '480') {
+      targetHeight = 480;
+      targetWidth = Math.round(480 * arRatio);
+    } else if (projectStore.proxyRes === '720') {
+      targetHeight = 720;
+      targetWidth = Math.round(720 * arRatio);
+    } else {
+      targetHeight = 1080;
+      targetWidth = Math.round(1080 * arRatio);
+    }
+    
+    if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
+      this.resize(targetWidth, targetHeight);
+    }
+
     this.ctx.fillStyle = '#000000';
-    this.ctx.fillRect(0, 0, W, H);
+    this.ctx.fillRect(0, 0, targetWidth, targetHeight);
 
     const time = projectStore.currentTime;
+
+    // Apply global proxy scale so internal rendering always acts like 1920x1080 space
+    const globalScaleX = targetWidth / 1920;
+    const globalScaleY = targetHeight / 1080;
+
+    this.ctx.save();
+    this.ctx.scale(globalScaleX, globalScaleY);
+
+    const W = 1920;
+    const H = 1080;
 
     for (let i = 0; i < projectStore.layers.length; i++) {
       const layer = projectStore.layers[i];
@@ -97,8 +136,8 @@ export class Renderer {
       if (layer.type === 'video' || layer.type === 'audio') {
         const media = layer.type === 'video' ? nodes.videoEl : nodes.audioEl;
         if (media) {
+          media.volume = projectStore.globalMuted ? 0 : Math.max(0, Math.min(1, layer.volume));
           if (isVisible) {
-            // Drift correction
             if (Math.abs(media.currentTime - localTime) > 0.1) {
               media.currentTime = localTime;
             }
@@ -110,14 +149,6 @@ export class Renderer {
           } else {
             if (!media.paused) media.pause();
           }
-        }
-        
-        // Sync Audio FX
-        if (nodes.gainNode) {
-          nodes.gainNode.gain.value = projectStore.globalMuted ? 0 : layer.volume;
-        }
-        if (nodes.echoMixNode) {
-          nodes.echoMixNode.gain.value = layer.echo ? 1.0 : 0.0;
         }
       }
 
@@ -163,6 +194,8 @@ export class Renderer {
         }
       }
     }
+
+    this.ctx.restore(); // Restore global scale
   }
 }
 
