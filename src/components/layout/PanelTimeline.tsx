@@ -173,18 +173,20 @@ export const PanelTimeline: Component = () => {
   
   const tickConfig = () => {
     const pps = projectStore.pixelsPerSecond;
-    if (pps < 10) return { label: 120, minor: 60 };
-    if (pps < 25) return { label: 60, minor: 30 };
-    if (pps < 50) return { label: 10, minor: 5 };
-    if (pps < 80) return { label: 5, minor: 1 };
-    if (pps < 150) return { label: 2, minor: 1 };
-    return { label: 1, minor: 0.5 };
+    if (pps < 5) return { label: 120, minor: 30 };
+    if (pps < 10) return { label: 60, minor: 15 };
+    if (pps < 25) return { label: 10, minor: 2 };
+    if (pps < 50) return { label: 5, minor: 1 };
+    if (pps < 100) return { label: 2, minor: 0.5 };
+    return { label: 1, minor: 0.1 };
   };
 
   const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+    const totalS = Math.round(seconds);
+    const m = Math.floor(totalS / 60);
+    const s = totalS % 60;
+    if (m === 0) return `${s}s`;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
   return (
     <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
@@ -204,7 +206,7 @@ export const PanelTimeline: Component = () => {
           <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-2" title="Timeline Zoom">
             <ZoomOut class="w-3.5 h-3.5" />
-            <input type="range" min="10" max="200" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer" />
+            <input type="range" min="2" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary" />
             <ZoomIn class="w-3.5 h-3.5" />
           </div>
         </div>
@@ -308,14 +310,16 @@ export const PanelTimeline: Component = () => {
                       {(layer) => {
                         const getLayerColor = () => {
                           const isActive = projectStore.activeLayerId === layer.id;
-                          if (isActive) return 'bg-[#05d590] border-white z-20 shadow-[0_0_20px_rgba(5,213,144,0.5)] scale-[1.02]';
+                          let cls = isActive ? 'z-20 border-white ring-2 ring-white/20 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'border-white/10';
+                          
                           switch (layer.type) {
-                            case 'video': return 'bg-[#2563eb] border-[#3b82f6]/30 hover:border-white/50';
-                            case 'audio': return 'bg-[#059669] border-[#10b981]/30 hover:border-white/50';
-                            case 'image': return 'bg-[#7c3aed] border-[#8b5cf6]/30 hover:border-white/50';
-                            case 'text': return 'bg-[#d97706] border-[#f59e0b]/30 hover:border-white/50';
-                            default: return 'bg-[#4b5563] border-[#6b7280]/30 hover:border-white/50';
+                            case 'video': cls += ' bg-[#2563eb] hover:border-white/40'; break;
+                            case 'audio': cls += ' bg-[#059669] hover:border-white/40'; break;
+                            case 'image': cls += ' bg-[#7c3aed] hover:border-white/40'; break;
+                            case 'text': cls += ' bg-[#d97706] hover:border-white/40'; break;
+                            default: cls += ' bg-[#4b5563] hover:border-white/40';
                           }
+                          return cls;
                         };
                         return (
                         <div 
