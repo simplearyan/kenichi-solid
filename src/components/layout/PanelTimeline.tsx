@@ -5,6 +5,11 @@ import { audioEngine } from '../../engine/AudioEngine';
 import { layerRegistry } from '../../engine/LayerRegistry';
 import { setupResizer } from '../../utils/resizer';
 
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 255, 255';
+};
+
 const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props) => {
   let canvasRef!: HTMLCanvasElement;
 
@@ -36,13 +41,51 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
     const visiblePeaks = media.peaks.slice(startIdx, endIdx);
     if (visiblePeaks.length === 0) return;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.4;
-    const barWidth = Math.max(1, w / visiblePeaks.length);
+    const style = layer.waveformStyle || 'standard';
+    const appearance = layer.audioAppearance || 'waveform';
+    const baseColor = layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6');
+    const isWaveformMode = appearance === 'waveform';
+    
+    // Waveform translucency like v0.8
+    const rgb = hexToRgb(baseColor);
+    const waveColor = isWaveformMode ? `rgba(${rgb}, 0.85)` : 'rgba(0, 0, 0, 0.45)';
+    
+    ctx.fillStyle = waveColor;
+    ctx.globalAlpha = 1.0;
 
-    for (let i = 0; i < visiblePeaks.length; i++) {
-      const ph = visiblePeaks[i] * h * 0.75;
-      ctx.fillRect(i * barWidth, h / 2 - ph / 2, Math.max(1, barWidth - 1), ph);
+    const sampleSize = visiblePeaks.length;
+    if (sampleSize === 0) return;
+
+    if (style === 'viz') {
+      // Interpolated Sharp Graph Style
+      ctx.beginPath();
+      for (let x = 0; x < w; x++) {
+        const floatIdx = (x / w) * (sampleSize - 1);
+        const i = Math.floor(floatIdx);
+        const f = floatIdx - i;
+        
+        // Linear interpolation for smooth graph look
+        const p1 = visiblePeaks[i] || 0;
+        const p2 = visiblePeaks[i + 1] || p1;
+        const peak = p1 * (1 - f) + p2 * f;
+        
+        const ph = Math.round(peak * h * 0.85);
+        if (ph > 0) {
+          ctx.fillRect(x, Math.round(h / 2 - ph / 2), 1, ph);
+        }
+      }
+    } else {
+      // Standard Bars with better spacing
+      const barSpacing = 4;
+      const bw = 2;
+      for (let x = 0; x < w; x += (bw + barSpacing)) {
+        const sampleIdx = Math.floor((x / w) * sampleSize);
+        const peak = visiblePeaks[sampleIdx] || 0;
+        const ph = Math.round(peak * h * 0.75);
+        if (ph > 0) {
+          ctx.fillRect(x, Math.round(h / 2 - ph / 2), bw, ph);
+        }
+      }
     }
   });
 
@@ -125,9 +168,6 @@ export const PanelTimeline: Component = () => {
         if (newStart < 0) newStart = 0;
         updateLayer(dragLayerId, { startTime: newStart });
       } else if (dragType === 'trim-left') {
-        const media = layer.mediaId ? projectStore.mediaPool[layer.mediaId] : null;
-        const maxMediaDuration = media ? media.duration : Infinity;
-
         let newStart = dragStartProp + dt;
         let newIn = dragStartInPoint + dt;
         let newDur = dragStartDuration - dt;
@@ -409,29 +449,23 @@ export const PanelTimeline: Component = () => {
                     style={{ height: `${projectStore.trackHeight}px` }}
                   >
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
-                      {(layer) => {
-                        const getLayerColor = () => {
-                          const isActive = projectStore.activeLayerId === layer.id;
-                          let cls = isActive ? 'z-20 border-white/90 ring-1 ring-white/10' : 'border-white/10';
-
-                          switch (layer.type) {
-                            case 'video': cls += ' bg-[#2563eb] hover:bg-[#3b82f6]'; break;
-                            case 'audio': cls += ' bg-[#059669] hover:bg-[#10b981]'; break;
-                            case 'image': cls += ' bg-[#7c3aed] hover:bg-[#8b5cf6]'; break;
-                            case 'text': cls += ' bg-[#d97706] hover:bg-[#f59e0b]'; break;
-                            default: cls += ' bg-[#4b5563] hover:bg-[#6b7280]';
-                          }
-                          return cls;
-                        };
-                        return (
-                          <div
-                            class={`timeline-clip absolute top-1 bottom-1 rounded shadow-lg group border transition-[background-color,border-color,box-shadow,opacity] duration-150 ${getLayerColor()} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
-                            style={{
-                              left: `${layer.startTime * projectStore.pixelsPerSecond}px`,
-                              width: `${layer.duration * projectStore.pixelsPerSecond}px`
-                            }}
-                            onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
-                          >
+                      {(layer) => (
+                            <div
+                              class={`timeline-clip absolute top-1 bottom-1 rounded shadow-lg group border transition-[background-color,border-color,box-shadow,opacity] duration-150 ${projectStore.activeLayerId === layer.id ? 'z-20 border-white/60 ring-1 ring-white/10' : 'border-white/5'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                              style={{
+                                left: `${layer.startTime * projectStore.pixelsPerSecond}px`,
+                                width: `${layer.duration * projectStore.pixelsPerSecond}px`,
+                                'background-color': (layer.type === 'audio' || layer.type === 'video') 
+                                  ? (layer.audioAppearance === 'clip' 
+                                    ? (layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))
+                                    : `rgba(${hexToRgb(layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.15)`)
+                                  : (layer.clipColor || (layer.type === 'image' ? '#7c3aed' : layer.type === 'text' ? '#d97706' : '#4b5563')),
+                                'border-color': (layer.audioAppearance === 'clip')
+                                  ? 'rgba(255,255,255,0.15)'
+                                  : `rgba(${hexToRgb(layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.4)`
+                              }}
+                              onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
+                            >
                             <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none z-10 relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                               {layer.name}
                             </div>
@@ -455,8 +489,7 @@ export const PanelTimeline: Component = () => {
                               <div class="absolute inset-y-2 right-0.5 w-0.5 bg-black/20 rounded-full"></div>
                             </div>
                           </div>
-                        );
-                      }}
+                        )}
                     </For>
                   </div>
                 )}

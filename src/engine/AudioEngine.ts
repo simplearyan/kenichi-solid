@@ -107,7 +107,6 @@ export class AudioEngine {
 
     const layers = projectStore.layers;
     const tracks = projectStore.tracks;
-    let scheduledCount = 0;
 
     for (const layer of layers) {
       if (layer.type !== 'audio' && layer.type !== 'video') continue;

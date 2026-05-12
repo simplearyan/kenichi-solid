@@ -1,7 +1,12 @@
-import { type Component, createEffect, onMount, onCleanup, createSignal, Show } from 'solid-js';
+import { type Component, createEffect, onCleanup, createSignal } from 'solid-js';
 import { Play, Pause } from 'lucide-solid';
 import { projectStore, updateLayer } from '../../store/projectStore';
 import { audioEngine } from '../../engine/AudioEngine';
+
+const hexToRgb = (hex: string) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 255, 255';
+};
 
 interface AudioTrimViewProps {
   layerId: string;
@@ -86,13 +91,14 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
 
     const peaks = m.peaks;
     const barWidth = w / peaks.length;
-    const style = l!.waveformStyle || 'solid';
-    const clipColor = l!.clipColor || (l!.type === 'audio' ? '#059669' : '#2563eb');
+    const style = l!.waveformStyle || 'standard';
+    const appearance = l!.audioAppearance || 'waveform';
+    const baseColor = l!.clipColor || (l!.type === 'audio' ? '#059669' : '#2563eb');
 
     // Draw background waveform (dimmed)
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = appearance === 'waveform' ? '#333' : 'rgba(0,0,0,0.15)';
     ctx.globalAlpha = 0.5;
-    renderWaveform(ctx, peaks, barWidth, h, style);
+    renderWaveform(ctx, peaks, barWidth, h, style, appearance, baseColor);
     ctx.globalAlpha = 1.0;
 
     // Draw highlighted trimmed area
@@ -104,8 +110,8 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     ctx.rect(inPos, 0, durWidth, h);
     ctx.clip();
     
-    ctx.fillStyle = clipColor;
-    renderWaveform(ctx, peaks, barWidth, h, style);
+    ctx.fillStyle = appearance === 'waveform' ? baseColor : 'rgba(0,0,0,0.4)';
+    renderWaveform(ctx, peaks, barWidth, h, style, appearance, baseColor);
     ctx.restore();
 
     // Draw markers
@@ -117,29 +123,41 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     ctx.shadowBlur = 0;
   });
 
-  const renderWaveform = (ctx: CanvasRenderingContext2D, peaks: number[], barWidth: number, h: number, style: string) => {
-    for (let i = 0; i < peaks.length; i++) {
-      const peak = peaks[i];
-      const ph = peak * h * 0.85;
-      const x = i * barWidth;
-
-      if (style === 'mirrored') {
-        ctx.fillRect(x, h / 2 - ph / 2, Math.max(1, barWidth - 0.5), ph / 2 - 1);
-        ctx.fillRect(x, h / 2 + 1, Math.max(1, barWidth - 0.5), ph / 2 - 1);
-      } else {
-        ctx.fillRect(x, h / 2 - ph / 2, Math.max(1, barWidth - 0.5), ph);
+  const renderWaveform = (ctx: CanvasRenderingContext2D, peaks: number[], barWidth: number, h: number, style: string, appearance: string, baseColor: string) => {
+    const w = peaks.length * barWidth;
+    const isWaveformMode = appearance === 'waveform';
+    const rgb = hexToRgb(baseColor);
+    
+    ctx.fillStyle = isWaveformMode ? `rgba(${rgb}, 0.85)` : 'rgba(0, 0, 0, 0.45)';
+    
+    if (style === 'viz') {
+      // Interpolated Sharp Graph Style
+      for (let x = 0; x < w; x++) {
+        const floatIdx = (x / w) * (peaks.length - 1);
+        const i = Math.floor(floatIdx);
+        const f = floatIdx - i;
+        const p1 = peaks[i] || 0;
+        const p2 = peaks[i + 1] || p1;
+        const peak = p1 * (1 - f) + p2 * f;
+        
+        const ph = Math.round(peak * h * 0.85);
+        if (ph > 0) {
+          ctx.fillRect(x, Math.round(h / 2 - ph / 2), 1, ph);
+        }
+      }
+    } else {
+      // Standard Professional Bars
+      const barSpacing = 4;
+      const bw = 2;
+      for (let x = 0; x < w; x += (bw + barSpacing)) {
+        const sampleIdx = Math.floor((x / w) * peaks.length);
+        const peak = peaks[sampleIdx] || 0;
+        const ph = Math.round(peak * h * 0.75);
+        if (ph > 0) {
+          ctx.fillRect(x, Math.round(h / 2 - ph / 2), bw, ph);
+        }
       }
     }
-    
-    // Center line
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, h / 2);
-    ctx.lineTo(peaks.length * barWidth, h / 2);
-    ctx.stroke();
-    ctx.restore();
   };
 
   const handleMouseDown = (e: MouseEvent, type: 'in' | 'out') => {

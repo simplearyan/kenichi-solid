@@ -244,11 +244,21 @@ export const PanelRight: Component = () => {
                       <div class="grid grid-cols-2 gap-3 pt-2">
                         <div class="space-y-1.5">
                           <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Waveform Style</label>
-                          <select value={activeLayer()?.waveformStyle || 'solid'} onChange={(e) => handlePropChange('waveformStyle', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
-                            <option value="solid">Solid</option>
-                            <option value="mirrored">Mirrored</option>
+                          <select value={activeLayer()?.waveformStyle || 'standard'} onChange={(e) => handlePropChange('waveformStyle', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                            <option value="standard">Standard</option>
+                            <option value="viz">Viz</option>
                           </select>
                         </div>
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Appearance Mode</label>
+                          <select value={activeLayer()?.audioAppearance || 'waveform'} onChange={(e) => handlePropChange('audioAppearance', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                            <option value="waveform">Waveform</option>
+                            <option value="clip">Clip</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3 pt-1">
                         <div class="space-y-1.5">
                           <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Clip Color</label>
                           <div class="flex items-center gap-2 bg-[#1a1a1a] border border-[#333] rounded p-1">
