@@ -1,6 +1,53 @@
-import { type Component } from 'solid-js';
-import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart } from 'lucide-solid';
+import { type Component, createSignal, For, onMount, Show } from 'solid-js';
+import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
+
+const HeaderSelect: Component<{
+  value: string | number;
+  options: { label: string; value: string | number }[];
+  onChange: (val: any) => void;
+}> = (props) => {
+  const [isOpen, setIsOpen] = createSignal(false);
+  let containerRef!: HTMLDivElement;
+
+  const currentLabel = () => props.options.find(o => o.value === props.value)?.label || props.value;
+
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (containerRef && !containerRef.contains(e.target as Node)) setIsOpen(false);
+  };
+
+  onMount(() => {
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  });
+
+  return (
+    <div class="relative" ref={containerRef}>
+      <button 
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen()); }}
+        class="flex items-center gap-1.5 hover:text-primary transition-colors py-1 outline-none"
+      >
+        <span class="text-white font-medium">{currentLabel()}</span>
+        <ChevronDown class={`w-3 h-3 text-neutral-500 transition-transform ${isOpen() ? 'rotate-180' : ''}`} />
+      </button>
+
+      <Show when={isOpen()}>
+        <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 min-w-[140px] backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-200">
+          <For each={props.options}>
+            {(opt) => (
+              <button 
+                onClick={() => { props.onChange(opt.value); setIsOpen(false); }}
+                class={`w-full px-4 py-2 text-left text-[11px] transition-colors flex items-center justify-between ${props.value === opt.value ? 'bg-primary/10 text-primary font-bold' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+              >
+                {opt.label}
+              </button>
+            )}
+          </For>
+        </div>
+      </Show>
+    </div>
+  );
+};
 
 export const Header: Component = () => {
   return (
@@ -12,37 +59,40 @@ export const Header: Component = () => {
         <span class="font-bold text-white tracking-wide text-sm">KenichiStudio <span class="text-neutral-500 font-normal hidden sm:inline">Pro</span></span>
       </div>
 
-      <div class="hidden md:flex items-center gap-5">
-        <div class="flex items-center gap-3 text-xs font-medium text-neutral-400">
-          <select 
+      <div class="hidden md:flex items-center gap-6">
+        <div class="flex items-center gap-6 text-[11px] font-medium text-neutral-400">
+          <HeaderSelect 
             value={projectStore.proxyRes} 
-            onChange={(e) => setProjectStore('proxyRes', e.currentTarget.value)}
-            class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors"
-          >
-            <option value="480">480p Proxy</option>
-            <option value="720">720p HD</option>
-            <option value="1080">1080p FHD</option>
-          </select>
-          <select 
+            onChange={(v) => setProjectStore('proxyRes', v as any)}
+            options={[
+              { label: '240p Low', value: '240' },
+              { label: '360p Med', value: '360' },
+              { label: '480p Std', value: '480' },
+              { label: '540p High', value: '540' },
+              { label: '720p HD', value: '720' },
+              { label: '1080p FHD', value: '1080' }
+            ]}
+          />
+          <HeaderSelect 
             value={projectStore.aspectRatio} 
-            onChange={(e) => setProjectStore('aspectRatio', e.currentTarget.value)}
-            class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors"
-          >
-            <option value="16/9">16:9 (Widescreen)</option>
-            <option value="9/16">9:16 (Vertical)</option>
-            <option value="1/1">1:1 (Square)</option>
-          </select>
-          <select 
+            onChange={(v) => setProjectStore('aspectRatio', v as any)}
+            options={[
+              { label: '16:9 Widescreen', value: '16/9' },
+              { label: '9:16 Vertical', value: '9/16' },
+              { label: '1:1 Square', value: '1/1' }
+            ]}
+          />
+          <HeaderSelect 
             value={projectStore.zoomMode} 
-            onChange={(e) => setProjectStore('zoomMode', e.currentTarget.value)}
-            class="bg-transparent border-none outline-none text-white appearance-none cursor-pointer hover:text-primary transition-colors"
-          >
-            <option value="fit">Fit</option>
-            <option value="0.25">25%</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75%</option>
-            <option value="1">100%</option>
-          </select>
+            onChange={(v) => setProjectStore('zoomMode', v as any)}
+            options={[
+              { label: 'Fit View', value: 'fit' },
+              { label: '25% Zoom', value: '0.25' },
+              { label: '50% Zoom', value: '0.5' },
+              { label: '75% Zoom', value: '0.75' },
+              { label: '100% Zoom', value: '1' }
+            ]}
+          />
         </div>
         <div class="w-px h-5 bg-border mx-1"></div>
         <div class="flex items-center gap-1">

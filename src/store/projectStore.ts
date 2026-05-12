@@ -80,6 +80,7 @@ export interface ProjectState {
   duration: number;
   currentTime: number;
   fps: number;
+  currentFPS: number;
   pixelsPerSecond: number;
   isPlaying: boolean;
   globalMuted: boolean;
@@ -91,8 +92,8 @@ export interface ProjectState {
   mediaPool: Record<string, MediaItem>;
 
   // Settings
-  proxyRes: string;
-  aspectRatio: string;
+  proxyRes: "240" | "360" | "480" | "540" | "720" | "1080";
+  aspectRatio: "16/9" | "9/16" | "1/1";
   zoomMode: string;
   // UI State
   layout: "layout-default" | "layout-wide-left" | "layout-wide-right" | "layout-full";
@@ -123,7 +124,8 @@ export interface ProjectState {
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
   duration: 10,
   currentTime: 0,
-  fps: 0,
+  fps: 60,
+  currentFPS: 0,
   pixelsPerSecond: 50,
   isPlaying: false,
   globalMuted: false,

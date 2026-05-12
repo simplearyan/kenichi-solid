@@ -8,6 +8,63 @@ import { projectStore, setProjectStore, updateLayer, moveTrack } from '../../sto
 import { setupResizer } from '../../utils/resizer';
 import { AudioTrimView } from '../common/AudioTrimView';
 
+const PropSelect: Component<{
+  label?: string;
+  value: string | number;
+  options: { label: string; value: string | number }[];
+  onChange: (val: any) => void;
+  class?: string;
+}> = (props) => {
+  const [isOpen, setIsOpen] = createSignal(false);
+  let containerRef!: HTMLDivElement;
+
+  const currentLabel = () => props.options.find(o => o.value === props.value)?.label || props.value;
+
+  const handleOutsideClick = (e: MouseEvent) => {
+    if (containerRef && !containerRef.contains(e.target as Node)) {
+      setIsOpen(false);
+    }
+  };
+
+  onMount(() => {
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  });
+
+  return (
+    <div class={`space-y-1.5 relative ${props.class || ''}`} ref={containerRef}>
+      <Show when={props.label}>
+        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold ml-0.5">{props.label}</label>
+      </Show>
+      <button 
+        onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen()); }}
+        class="w-full h-10 bg-black/40 border border-white/5 hover:border-white/10 hover:bg-black/60 rounded-xl px-3.5 flex items-center justify-between text-xs text-white transition-all outline-none focus:border-primary/50"
+      >
+        <span class="truncate font-medium">{currentLabel()}</span>
+        <ChevronDown class={`w-3.5 h-3.5 text-neutral-500 transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`} />
+      </button>
+
+      <Show when={isOpen()}>
+        <div class="absolute left-0 right-0 top-full mt-1.5 bg-[#141414] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+          <For each={props.options}>
+            {(opt) => (
+              <button 
+                onClick={() => { props.onChange(opt.value); setIsOpen(false); }}
+                class={`w-full px-3.5 py-2.5 text-left text-xs transition-colors flex items-center justify-between ${props.value === opt.value ? 'bg-primary/10 text-primary font-bold' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+              >
+                {opt.label}
+                <Show when={props.value === opt.value}>
+                  <div class="w-1.5 h-1.5 rounded-full bg-primary" />
+                </Show>
+              </button>
+            )}
+          </For>
+        </div>
+      </Show>
+    </div>
+  );
+};
+
 const PropSlider: Component<{
   label: string;
   value: number;
@@ -145,9 +202,11 @@ export const PanelRight: Component = () => {
     const layer = activeLayer();
     if (!layer) return [];
     
-    const tabs = [
-      { id: 'transform', name: 'Transform', icon: <Maximize class="w-3.5 h-3.5" /> },
-    ];
+    const tabs = [];
+
+    if (layer.type !== 'audio') {
+      tabs.push({ id: 'transform', name: 'Transform', icon: <Maximize class="w-3.5 h-3.5" /> });
+    }
 
     if (layer.type !== 'audio' && layer.type !== 'text') {
       tabs.push({ id: 'fx', name: 'Effects', icon: <Zap class="w-3.5 h-3.5" /> });
@@ -273,43 +332,45 @@ export const PanelRight: Component = () => {
               <div class="flex flex-col h-full">
                 
                 {/* Transform Section */}
-                <Section 
-                  title="Transform" 
-                  icon={<Maximize class="w-3.5 h-3.5" />} 
-                  isOpen={collapsed().transform} 
-                  onToggle={() => toggleSection('transform')}
-                  showOnMobile={activePropTab() === 'transform'}
-                >
-                   <div class="space-y-5">
-                      <PropSlider 
-                        label="Scale"
-                        value={activeLayer()?.scale || 1}
-                        min={0} max={5} step={0.05}
-                        onChange={(v) => handlePropChange('scale', v)}
-                      />
-                      <PropSlider 
-                        label="Rotation"
-                        value={activeLayer()?.rotation || 0}
-                        min={0} max={360} step={1}
-                        onChange={(v) => handlePropChange('rotation', v)}
-                      />
-                      
-                      <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position X</label>
-                          <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                            <input type="number" step="1" value={activeLayer()?.posX} onInput={(e) => handlePropChange('posX', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                <Show when={activeLayer()?.type !== 'audio'}>
+                  <Section 
+                    title="Transform" 
+                    icon={<Maximize class="w-3.5 h-3.5" />} 
+                    isOpen={collapsed().transform} 
+                    onToggle={() => toggleSection('transform')}
+                    showOnMobile={activePropTab() === 'transform'}
+                  >
+                     <div class="space-y-5">
+                        <PropSlider 
+                          label="Scale"
+                          value={activeLayer()?.scale || 1}
+                          min={0} max={5} step={0.05}
+                          onChange={(v) => handlePropChange('scale', v)}
+                        />
+                        <PropSlider 
+                          label="Rotation"
+                          value={activeLayer()?.rotation || 0}
+                          min={0} max={360} step={1}
+                          onChange={(v) => handlePropChange('rotation', v)}
+                        />
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                          <div class="space-y-1">
+                            <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position X</label>
+                            <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
+                              <input type="number" step="1" value={activeLayer()?.posX} onInput={(e) => handlePropChange('posX', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                            </div>
                           </div>
-                        </div>
-                        <div class="space-y-1">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position Y</label>
-                          <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                            <input type="number" step="1" value={activeLayer()?.posY} onInput={(e) => handlePropChange('posY', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                          <div class="space-y-1">
+                            <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position Y</label>
+                            <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
+                              <input type="number" step="1" value={activeLayer()?.posY} onInput={(e) => handlePropChange('posY', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                </Section>
+                  </Section>
+                </Show>
 
                 {/* Pixel FX Section */}
                 <Show when={activeLayer()?.type !== 'audio' && activeLayer()?.type !== 'text'}>
@@ -435,18 +496,20 @@ export const PanelRight: Component = () => {
                       </div>
                       
                       <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Font</label>
-                          <select value={activeLayer()?.fontFamily} onChange={(e) => handlePropChange('fontFamily', e.currentTarget.value)} class="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-indigo-500/50">
-                            <option value="Inter">Inter</option>
-                            <option value="Outfit">Outfit</option>
-                            <option value="Rubik">Rubik</option>
-                            <option value="JetBrains Mono">JetBrains Mono</option>
-                          </select>
-                        </div>
+                        <PropSelect 
+                          label="Font"
+                          value={activeLayer()?.fontFamily || 'Inter'}
+                          options={[
+                            { label: 'Inter', value: 'Inter' },
+                            { label: 'Outfit', value: 'Outfit' },
+                            { label: 'Rubik', value: 'Rubik' },
+                            { label: 'JetBrains Mono', value: 'JetBrains Mono' }
+                          ]}
+                          onChange={(v) => handlePropChange('fontFamily', v)}
+                        />
                         <div class="space-y-1.5">
                           <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Size</label>
-                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono focus:border-indigo-500/50" />
+                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-indigo-500/50" />
                         </div>
                       </div>
 
@@ -459,59 +522,67 @@ export const PanelRight: Component = () => {
                 </Show>
 
                 {/* Animation FX Section */}
-                <Section 
-                  title="Animation FX" 
-                  icon={<PlayCircle class="w-3.5 h-3.5" />} 
-                  color="bg-pink-500"
-                  isOpen={collapsed().anim} 
-                  onToggle={() => toggleSection('anim')}
-                  showOnMobile={activePropTab() === 'anim'}
-                >
-                  <div class="space-y-5">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="space-y-1.5">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">In Anim</label>
-                        <select value={activeLayer()?.animIn || 'none'} onChange={(e) => handlePropChange('animIn', e.currentTarget.value)} class="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-pink-500/50">
-                          <option value="none">None</option>
-                          <option value="fade">Fade In</option>
-                          <option value="zoomIn">Zoom In</option>
-                          <option value="slideLeft">Slide Left</option>
-                        </select>
+                <Show when={activeLayer()?.type !== 'audio'}>
+                  <Section 
+                    title="Animation FX" 
+                    icon={<PlayCircle class="w-3.5 h-3.5" />} 
+                    color="bg-pink-500"
+                    isOpen={collapsed().anim} 
+                    onToggle={() => toggleSection('anim')}
+                    showOnMobile={activePropTab() === 'anim'}
+                  >
+                    <div class="space-y-5">
+                      <div class="grid grid-cols-2 gap-4">
+                        <PropSelect 
+                          label="In Anim"
+                          value={activeLayer()?.animIn || 'none'}
+                          options={[
+                            { label: 'None', value: 'none' },
+                            { label: 'Fade In', value: 'fade' },
+                            { label: 'Zoom In', value: 'zoomIn' },
+                            { label: 'Slide Left', value: 'slideLeft' }
+                          ]}
+                          onChange={(v) => handlePropChange('animIn', v)}
+                        />
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
+                          <input type="number" step="0.1" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                        </div>
                       </div>
-                      <div class="space-y-1.5">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
-                        <input type="number" step="0.1" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
-                      </div>
-                    </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                      <div class="space-y-1.5">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Out Anim</label>
-                        <select value={activeLayer()?.animOut || 'none'} onChange={(e) => handlePropChange('animOut', e.currentTarget.value)} class="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-pink-500/50">
-                          <option value="none">None</option>
-                          <option value="fade">Fade Out</option>
-                          <option value="zoomOut">Zoom Out</option>
-                          <option value="rotateOut">Rotate Out</option>
-                          <option value="slideRight">Slide Right</option>
-                        </select>
+                      <div class="grid grid-cols-2 gap-4">
+                        <PropSelect 
+                          label="Out Anim"
+                          value={activeLayer()?.animOut || 'none'}
+                          options={[
+                            { label: 'None', value: 'none' },
+                            { label: 'Fade Out', value: 'fade' },
+                            { label: 'Zoom Out', value: 'zoomOut' },
+                            { label: 'Rotate Out', value: 'rotateOut' },
+                            { label: 'Slide Right', value: 'slideRight' }
+                          ]}
+                          onChange={(v) => handlePropChange('animOut', v)}
+                        />
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
+                          <input type="number" step="0.1" value={activeLayer()?.animOutDuration || 1.0} onInput={(e) => handlePropChange('animOutDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                        </div>
                       </div>
-                      <div class="space-y-1.5">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
-                        <input type="number" step="0.1" value={activeLayer()?.animOutDuration || 1.0} onInput={(e) => handlePropChange('animOutDuration', parseFloat(e.currentTarget.value))} class="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
-                      </div>
-                    </div>
 
-                    <div class="space-y-1.5">
-                      <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Loop Anim</label>
-                      <select value={activeLayer()?.animLoop || 'none'} onChange={(e) => handlePropChange('animLoop', e.currentTarget.value)} class="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-pink-500/50">
-                        <option value="none">None</option>
-                        <option value="pulse">Pulse (Scale)</option>
-                        <option value="wiggle">Wiggle (Rotation)</option>
-                        <option value="float">Float (Y-Axis)</option>
-                      </select>
+                      <PropSelect 
+                        label="Loop Anim"
+                        value={activeLayer()?.animLoop || 'none'}
+                        options={[
+                          { label: 'None', value: 'none' },
+                          { label: 'Pulse (Scale)', value: 'pulse' },
+                          { label: 'Wiggle (Rotation)', value: 'wiggle' },
+                          { label: 'Float (Y-Axis)', value: 'float' }
+                        ]}
+                        onChange={(v) => handlePropChange('animLoop', v)}
+                      />
                     </div>
-                  </div>
-                </Section>
+                  </Section>
+                </Show>
               </div>
             </Show>
           </div>

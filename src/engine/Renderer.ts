@@ -8,6 +8,8 @@ export class Renderer {
   private reqAnimFrameId: number | null = null;
   private lastTime = performance.now();
   private fpsLastTime = performance.now();
+  private lastFpsUpdate = 0;
+  private framesThisSecond = 0;
   private frameCount = 0;
   private visibilityMap = new Map<string, boolean>();
   private wasPlaying = false;
@@ -29,9 +31,17 @@ export class Renderer {
 
   startLoop() {
     this.lastTime = performance.now();
+    this.lastFpsUpdate = this.lastTime;
     const loop = (time: number) => {
       const dt = (time - this.lastTime) / 1000;
       this.lastTime = time;
+
+      this.framesThisSecond++;
+      if (time - this.lastFpsUpdate >= 1000) {
+        setProjectStore('currentFPS', Math.round((this.framesThisSecond * 1000) / (time - this.lastFpsUpdate)));
+        this.framesThisSecond = 0;
+        this.lastFpsUpdate = time;
+      }
 
       if (projectStore.isPlaying) {
         if (!this.wasPlaying) {
@@ -130,9 +140,18 @@ export class Renderer {
     let targetHeight = baseH;
     let arRatio = baseW / baseH;
 
-    if (projectStore.proxyRes === '480') {
+    if (projectStore.proxyRes === '240') {
+      targetHeight = 240;
+      targetWidth = Math.round(240 * arRatio);
+    } else if (projectStore.proxyRes === '360') {
+      targetHeight = 360;
+      targetWidth = Math.round(360 * arRatio);
+    } else if (projectStore.proxyRes === '480') {
       targetHeight = 480;
       targetWidth = Math.round(480 * arRatio);
+    } else if (projectStore.proxyRes === '540') {
+      targetHeight = 540;
+      targetWidth = Math.round(540 * arRatio);
     } else if (projectStore.proxyRes === '720') {
       targetHeight = 720;
       targetWidth = Math.round(720 * arRatio);
@@ -221,7 +240,8 @@ export class Renderer {
               
               if (!projectStore.isPlaying) {
                 // SCRUBBING/IDLE: Hard seek visuals for immediate feedback
-                if (absDrift > 0.03 || forceSync) media.currentTime = localTime;
+                // INCREASED THRESHOLD: 0.12s tolerance to avoid flicker on Pause
+                if (absDrift > 0.12 || forceSync) media.currentTime = localTime;
                 media.playbackRate = 1.0;
                 if (!media.paused) media.pause();
               } else {

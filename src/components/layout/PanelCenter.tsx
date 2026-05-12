@@ -20,14 +20,33 @@ export const PanelCenter: Component = () => {
   return (
     <main class="w-full h-full flex flex-col gap-2 relative">
       <div class="flex-1 glass-panel bg-surface border border-border rounded-lg md:rounded-xl flex items-center justify-center relative overflow-hidden p-1 md:p-2 min-h-0">
-        <div id="stats-overlay" class="absolute top-2 left-2 md:top-3 md:left-3 bg-background/80 text-primary font-mono text-[9px] md:text-[10px] px-2 py-1 rounded-md z-10 border border-primary/30 backdrop-blur-md flex items-center gap-2">
-          <span>
-            {projectStore.proxyRes === '480' ? '854x480' : projectStore.proxyRes === '720' ? '1280x720' : '1920x1080'}
-          </span> 
-          <span>|</span> 
-          <span class="text-[#ff3366]">PROXY</span>
-          <span>|</span>
-          <span>{projectStore.fps} FPS</span>
+        <div id="stats-overlay" class="absolute top-3 left-3 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-3 py-1.5 z-10 flex items-center gap-3 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-500 pointer-events-none select-none">
+          <div class="flex items-center gap-2">
+            <div class={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(5,213,144,0.6)] ${projectStore.isPlaying ? 'bg-primary animate-pulse' : 'bg-neutral-600'}`} />
+            <span class="text-[9px] font-black text-white uppercase tracking-tight">Preview</span>
+          </div>
+          
+          <div class="w-px h-3 bg-white/10" />
+          
+          <div class="flex items-center gap-1.5">
+            <span class="text-neutral-500 text-[8px] font-black uppercase tracking-widest">Res</span>
+            <span class="text-white font-mono text-[10px] font-bold">
+              {(() => {
+                const h = parseInt(projectStore.proxyRes);
+                const ar = projectStore.aspectRatio === '16/9' ? 16/9 : projectStore.aspectRatio === '9/16' ? 9/16 : 1;
+                return `${Math.round(h * ar)}x${h}`;
+              })()}
+            </span>
+          </div>
+
+          <div class="w-px h-3 bg-white/10" />
+          
+          <div class="flex items-center gap-1.5">
+            <span class="text-neutral-500 text-[8px] font-black uppercase tracking-widest">Perf</span>
+            <span class={`font-mono text-[10px] font-bold transition-colors duration-300 ${projectStore.currentFPS < 24 ? 'text-red-400' : projectStore.currentFPS < 50 ? 'text-yellow-400' : 'text-primary'}`}>
+               {projectStore.currentFPS} FPS
+            </span>
+          </div>
         </div>
 
         <Show when={projectStore.layers.length === 0}>
