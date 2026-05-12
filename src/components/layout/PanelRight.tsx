@@ -40,12 +40,12 @@ export const PanelRight: Component = () => {
       
       <div class="h-12 border-b border-border bg-[#1a1a1a] flex items-center p-1 shrink-0">
         <div class="flex bg-black p-1 rounded-lg w-full">
-          <button 
+            <button 
             onClick={() => setProjectStore('rightPanelTab', 'layers')}
             class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-all ${projectStore.rightPanelTab === 'layers' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-neutral-500 hover:text-white hover:bg-[#1e1e1e]'}`}
           >
             <Layers class="w-3.5 h-3.5" />
-            Layers
+            Clips
           </button>
           <button 
             onClick={() => setProjectStore('rightPanelTab', 'props')}
@@ -59,27 +59,44 @@ export const PanelRight: Component = () => {
 
       <div class="flex-1 overflow-y-auto custom-scrollbar">
         <Show when={projectStore.rightPanelTab === 'layers'}>
-          <div class="flex flex-col-reverse p-2 gap-1">
+          <div class="flex flex-col p-2 gap-4">
             <Show when={projectStore.layers.length === 0}>
-              <div class="text-xs text-neutral-500 text-center py-8">No layers yet.</div>
+              <div class="text-xs text-neutral-500 text-center py-8">No clips on timeline.</div>
             </Show>
-            <For each={projectStore.layers}>
-              {(layer) => (
-                <div 
-                  class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border ${projectStore.activeLayerId === layer.id ? 'bg-primary/10 border-primary/30' : 'bg-[#1a1a1a] border-transparent hover:bg-[#222]'}`}
-                  onClick={() => setProjectStore('activeLayerId', layer.id)}
-                >
-                  <div class="text-neutral-400">
-                    {getIcon(layer.type)}
+            
+            <For each={projectStore.tracks}>
+              {(track) => (
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 px-1 py-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest border-b border-border/30 mb-2">
+                    <span class="truncate">{track.name}</span>
+                    <div class="flex-1 h-[1px] bg-border/20"></div>
                   </div>
-                  <span class="text-xs text-white truncate flex-1">{layer.name}</span>
-                  <div class="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-neutral-500 hover:text-white">
-                      {layer.hidden ? <EyeOff class="w-3.5 h-3.5" /> : <Eye class="w-3.5 h-3.5" />}
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-neutral-500 hover:text-white">
-                      {layer.locked ? <Lock class="w-3.5 h-3.5" /> : <Unlock class="w-3.5 h-3.5" />}
-                    </button>
+                  
+                  <div class="flex flex-col gap-1 pl-1">
+                    <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
+                      {(layer) => (
+                        <div 
+                          class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border ${projectStore.activeLayerId === layer.id ? 'bg-primary/10 border-primary/30' : 'bg-[#1a1a1a] border-transparent hover:bg-[#222]'}`}
+                          onClick={() => setProjectStore('activeLayerId', layer.id)}
+                        >
+                          <div class="text-neutral-400">
+                            {getIcon(layer.type)}
+                          </div>
+                          <span class="text-xs text-white truncate flex-1">{layer.name}</span>
+                          <div class="flex items-center gap-2">
+                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-neutral-500 hover:text-white">
+                              {layer.hidden ? <EyeOff class="w-3.5 h-3.5" /> : <Eye class="w-3.5 h-3.5" />}
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-neutral-500 hover:text-white">
+                              {layer.locked ? <Lock class="w-3.5 h-3.5" /> : <Unlock class="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </For>
+                    <Show when={projectStore.layers.filter(l => l.trackId === track.id).length === 0}>
+                       <div class="text-[10px] text-neutral-600 italic pl-2 py-1">Empty track</div>
+                    </Show>
                   </div>
                 </div>
               )}
