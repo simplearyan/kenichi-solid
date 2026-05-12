@@ -6,6 +6,11 @@
   body {
     @apply bg-background text-textMain overflow-hidden font-sans;
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv11", "ss01", "ss03";
+    letter-spacing: -0.015em;
   }
 }
 
