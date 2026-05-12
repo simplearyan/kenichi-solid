@@ -179,17 +179,18 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     }
   };
 
-  const handleMouseDown = (e: MouseEvent, type: 'in' | 'out' | 'move') => {
+  const handlePointerDown = (e: PointerEvent, type: 'in' | 'out' | 'move') => {
     const startX = e.clientX;
     const m = media();
     const l = layer();
     if (!m || !l) return;
 
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const initialIn = l.inPoint;
     const initialDur = l.duration;
     const rect = containerRef.getBoundingClientRect();
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
+    const onPointerMove = (moveEvent: PointerEvent) => {
       const dx = moveEvent.clientX - startX;
       const dt = (dx / rect.width) * m.duration;
 
@@ -201,19 +202,18 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
         let newDur = Math.max(0.1, Math.min(m.duration - initialIn, initialDur + dt));
         updateLayer(l.id, { duration: newDur });
       } else if (type === 'move') {
-        // Shift both in and out while keeping duration constant
         let newIn = Math.max(0, Math.min(m.duration - initialDur, initialIn + dt));
         updateLayer(l.id, { inPoint: newIn });
       }
     };
 
-    const onMouseUp = () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+    const onPointerUp = () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
     };
 
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
   };
 
   return (
@@ -234,7 +234,7 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
         
         <div 
           ref={containerRef}
-          class="relative h-20 bg-black/40 rounded-lg border border-white/5 overflow-hidden cursor-crosshair group-hover:border-white/10 transition-colors"
+          class="relative h-20 bg-black/40 rounded-lg border border-white/5 overflow-hidden cursor-crosshair group-hover:border-white/10 transition-colors touch-none"
           style={{ 'background-color': 'rgba(255, 255, 255, 0.05)' }}
         >
           <canvas 
@@ -246,27 +246,27 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
 
           {/* Draggable Mid-Area */}
           <div 
-            class="absolute top-0 bottom-0 cursor-move transition-colors group-hover:bg-white/5 active:bg-white/10"
+            class="absolute top-0 bottom-0 cursor-move transition-colors group-hover:bg-white/5 active:bg-white/10 touch-none"
             style={{ 
               left: `${(layer()?.inPoint || 0) / (media()?.duration || 1) * 100}%`,
               width: `${(layer()?.duration || 0) / (media()?.duration || 1) * 100}%`
             }}
-            onMouseDown={(e) => handleMouseDown(e, 'move')}
+            onPointerDown={(e) => handlePointerDown(e, 'move')}
           />
 
           {/* Trim Handles */}
           <div 
-            class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0 z-10"
+            class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0 z-10 touch-none"
             style={{ left: `${(layer()?.inPoint || 0) / (media()?.duration || 1) * 100}%`, transform: 'translateX(-50%)' }}
-            onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(e, 'in'); }}
+            onPointerDown={(e) => { e.stopPropagation(); handlePointerDown(e, 'in'); }}
           >
             <div class="w-1 h-6 bg-white/70 rounded-full shadow-lg"></div>
           </div>
           
           <div 
-            class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0 z-10"
+            class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0 z-10 touch-none"
             style={{ left: `${((layer()?.inPoint || 0) + (layer()?.duration || 0)) / (media()?.duration || 1) * 100}%`, transform: 'translateX(-50%)' }}
-            onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(e, 'out'); }}
+            onPointerDown={(e) => { e.stopPropagation(); handlePointerDown(e, 'out'); }}
           >
             <div class="w-1 h-6 bg-white/70 rounded-full shadow-lg"></div>
           </div>

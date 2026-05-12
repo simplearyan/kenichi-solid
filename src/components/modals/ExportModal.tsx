@@ -65,30 +65,33 @@ export const ExportModal: Component = () => {
   };
 
   return (
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 touch-none">
+      <div class="bg-surface border border-border rounded-xl w-[92vw] sm:w-full sm:max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         <div class="h-12 border-b border-border bg-[#141414] flex items-center justify-between px-4 shrink-0">
-          <h2 class="font-bold text-white tracking-wide flex items-center gap-2">
-            <Download class="w-4 h-4 text-primary" /> Export Project
+          <h2 class="font-bold text-white tracking-tight flex items-center gap-2">
+            <div class="w-7 h-7 rounded bg-primary/10 flex items-center justify-center">
+              <Download class="w-3.5 h-3.5 text-primary" />
+            </div>
+            Export Project
           </h2>
           <button 
             onClick={() => !isExporting() && setProjectStore('exportModalOpen', false)}
             disabled={isExporting()}
-            class="text-neutral-400 hover:text-white p-1 rounded-md hover:bg-white/10 transition-colors disabled:opacity-50"
+            class="text-neutral-500 hover:text-white p-1.5 rounded-md hover:bg-white/5 transition-all disabled:opacity-30"
           >
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <div class="p-5 flex flex-col gap-5 bg-[#1a1a1a]">
-          <div class="flex flex-col gap-2">
-            <label class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Format</label>
+        <div class="p-4 flex flex-col gap-4 bg-[#1a1a1a]">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest ml-0.5">Format</label>
             <select 
               value={format()} 
               onChange={(e) => setFormat(e.currentTarget.value as any)}
               disabled={isExporting()}
-              class="w-full h-10 bg-[#0f0f0f] border border-border rounded-md px-3 text-sm text-white focus:border-primary outline-none transition-colors disabled:opacity-50"
+              class="w-full h-10 bg-[#0a0a0a] border border-border rounded-lg px-3 text-sm text-white focus:border-primary/50 outline-none transition-all disabled:opacity-50 appearance-none cursor-pointer"
             >
               <option value="mp4">MP4 Video (H.264)</option>
               <option value="webm">WebM Video (VP9)</option>
@@ -97,14 +100,14 @@ export const ExportModal: Component = () => {
             </select>
           </div>
 
-          <div class="flex gap-4">
-            <div class="flex flex-col gap-2 flex-1">
-              <label class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Resolution</label>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <div class="flex flex-col gap-1.5 flex-1">
+              <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest ml-0.5">Resolution</label>
               <select 
                 value={resolution()} 
                 onChange={(e) => setResolution(e.currentTarget.value as any)}
                 disabled={isExporting()}
-                class="w-full h-10 bg-[#0f0f0f] border border-border rounded-md px-3 text-sm text-white focus:border-primary outline-none transition-colors disabled:opacity-50"
+                class="w-full h-10 bg-[#0a0a0a] border border-border rounded-lg px-3 text-sm text-white focus:border-primary/50 outline-none transition-all disabled:opacity-50 appearance-none cursor-pointer"
               >
                 <option value="720">720p (HD)</option>
                 <option value="1080">1080p (FHD)</option>
@@ -112,13 +115,13 @@ export const ExportModal: Component = () => {
                 <option value="2160">2160p (4K)</option>
               </select>
             </div>
-            <div class="flex flex-col gap-2 w-1/3">
-              <label class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Framerate</label>
+            <div class="flex flex-col gap-1.5 sm:w-[110px]">
+              <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest ml-0.5">Framerate</label>
               <select 
                 value={fps()} 
                 onChange={(e) => setFps(parseInt(e.currentTarget.value))}
                 disabled={isExporting()}
-                class="w-full h-10 bg-[#0f0f0f] border border-border rounded-md px-3 text-sm text-white focus:border-primary outline-none transition-colors disabled:opacity-50"
+                class="w-full h-10 bg-[#0a0a0a] border border-border rounded-lg px-3 text-sm text-white focus:border-primary/50 outline-none transition-all disabled:opacity-50 appearance-none cursor-pointer"
               >
                 <option value="24">24 FPS</option>
                 <option value="30">30 FPS</option>
@@ -128,91 +131,89 @@ export const ExportModal: Component = () => {
           </div>
 
           <Show when={isExporting()}>
-            <div class="mt-2 flex flex-col gap-3 p-4 bg-[#2a2a2a] rounded-lg border border-border">
-              <div class="flex justify-between items-center text-xs">
-                <span class="text-white font-medium flex items-center gap-2">
+            <div class="flex flex-col gap-3 p-4 bg-[#0a0a0a] rounded-xl border border-white/5">
+              <div class="flex justify-between items-center text-[11px]">
+                <span class="text-white/70 font-medium flex items-center gap-2">
                   <Show when={!isPaused()} fallback={<Pause class="w-3 h-3 text-yellow-500" />}>
                     <Loader2 class="w-3 h-3 animate-spin text-primary" />
                   </Show>
                   {statusText()}
                 </span>
-                <span class="text-primary font-mono">{progress().toFixed(0)}%</span>
+                <span class="text-primary font-mono font-bold">{progress().toFixed(0)}%</span>
               </div>
-              <div class="w-full h-2 bg-[#141414] rounded-full overflow-hidden">
-                <div class="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${progress()}%` }}></div>
+              <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full bg-primary rounded-full transition-all duration-500 ease-out" style={{ width: `${progress()}%` }}></div>
               </div>
               
-              <div class="flex items-center justify-center gap-4 mt-1">
+              <div class="flex items-center gap-2 mt-1">
                 <button 
                   onClick={() => setIsPaused(!isPaused())}
-                  class="flex items-center gap-2 px-3 py-1.5 rounded bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold transition-all"
+                  class="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold transition-all active:scale-95 border border-white/5"
                 >
-                  <Show when={isPaused()} fallback={<><Pause class="w-3 h-3" /> Pause</>}>
-                    <><Play class="w-3 h-3" /> Resume</>
+                  <Show when={isPaused()} fallback={<><Pause class="w-3 h-3" /> PAUSE</>}>
+                    <><Play class="w-3 h-3" /> RESUME</>
                   </Show>
                 </button>
                 <button 
                   onClick={() => { cancelled = true; setIsPaused(false); }}
-                  class="flex items-center gap-2 px-3 py-1.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-bold transition-all"
+                  class="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold transition-all active:scale-95 border border-red-500/10"
                 >
-                  <Square class="w-3 h-3 fill-current" /> Stop
+                  <Square class="w-3 h-3 fill-current" /> STOP
                 </button>
               </div>
             </div>
           </Show>
 
           <Show when={exportError()}>
-             <div class="mt-2 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-xs text-center font-medium">
-               {exportError()}
+             <div class="p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-[10px] text-center font-bold tracking-wider">
+               {exportError().toUpperCase()}
              </div>
           </Show>
-
         </div>
 
         <Show when={!isExporting()}>
-          <div class="px-5 pb-5">
-            <div class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-[#29abe0] rounded-full flex items-center justify-center text-white shadow-sm">
-                  <Heart class="w-4 h-4 fill-current" />
+          <div class="px-4 pb-4 bg-[#1a1a1a]">
+            <div class="p-3 bg-white/5 border border-white/5 rounded-xl flex flex-col xs:flex-row items-center justify-between gap-3">
+              <div class="flex items-center gap-3 w-full xs:w-auto">
+                <div class="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-primary shrink-0">
+                  <Heart class="w-4.5 h-4.5 fill-current" />
                 </div>
                 <div class="flex flex-col">
-                  <span class="text-[10px] text-white font-bold leading-tight">Love Kenichi Studio?</span>
-                  <span class="text-[9px] text-neutral-400 leading-tight">Support the project to keep it free.</span>
+                  <span class="text-[11px] text-white font-bold">Love Kenichi?</span>
+                  <span class="text-[10px] text-neutral-500 font-medium">Keep the engine free.</span>
                 </div>
               </div>
               <a 
                 href="https://ko-fi.com/simplearyan" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                class="px-4 py-2 bg-[#29abe0] hover:bg-[#2499c9] text-white text-[10px] font-bold rounded-lg transition-all flex items-center gap-1.5 shadow-md active:scale-95"
+                class="w-full xs:w-auto h-9 px-4 bg-primary hover:bg-primaryHover text-background text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 active:scale-95 uppercase tracking-wider"
               >
-                <Heart class="w-3.5 h-3.5 fill-current" /> Support on Ko-fi
+                <Heart class="w-3 h-3 fill-current" /> Support
               </a>
             </div>
           </div>
         </Show>
 
-        <div class="p-4 bg-[#141414] border-t border-border flex justify-end gap-3 shrink-0">
+        <div class="p-4 bg-[#141414] border-t border-border flex flex-col-reverse xs:flex-row justify-end gap-2.5 shrink-0">
           <button 
             onClick={() => setProjectStore('exportModalOpen', false)}
             disabled={isExporting()}
-            class="px-5 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors disabled:opacity-50"
+            class="h-10 px-5 text-xs font-bold text-neutral-500 hover:text-white hover:bg-white/5 rounded-lg transition-all disabled:opacity-30"
           >
-            Cancel
+            CANCEL
           </button>
           <button 
             onClick={handleExport}
             disabled={isExporting()}
-            class="px-6 py-2 bg-primary hover:bg-primaryHover text-background text-sm font-bold rounded-md shadow-[0_0_15px_rgba(5,213,144,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center gap-2"
+            class="h-10 px-7 bg-primary hover:bg-primaryHover text-background text-xs font-black rounded-lg transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
           >
             <Show when={isExporting()} fallback={<Download class="w-4 h-4" />}>
                <Loader2 class="w-4 h-4 animate-spin" />
             </Show>
-            {isExporting() ? 'Exporting...' : 'Export'}
+            {isExporting() ? 'EXPORTING...' : 'EXPORT VIDEO'}
           </button>
         </div>
-
       </div>
     </div>
   );

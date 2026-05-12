@@ -172,7 +172,7 @@ export const PanelTimeline: Component = () => {
   let dragStartDuration = 0;
   let dragStartInPoint = 0;
 
-  const onWindowMouseMove = (e: MouseEvent) => {
+  const onWindowPointerMove = (e: PointerEvent) => {
     if (!isDragging) return;
     const pxPerSec = projectStore.pixelsPerSecond;
     const dx = e.clientX - dragStartX;
@@ -183,7 +183,6 @@ export const PanelTimeline: Component = () => {
       if (t < 0) t = 0;
       if (t > projectStore.duration) t = projectStore.duration;
       setProjectStore('currentTime', t);
-      // We will sync video engine time elsewhere (e.g. EngineCore)
     } else if (dragLayerId) {
       const layer = projectStore.layers.find(l => l.id === dragLayerId);
       if (!layer) return;
@@ -218,7 +217,6 @@ export const PanelTimeline: Component = () => {
         
         let newDur = dragStartDuration + dt;
         
-        // Constraint: inPoint + duration <= media.duration
         if (layer.inPoint + newDur > maxMediaDuration) {
           newDur = maxMediaDuration - layer.inPoint;
         }
@@ -229,7 +227,7 @@ export const PanelTimeline: Component = () => {
     }
   };
 
-  const onWindowMouseUp = () => {
+  const onWindowPointerUp = () => {
     isDragging = false;
     dragType = null;
     dragLayerId = null;
@@ -237,20 +235,17 @@ export const PanelTimeline: Component = () => {
 
   onMount(() => {
     if (resizerRef) setupResizer(resizerRef, 'timeline');
-    window.addEventListener('mousemove', onWindowMouseMove);
-    window.addEventListener('mouseup', onWindowMouseUp);
+    window.addEventListener('pointermove', onWindowPointerMove);
+    window.addEventListener('pointerup', onWindowPointerUp);
   });
 
   onCleanup(() => {
-    window.removeEventListener('mousemove', onWindowMouseMove);
-    window.removeEventListener('mouseup', onWindowMouseUp);
+    window.removeEventListener('pointermove', onWindowPointerMove);
+    window.removeEventListener('pointerup', onWindowPointerUp);
   });
 
-  const startScrub = (e: MouseEvent) => {
-    // Pause playback on scrub start
+  const startScrub = (e: PointerEvent) => {
     if (projectStore.isPlaying) setProjectStore('isPlaying', false);
-
-    // Only seek if clicking empty space or ruler, not clips
     if ((e.target as HTMLElement).closest('.timeline-clip')) return;
 
     if (!timelineAreaRef) return;
@@ -267,11 +262,11 @@ export const PanelTimeline: Component = () => {
     dragType = 'scrub';
     dragStartX = e.clientX;
     dragStartProp = t;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const startLayerDrag = (e: MouseEvent, layerId: string, type: 'move' | 'trim-left' | 'trim-right') => {
+  const startLayerDrag = (e: PointerEvent, layerId: string, type: 'move' | 'trim-left' | 'trim-right') => {
     e.stopPropagation();
-    // Pause playback on drag start
     if (projectStore.isPlaying) setProjectStore('isPlaying', false);
 
     const layer = projectStore.layers.find(l => l.id === layerId);
@@ -285,6 +280,7 @@ export const PanelTimeline: Component = () => {
     dragStartProp = layer.startTime;
     dragStartDuration = layer.duration;
     dragStartInPoint = layer.inPoint;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const zoomIn = () => {
@@ -317,7 +313,7 @@ export const PanelTimeline: Component = () => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
   return (
-    <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
+    <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative touch-none">
       <div ref={resizerRef} class="resizer resizer-t" id="resizer-timeline"></div>
 
       <div class="h-10 border-b border-border bg-[#1a1a1a] flex items-center px-4 justify-between shrink-0">
@@ -438,7 +434,7 @@ export const PanelTimeline: Component = () => {
           <div
             class="relative min-h-full"
             style={{ width: `${Math.max(1000, projectStore.duration * projectStore.pixelsPerSecond + 500)}px` }}
-            onMouseDown={startScrub}
+            onPointerDown={startScrub}
           >
 
             {/* Ruler */}
@@ -472,7 +468,7 @@ export const PanelTimeline: Component = () => {
             </div>
 
             {/* Tracks */}
-            <div class="w-full flex flex-col relative z-10">
+            <div class="w-full flex flex-col relative z-10 touch-none">
               <For each={projectStore.tracks}>
                 {(track) => (
                   <div
@@ -482,7 +478,7 @@ export const PanelTimeline: Component = () => {
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
                       {(layer) => (
                             <div
-                              class={`timeline-clip absolute top-1 bottom-1 rounded shadow-xl group border-2 transition-[border-color,ring,box-shadow,opacity] duration-150 cursor-pointer ${projectStore.activeLayerId === layer.id ? 'z-20 border-white ring-2 ring-white/20' : 'border-white/5'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                              class={`timeline-clip absolute top-1 bottom-1 rounded shadow-xl group border-2 transition-[border-color,ring,box-shadow,opacity] duration-150 cursor-pointer touch-none ${projectStore.activeLayerId === layer.id ? 'z-20 border-white ring-2 ring-white/20' : 'border-white/5'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
                               style={{
                                 left: `${layer.startTime * projectStore.pixelsPerSecond}px`,
                                 width: `${layer.duration * projectStore.pixelsPerSecond}px`,
@@ -492,7 +488,7 @@ export const PanelTimeline: Component = () => {
                                     : `rgba(${hexToRgb(layer.clipColor && layer.clipColor !== '#ffffff' ? layer.clipColor : (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.15)`)
                                   : (layer.clipColor && layer.clipColor !== '#ffffff' ? layer.clipColor : (layer.type === 'image' ? '#7c3aed' : layer.type === 'text' ? '#d97706' : '#4b5563')),
                               }}
-                              onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
+                              onPointerDown={(e) => startLayerDrag(e, layer.id, 'move')}
                             >
                             <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none select-none z-10 relative drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                               {layer.name}
@@ -505,16 +501,16 @@ export const PanelTimeline: Component = () => {
 
                             {/* Trimming Handles */}
                             <div
-                              class="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize bg-white/30 hover:bg-white/60 transition-colors z-20 rounded-l"
-                              onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
+                              class="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize bg-white/30 hover:bg-white/60 transition-colors z-20 rounded-l active:bg-white/80"
+                              onPointerDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
                             >
-                              <div class="absolute inset-y-2 left-0.5 w-0.5 bg-black/20 rounded-full"></div>
+                              <div class="absolute inset-y-2 left-1 w-0.5 bg-black/20 rounded-full"></div>
                             </div>
                             <div
-                              class="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize bg-white/30 hover:bg-white/60 transition-colors z-20 rounded-r"
-                              onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
+                              class="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize bg-white/30 hover:bg-white/60 transition-colors z-20 rounded-r active:bg-white/80"
+                              onPointerDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
                             >
-                              <div class="absolute inset-y-2 right-0.5 w-0.5 bg-black/20 rounded-full"></div>
+                              <div class="absolute inset-y-2 right-1 w-0.5 bg-black/20 rounded-full"></div>
                             </div>
                           </div>
                         )}

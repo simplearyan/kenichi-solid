@@ -2,17 +2,17 @@ export const setupResizer = (
   resizerEl: HTMLElement,
   type: 'left' | 'right' | 'timeline'
 ) => {
-  resizerEl.addEventListener('mousedown', () => {
+  resizerEl.addEventListener('pointerdown', (e) => {
     const workspaceGrid = document.getElementById('workspace-grid');
     if (!workspaceGrid) return;
 
+    resizerEl.setPointerCapture(e.pointerId);
     document.body.style.cursor = type === 'timeline' ? 'row-resize' : 'col-resize';
     resizerEl.classList.add('active');
     
-    // Optional: add a class to disable transitions during drag if you have them
     workspaceGrid.style.transition = 'none';
 
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
       if (type === 'left') {
         const width = Math.max(200, Math.min(ev.clientX - 12, window.innerWidth / 2.5));
         workspaceGrid.style.setProperty('--left-w', `${width}px`);
@@ -31,11 +31,11 @@ export const setupResizer = (
       document.body.style.cursor = '';
       resizerEl.classList.remove('active');
       workspaceGrid.style.transition = '';
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
     };
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
   });
 };
