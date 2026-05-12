@@ -128,25 +128,50 @@ export const exportProject = async (config: ExportConfig, onProgress: (progress:
 
     const promises: Promise<any>[] = [];
     for (const layer of projectStore.layers) {
-      if (layer.hidden || layer.type !== 'video') continue;
+      if (layer.hidden) continue;
       const track = projectStore.tracks.find(tr => tr.id === layer.trackId);
-      if (track && track.hidden) continue;
+      if (track && (track.hidden || track.muted)) {
+        // Skip hidden tracks but ensure they are removed from registry if not needed
+        continue;
+      }
       
       if (t >= layer.startTime && t < layer.startTime + layer.duration) {
-         const nodes = layerRegistry.get(layer.id);
-         if (nodes && nodes.videoEl) {
+         // Ensure layer is instantiated
+         let nodes = layerRegistry.get(layer.id);
+         if (!nodes) {
+           layerRegistry.instantiate(layer);
+           nodes = layerRegistry.get(layer.id);
+         }
+
+         if (nodes && layer.type === 'video' && nodes.videoEl) {
+           const vid = nodes.videoEl;
            const localT = t - layer.startTime + layer.inPoint;
-           if (Math.abs(nodes.videoEl.currentTime - localT) > 0.001) {
-             nodes.videoEl.currentTime = localT;
-             promises.push(new Promise(r => {
-               const handler = () => { 
-                 nodes.videoEl!.removeEventListener('seeked', handler); 
-                 requestAnimationFrame(() => r(true)); 
-               };
-               nodes.videoEl!.addEventListener('seeked', handler);
-               setTimeout(() => { nodes.videoEl!.removeEventListener('seeked', handler); r(true); }, 500);
-             }));
-           }
+           
+           // Seek and Wait
+           vid.currentTime = localT;
+           promises.push(new Promise(r => {
+             const onSeeked = () => { 
+               vid.removeEventListener('seeked', onSeeked); 
+               // Small delay to ensure texture is uploaded
+               setTimeout(() => r(true), 16); 
+             };
+             if (vid.readyState >= 2 && Math.abs(vid.currentTime - localT) < 0.01) {
+               r(true);
+             } else {
+               vid.addEventListener('seeked', onSeeked);
+               // Safety timeout
+               setTimeout(() => { vid.removeEventListener('seeked', onSeeked); r(true); }, 1000);
+             }
+           }));
+         } else if (nodes && layer.type === 'image' && nodes.imgEl) {
+            const img = nodes.imgEl;
+            if (!img.complete) {
+              promises.push(new Promise(r => {
+                img.onload = () => r(true);
+                img.onerror = () => r(true);
+                setTimeout(r, 1000); // Safety
+              }));
+            }
          }
       }
     }

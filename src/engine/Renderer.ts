@@ -198,7 +198,14 @@ export class Renderer {
         const isVisible = time >= layer.startTime && time < layer.startTime + layer.duration;
         const localTime = time - layer.startTime + layer.inPoint;
 
-        const nodes = layerRegistry.get(layer.id);
+        let nodes = layerRegistry.get(layer.id);
+        
+        // AUTO-INSTANTIATE: If layer is visible but not in registry, create it immediately
+        if (isVisible && !nodes) {
+          layerRegistry.instantiate(layer);
+          nodes = layerRegistry.get(layer.id);
+        }
+
         if (layer.type !== 'text' && !nodes) continue;
 
         // Sync Audio/Video Playback
