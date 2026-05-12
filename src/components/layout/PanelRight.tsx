@@ -35,10 +35,10 @@ export const PanelRight: Component = () => {
   };
 
   return (
-    <div class="hidden md:flex w-full h-full glass-panel bg-surface border border-border rounded-xl flex-col overflow-hidden shrink-0 relative">
+    <div class="flex w-full h-full glass-panel bg-surface border border-border rounded-xl flex-col overflow-hidden shrink-0 relative">
       <div ref={resizerRef} class="resizer resizer-l" id="resizer-right"></div>
       
-      <div class="h-12 border-b border-border bg-[#1a1a1a] flex items-center p-1 shrink-0">
+      <div class="hidden md:flex h-12 border-b border-border bg-[#1a1a1a] items-center p-1 shrink-0">
         <div class="flex bg-black p-1 rounded-lg w-full">
             <button 
             onClick={() => setProjectStore('rightPanelTab', 'layers')}

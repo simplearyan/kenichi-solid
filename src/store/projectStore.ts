@@ -101,7 +101,7 @@ export interface ProjectState {
   showLeftPanel: boolean;
   showRightPanel: boolean;
   showTimelinePanel: boolean;
-  mobileTab: "left" | "right" | "timeline";
+  mobileTab: "timeline" | "pool" | "clips" | "props" | "text" | "shapes";
 
   // Source Modal State
   sourceModalOpen: boolean;
@@ -143,7 +143,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   showLeftPanel: true,
   showRightPanel: true,
   showTimelinePanel: true,
-  mobileTab: "left",
+  mobileTab: "timeline",
 
   sourceModalOpen: false,
   sourceMediaId: null,

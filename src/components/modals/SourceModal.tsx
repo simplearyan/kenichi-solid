@@ -150,24 +150,19 @@ export const SourceModal: Component = () => {
     }
   };
 
-  const handleScrub = (e: MouseEvent) => {
-    if (!scrubberTrackRef || !videoRef) return;
-    const rect = scrubberTrackRef.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const newTime = pos * duration();
-    setCurrentTime(newTime);
-    videoRef.currentTime = newTime;
+  const getClientX = (e: MouseEvent | TouchEvent) => {
+    return 'touches' in e ? (e.touches[0] || e.changedTouches[0]).clientX : (e as MouseEvent).clientX;
   };
 
-  const onHandleMouseDown = (e: MouseEvent, type: 'in' | 'out' | 'move') => {
+  const onHandleMouseDown = (e: MouseEvent | TouchEvent, type: 'in' | 'out' | 'move') => {
     e.stopPropagation();
-    const dragStartX = e.clientX;
+    const dragStartX = getClientX(e);
     const dragStartIn = projectStore.srcIn;
     const dragStartOut = projectStore.srcOut;
 
-    const onMove = (moveEvent: MouseEvent) => {
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
       const rect = scrubberTrackRef.getBoundingClientRect();
-      const dx = moveEvent.clientX - dragStartX;
+      const dx = getClientX(moveEvent) - dragStartX;
       const dt = (dx / rect.width) * duration();
 
       if (type === 'in') {
@@ -186,30 +181,48 @@ export const SourceModal: Component = () => {
     const onUp = () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
     };
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
   };
 
-  const onScrubberMouseDown = (e: MouseEvent) => {
+  const onScrubberMouseDown = (e: MouseEvent | TouchEvent) => {
     if (!videoRef.paused) {
       videoRef.pause();
       setIsPlaying(false);
     }
-    handleScrub(e);
+    
+    const handleScrubNative = (ev: MouseEvent | TouchEvent) => {
+      if (!scrubberTrackRef || !videoRef) return;
+      const rect = scrubberTrackRef.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (getClientX(ev) - rect.left) / rect.width));
+      const newTime = pos * duration();
+      setCurrentTime(newTime);
+      videoRef.currentTime = newTime;
+    };
 
-    const onMove = (moveEvent: MouseEvent) => {
-      handleScrub(moveEvent);
+    handleScrubNative(e);
+
+    const onMove = (moveEvent: MouseEvent | TouchEvent) => {
+      handleScrubNative(moveEvent);
     };
 
     const onUp = () => {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onUp);
     };
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
   };
 
   const handleImageMouseDown = (e: MouseEvent) => {
@@ -301,13 +314,14 @@ export const SourceModal: Component = () => {
   };
 
   return (
-    <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div class="bg-[#1e1e1e] border border-border w-full max-w-4xl rounded-xl flex flex-col overflow-hidden shadow-2xl">
+    <div class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2 md:p-4 backdrop-blur-sm overflow-y-auto">
+      <div class="bg-[#1e1e1e] border border-border w-full max-w-4xl rounded-xl flex flex-col overflow-hidden shadow-2xl my-auto">
 
         <div class="h-12 border-b border-border bg-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
-          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
-            <Navigation class="w-4 h-4 text-indigo-400" />
-            Source Preview <span class="text-neutral-500 font-normal ml-2">/ {media()?.name}</span>
+          <h2 class="text-xs md:text-sm font-semibold text-white flex items-center gap-2 truncate pr-2">
+            <Navigation class="w-4 h-4 text-indigo-400 shrink-0" />
+            <span class="truncate">Source Preview</span> 
+            <span class="text-neutral-500 font-normal truncate hidden sm:inline">/ {media()?.name}</span>
           </h2>
           <button onClick={closeSourceModal} class="text-neutral-400 hover:text-white p-1 rounded-md hover:bg-[#2a2a2a] transition-colors">
             <X class="w-5 h-5" />
@@ -342,6 +356,7 @@ export const SourceModal: Component = () => {
                       width: `${((projectStore.srcOut - projectStore.srcIn) / duration()) * 100}%`
                     }}
                     onMouseDown={(e) => onHandleMouseDown(e, 'move')}
+                    onTouchStart={(e) => onHandleMouseDown(e, 'move')}
                   />
 
                   {/* Playhead (No Glow) */}
@@ -355,6 +370,7 @@ export const SourceModal: Component = () => {
                     class="absolute top-0 bottom-0 w-4 -ml-2 cursor-ew-resize flex items-center justify-center group/h z-30"
                     style={{ left: `${(projectStore.srcIn / duration()) * 100}%` }}
                     onMouseDown={(e) => onHandleMouseDown(e, 'in')}
+                    onTouchStart={(e) => onHandleMouseDown(e, 'in')}
                   >
                     <div class="w-1 h-12 bg-white rounded-full transition-transform group-hover/h:scale-x-150"></div>
                   </div>
@@ -363,6 +379,7 @@ export const SourceModal: Component = () => {
                     class="absolute top-0 bottom-0 w-4 -ml-2 cursor-ew-resize flex items-center justify-center group/h z-30"
                     style={{ left: `${(projectStore.srcOut / duration()) * 100}%` }}
                     onMouseDown={(e) => onHandleMouseDown(e, 'out')}
+                    onTouchStart={(e) => onHandleMouseDown(e, 'out')}
                   >
                     <div class="w-1 h-12 bg-white rounded-full transition-transform group-hover/h:scale-x-150"></div>
                   </div>
@@ -386,7 +403,7 @@ export const SourceModal: Component = () => {
           </Show>
         </div>
 
-        <div class="h-24 bg-[#1a1a1a] border-t border-border flex flex-col px-4 py-2 shrink-0 select-none relative">
+        <div class="min-h-[140px] md:h-24 bg-[#1a1a1a] border-t border-border flex flex-col px-3 md:px-4 py-2 md:py-2 shrink-0 select-none relative">
           <div
             ref={scrubberTrackRef}
             class={`h-6 relative group cursor-pointer ${media()?.type === 'image' ? 'opacity-30 pointer-events-none' : ''}`}
@@ -429,30 +446,32 @@ export const SourceModal: Component = () => {
             ></div>
           </div>
 
-          <div class="flex items-center justify-between mt-2">
-            <div class="flex items-center gap-4">
-              <button
-                onClick={handlePlayPause}
-                disabled={media()?.type === 'image'}
-                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white flex items-center justify-center transition-all disabled:opacity-50"
-              >
-                <Show when={!isPlaying()} fallback={<Pause class="w-4 h-4 fill-current" />}>
-                  <Play class="w-4 h-4 fill-current ml-0.5" />
-                </Show>
-              </button>
-              
-              <Show when={media()?.type === 'video'}>
+          <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between mt-2 gap-3 md:gap-0">
+            <div class="flex items-center justify-between md:justify-start gap-4">
+              <div class="flex items-center gap-3">
                 <button
-                  onClick={() => setExtractAudio(!extractAudio())}
-                  class={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${extractAudio() ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-transparent border-white/10 text-neutral-400 hover:border-white/20'}`}
+                  onClick={handlePlayPause}
+                  disabled={media()?.type === 'image'}
+                  class="w-10 h-10 md:w-9 md:h-9 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white flex items-center justify-center transition-all disabled:opacity-50"
                 >
-                  <Music class="w-3.5 h-3.5" />
-                  <span class="text-[10px] font-bold uppercase tracking-tight">Extract Audio</span>
+                  <Show when={!isPlaying()} fallback={<Pause class="w-4 h-4 fill-current" />}>
+                    <Play class="w-4 h-4 fill-current ml-0.5" />
+                  </Show>
                 </button>
-              </Show>
+                
+                <Show when={media()?.type === 'video'}>
+                  <button
+                    onClick={() => setExtractAudio(!extractAudio())}
+                    class={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${extractAudio() ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-transparent border-white/10 text-neutral-400 hover:border-white/20'}`}
+                  >
+                    <Music class="w-3.5 h-3.5" />
+                    <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-tight">Extract Audio</span>
+                  </button>
+                </Show>
+              </div>
 
               <div class="flex flex-col">
-                <div class="text-[10px] font-mono text-neutral-400">
+                <div class="text-[10px] md:text-[10px] font-mono text-neutral-400">
                   {currentTime().toFixed(1)}s <span class="text-neutral-600">/ {duration().toFixed(1)}s</span>
                 </div>
                 <Show when={media()?.type !== 'image'}>
@@ -463,39 +482,44 @@ export const SourceModal: Component = () => {
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
-              <div class="flex items-center bg-black/40 rounded-lg p-1.5 border border-white/5 gap-3 backdrop-blur-sm">
-                <div class="flex flex-col items-start px-2">
-                  <span class="text-[7px] text-neutral-600 font-black uppercase tracking-tighter mb-0.5">Start</span>
-                  <input
-                    type="number" step="0.1" min="0" max={projectStore.srcOut}
-                    value={projectStore.srcIn.toFixed(1)}
-                    onInput={(e) => updateSourceModalState({ srcIn: parseFloat(e.currentTarget.value) || 0 })}
-                    class="bg-transparent text-primary text-[11px] font-mono w-14 focus:outline-none border-b border-transparent focus:border-primary/50 transition-all hover:text-white"
-                  />
+            <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-2">
+              <div class="flex items-center justify-between md:justify-start gap-2">
+                <div class="flex items-center bg-black/40 rounded-lg p-1.5 border border-white/5 gap-2 md:gap-3 backdrop-blur-sm flex-1 md:flex-initial justify-around md:justify-start">
+                  <div class="flex flex-col items-start px-1 md:px-2">
+                    <span class="text-[7px] text-neutral-600 font-black uppercase tracking-tighter mb-0.5">Start</span>
+                    <input
+                      type="number" step="0.1" min="0" max={projectStore.srcOut}
+                      value={projectStore.srcIn.toFixed(1)}
+                      onInput={(e) => updateSourceModalState({ srcIn: parseFloat(e.currentTarget.value) || 0 })}
+                      class="bg-transparent text-primary text-[11px] font-mono w-12 md:w-14 focus:outline-none border-b border-transparent focus:border-primary/50 transition-all hover:text-white"
+                    />
+                  </div>
+                  <div class="w-px h-5 bg-white/5 self-center"></div>
+                  <div class="flex flex-col items-start px-1 md:px-2">
+                    <span class="text-[7px] text-neutral-600 font-black uppercase tracking-tighter mb-0.5">End</span>
+                    <input
+                      type="number" step="0.1" min={projectStore.srcIn} max={duration()}
+                      value={projectStore.srcOut.toFixed(1)}
+                      onInput={(e) => updateSourceModalState({ srcOut: parseFloat(e.currentTarget.value) || duration() })}
+                      class="bg-transparent text-primary text-[11px] font-mono w-12 md:w-14 focus:outline-none border-b border-transparent focus:border-primary/50 transition-all hover:text-white"
+                    />
+                  </div>
                 </div>
-                <div class="w-px h-5 bg-white/5 self-center"></div>
-                <div class="flex flex-col items-start px-2">
-                  <span class="text-[7px] text-neutral-600 font-black uppercase tracking-tighter mb-0.5">End</span>
-                  <input
-                    type="number" step="0.1" min={projectStore.srcIn} max={duration()}
-                    value={projectStore.srcOut.toFixed(1)}
-                    onInput={(e) => updateSourceModalState({ srcOut: parseFloat(e.currentTarget.value) || duration() })}
-                    class="bg-transparent text-primary text-[11px] font-mono w-14 focus:outline-none border-b border-transparent focus:border-primary/50 transition-all hover:text-white"
-                  />
+
+                <div class="flex bg-white/5 rounded-lg p-1 border border-white/5 overflow-hidden">
+                  <button onClick={handleSetIn} class="px-2 md:px-4 py-1.5 hover:bg-white/10 text-neutral-400 hover:text-white rounded-md text-[8px] md:text-[9px] font-black uppercase tracking-wider transition-all active:scale-95">
+                    In
+                  </button>
+                  <button onClick={handleSetOut} class="px-2 md:px-4 py-1.5 hover:bg-white/10 text-neutral-400 hover:text-white rounded-md text-[8px] md:text-[9px] font-black uppercase tracking-wider transition-all active:scale-95">
+                    Out
+                  </button>
                 </div>
               </div>
 
-              <div class="flex bg-white/5 rounded-lg p-1 border border-white/5 ml-1 overflow-hidden">
-                <button onClick={handleSetIn} class="px-4 py-1.5 hover:bg-white/10 text-neutral-400 hover:text-white rounded-md text-[9px] font-black uppercase tracking-wider transition-all active:scale-95">
-                  Mark In
-                </button>
-                <button onClick={handleSetOut} class="px-4 py-1.5 hover:bg-white/10 text-neutral-400 hover:text-white rounded-md text-[9px] font-black uppercase tracking-wider transition-all active:scale-95">
-                  Mark Out
-                </button>
-              </div>
-
-              <button onClick={addToTimeline} class="ml-2 px-5 py-2.5 bg-primary hover:bg-primaryHover text-black rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 uppercase">
+              <button 
+                onClick={addToTimeline} 
+                class="px-5 py-3 md:py-2.5 bg-primary hover:bg-primaryHover text-black rounded-lg md:rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/10 hover:shadow-primary/20 active:scale-[0.98] uppercase w-full md:w-auto"
+              >
                 <CheckCircle class="w-4 h-4" />
                 Add to Timeline
               </button>

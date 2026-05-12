@@ -11,7 +11,11 @@ export interface ExportConfig {
 import ZipWorker from '../workers/zip.worker.ts?worker';
 import MediaWorker from '../workers/mediabunny.worker.ts?worker';
 
-export const exportProject = async (config: ExportConfig, onProgress: (progress: number, status: string) => void) => {
+export const exportProject = async (
+  config: ExportConfig, 
+  onProgress: (progress: number, status: string) => void,
+  controller?: { isPaused: () => boolean; isCancelled: () => boolean }
+) => {
   const aspectRatioStr = projectStore.aspectRatio;
   let aspectX = 16, aspectY = 9;
   if (aspectRatioStr === '9/16') { aspectX = 9; aspectY = 16; }
@@ -123,6 +127,20 @@ export const exportProject = async (config: ExportConfig, onProgress: (progress:
   if (!ctx) throw new Error("Could not get OffscreenCanvas context");
 
   for (let f = 0; f < totalFrames; f++) {
+    // PAUSE/CANCEL CHECK
+    if (controller?.isCancelled()) {
+      worker.terminate();
+      throw new Error('Export Cancelled');
+    }
+    while (controller?.isPaused()) {
+      onProgress(Math.round((f / totalFrames) * 100), `Paused at Frame ${f + 1}...`);
+      await new Promise(r => setTimeout(r, 200));
+      if (controller?.isCancelled()) {
+        worker.terminate();
+        throw new Error('Export Cancelled');
+      }
+    }
+
     const t = f / config.fps;
     onProgress(Math.round((f / totalFrames) * 100), `Rendering Frame ${f + 1} of ${totalFrames}`);
 

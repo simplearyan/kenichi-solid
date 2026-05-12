@@ -66,26 +66,45 @@ export const WorkspaceGrid: Component<Props> = (props) => {
         {props.centerPanel}
       </div>
 
-      <div id="mobile-tabs" class="md:hidden flex items-center bg-surface border border-border rounded-xl p-1 shrink-0 mt-1 mb-1 shadow-sm">
-        <button 
-          onClick={() => setProjectStore('mobileTab', 'left')}
-          class={`mobile-tab-btn flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${projectStore.mobileTab === 'left' ? 'bg-[#262626] text-white' : 'text-neutral-500 hover:text-white'}`}
-        >Media</button>
-        <button 
-          onClick={() => setProjectStore('mobileTab', 'right')}
-          class={`mobile-tab-btn flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${projectStore.mobileTab === 'right' ? 'bg-[#262626] text-white' : 'text-neutral-500 hover:text-white'}`}
-        >Settings</button>
-        <button 
-          onClick={() => setProjectStore('mobileTab', 'timeline')}
-          class={`mobile-tab-btn flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${projectStore.mobileTab === 'timeline' ? 'bg-[#262626] text-white' : 'text-neutral-500 hover:text-white'}`}
-        >Timeline</button>
+      <div id="mobile-tabs" class="md:hidden flex items-center bg-[#1a1a1a] border border-border rounded-xl p-1 shrink-0 mt-1 mb-1 shadow-2xl overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-1 min-w-max px-1">
+          <button 
+            onClick={() => setProjectStore('mobileTab', 'timeline')}
+            class={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95 ${projectStore.mobileTab === 'timeline' ? 'bg-primary text-black shadow-[0_0_15px_rgba(5,213,144,0.3)]' : 'text-neutral-500 hover:text-neutral-300'}`}
+          >Timeline</button>
+          
+          <button 
+            onClick={() => { setProjectStore('mobileTab', 'pool'); setProjectStore('leftPanelTab', 'pool'); }}
+            class={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95 ${projectStore.mobileTab === 'pool' ? 'bg-primary text-black shadow-[0_0_15px_rgba(5,213,144,0.3)]' : 'text-neutral-500 hover:text-neutral-300'}`}
+          >Media</button>
+          
+          <button 
+            onClick={() => { setProjectStore('mobileTab', 'clips'); setProjectStore('rightPanelTab', 'layers'); }}
+            class={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95 ${projectStore.mobileTab === 'clips' ? 'bg-primary text-black shadow-[0_0_15px_rgba(5,213,144,0.3)]' : 'text-neutral-500 hover:text-neutral-300'}`}
+          >Clips</button>
+          
+          <button 
+            onClick={() => { setProjectStore('mobileTab', 'props'); setProjectStore('rightPanelTab', 'props'); }}
+            class={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95 ${projectStore.mobileTab === 'props' ? 'bg-primary text-black shadow-[0_0_15px_rgba(5,213,144,0.3)]' : 'text-neutral-500 hover:text-neutral-300'}`}
+          >Properties</button>
+          
+          <button 
+            onClick={() => { setProjectStore('mobileTab', 'text'); setProjectStore('leftPanelTab', 'text'); }}
+            class={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95 ${projectStore.mobileTab === 'text' ? 'bg-primary text-black shadow-[0_0_15px_rgba(5,213,144,0.3)]' : 'text-neutral-500 hover:text-neutral-300'}`}
+          >Text</button>
+          
+          <button 
+            onClick={() => { setProjectStore('mobileTab', 'shapes'); setProjectStore('leftPanelTab', 'shapes'); }}
+            class={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all active:scale-95 ${projectStore.mobileTab === 'shapes' ? 'bg-primary text-black shadow-[0_0_15px_rgba(5,213,144,0.3)]' : 'text-neutral-500 hover:text-neutral-300'}`}
+          >Shapes</button>
+        </div>
       </div>
 
-      <div class={`panel-left-area flex-col min-w-0 min-h-0 ${projectStore.mobileTab === 'left' ? 'flex flex-1' : 'hidden'} ${projectStore.showLeftPanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
+      <div class={`panel-left-area flex-col min-w-0 min-h-0 ${['pool', 'text', 'shapes'].includes(projectStore.mobileTab) ? 'flex flex-1' : 'hidden'} ${projectStore.showLeftPanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
         {props.leftPanel}
       </div>
 
-      <div class={`panel-right-area flex-col min-w-0 min-h-0 ${projectStore.mobileTab === 'right' ? 'flex flex-1' : 'hidden'} ${projectStore.showRightPanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
+      <div class={`panel-right-area flex-col min-w-0 min-h-0 ${['clips', 'props'].includes(projectStore.mobileTab) ? 'flex flex-1' : 'hidden'} ${projectStore.showRightPanel ? 'md:flex md:flex-initial' : 'md:hidden'}`}>
         {props.rightPanel}
       </div>
 

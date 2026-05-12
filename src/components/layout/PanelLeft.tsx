@@ -93,7 +93,7 @@ export const PanelLeft: Component = () => {
 
   return (
     <aside class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative">
-      <div class="flex border-b border-border bg-[#1a1a1a] shrink-0">
+      <div class="hidden md:flex border-b border-border bg-[#1a1a1a] shrink-0">
         <button 
           onClick={() => setProjectStore('leftPanelTab', 'pool')}
           class={`flex-1 py-2 text-[10px] font-bold tracking-wider transition-colors border-b-2 ${projectStore.leftPanelTab === 'pool' ? 'text-primary border-primary' : 'text-neutral-500 hover:text-neutral-300 border-transparent'}`}

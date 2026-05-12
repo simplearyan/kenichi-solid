@@ -1,5 +1,5 @@
 import { type Component } from 'solid-js';
-import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine } from 'lucide-solid';
+import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 export const Header: Component = () => {
@@ -79,6 +79,16 @@ export const Header: Component = () => {
           title="View on GitHub"
         >
           <GitBranch class="w-4 h-4" />
+        </a>
+        <a 
+          href="https://ko-fi.com/simplearyan" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#29abe0] text-white text-[10px] font-bold hover:bg-[#2499c9] transition-all shadow-sm active:scale-95"
+          title="Support on Ko-fi"
+        >
+          <Heart class="w-3.5 h-3.5 fill-current" />
+          <span class="hidden lg:inline">Support on Ko-fi</span>
         </a>
         <button 
           onClick={() => setProjectStore('exportModalOpen', true)}

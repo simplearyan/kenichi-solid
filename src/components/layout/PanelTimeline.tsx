@@ -334,11 +334,11 @@ export const PanelTimeline: Component = () => {
           <div class="w-px h-4 bg-[#333] mx-1"></div>
           <div class="flex items-center gap-2" title="Timeline Zoom">
             <button onClick={zoomOut} class="hover:text-white transition-colors p-1" title="Zoom Out"><ZoomOut class="w-3.5 h-3.5" /></button>
-            <input type="range" min="10" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary" />
+            <input type="range" min="10" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary hidden md:block" />
             <button onClick={zoomIn} class="hover:text-white transition-colors p-1" title="Zoom In"><ZoomIn class="w-3.5 h-3.5" /></button>
           </div>
-          <div class="w-px h-4 bg-[#333] mx-1"></div>
-          <div class="flex items-center gap-1.5" title="Track Height">
+          <div class="w-px h-4 bg-[#333] mx-1 hidden md:block"></div>
+          <div class="hidden md:flex items-center gap-1.5" title="Track Height">
             <button
               onClick={() => setProjectStore('trackHeight', h => Math.max(32, h - 8))}
               class="p-1 hover:bg-white/10 rounded transition-colors text-neutral-400 hover:text-white"
@@ -364,7 +364,7 @@ export const PanelTimeline: Component = () => {
           </button>
         </div>
 
-        <div class="flex items-center gap-1">
+        <div class="hidden md:flex items-center gap-1">
           <button
             onClick={() => setProjectStore('layout', 'layout-default')}
             class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-default' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
@@ -390,7 +390,7 @@ export const PanelTimeline: Component = () => {
           ><Maximize2 class="w-4 h-4" /></button>
 
           <div class="w-px h-4 bg-[#333] mx-1"></div>
-          <button onClick={() => setProjectStore('showTimelinePanel', false)} class="hidden md:block text-neutral-500 hover:text-white transition-colors ml-1"><X class="w-4 h-4" /></button>
+          <button onClick={() => setProjectStore('showTimelinePanel', false)} class="text-neutral-500 hover:text-white transition-colors ml-1"><X class="w-4 h-4" /></button>
         </div>
       </div>
 
