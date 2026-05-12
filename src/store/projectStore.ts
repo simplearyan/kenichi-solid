@@ -71,6 +71,15 @@ export interface LayerState {
   animOut?: string;
   animOutDuration?: number;
   animLoop?: string;
+  
+  // Style & Effects
+  borderRadius?: number;
+  shadowEnabled?: boolean;
+  shadowBlur?: number;
+  shadowColor?: string;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
+
   waveformStyle?: 'standard' | 'viz' | 'clean';
   audioAppearance?: 'waveform' | 'clip';
   clipColor?: string;
@@ -98,7 +107,7 @@ export interface ProjectState {
   // UI State
   layout: "layout-default" | "layout-wide-left" | "layout-wide-right" | "layout-full";
   leftPanelTab: "pool" | "text" | "shapes";
-  rightPanelTab: "layers" | "props";
+  rightPanelTab: "layers" | "props" | "project";
   showLeftPanel: boolean;
   showRightPanel: boolean;
   showTimelinePanel: boolean;
@@ -119,6 +128,7 @@ export interface ProjectState {
   trackHeight: number;
   followPlayhead: boolean;
   rippleEnabled: boolean;
+  canvasBackground: string;
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -162,6 +172,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   trackHeight: 64,
   followPlayhead: true,
   rippleEnabled: false,
+  canvasBackground: "#000000",
 });
 
 import { audioEngine } from '../engine/AudioEngine';

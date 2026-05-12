@@ -178,8 +178,12 @@ export class Renderer {
   public renderFrame(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, targetWidth: number, targetHeight: number, time: number, forceSync = false) {
     if (!ctx) return;
 
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    if (projectStore.canvasBackground === 'transparent') {
+      ctx.clearRect(0, 0, targetWidth, targetHeight);
+    } else {
+      ctx.fillStyle = projectStore.canvasBackground || '#000000';
+      ctx.fillRect(0, 0, targetWidth, targetHeight);
+    }
 
     let baseW = 1920;
     let baseH = 1080;
@@ -329,11 +333,41 @@ export class Renderer {
             if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
             if (filterStr) ctx.filter = filterStr.trim();
 
+            const x = -bCvs.width / 2;
+            const y = -bCvs.height / 2;
+            const w = bCvs.width;
+            const h = bCvs.height;
+            const r = layer.borderRadius ?? 0;
+
+            if (layer.shadowEnabled) {
+              const resScale = targetWidth / 1920;
+              ctx.shadowColor = layer.shadowColor || 'rgba(0,0,0,0.5)';
+              ctx.shadowBlur = (layer.shadowBlur || 20) * resScale;
+              ctx.shadowOffsetX = (layer.shadowOffsetX || 0) * resScale;
+              ctx.shadowOffsetY = (layer.shadowOffsetY || 10) * resScale;
+
+              // If we have border radius, we must cast shadow using a dummy shape 
+              // because clipping the image later will hide the shadow if it's on the same draw call.
+              if (r > 0) {
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, r);
+                ctx.fillStyle = '#000000'; // Opaque caster
+                ctx.fill();
+                ctx.shadowColor = 'transparent'; // Disable shadow for actual image draw to avoid double-rendering
+              }
+            }
+
             const canDraw = layer.type === 'image' || (layer.type === 'video' && (sourceMedia as HTMLVideoElement).readyState >= 2);
 
             if (canDraw) {
               // Reset stall count for this layer
               this.stallTracker.delete(layer.id);
+
+              if (r > 0) {
+                ctx.beginPath();
+                ctx.roundRect(x, y, w, h, r);
+                ctx.clip();
+              }
 
               if (layer.chromaKey) {
                 bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
@@ -373,11 +407,12 @@ export class Renderer {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
 
-          if (layer.dropShadow) {
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 15;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 5;
+          if (layer.shadowEnabled) {
+            const resScale = targetWidth / 1920;
+            ctx.shadowColor = layer.shadowColor || 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = (layer.shadowBlur || 20) * resScale;
+            ctx.shadowOffsetX = (layer.shadowOffsetX || 0) * resScale;
+            ctx.shadowOffsetY = (layer.shadowOffsetY || 10) * resScale;
           }
 
           if (layer.letterSpacing) {

@@ -2,7 +2,7 @@ import { type Component, onMount, For, Show, createSignal, createMemo } from 'so
 import { 
   Layers, Sliders, Eye, EyeOff, Lock, Unlock, Settings2, Music, Type, 
   Square, Film, Image as ImageIcon, ChevronUp, ChevronDown, 
-  Maximize, Zap, PlayCircle, ChevronRight 
+  Maximize, Zap, PlayCircle, ChevronRight, Palette
 } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer, moveTrack } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
@@ -206,6 +206,7 @@ export const PanelRight: Component = () => {
 
     if (layer.type !== 'audio') {
       tabs.push({ id: 'transform', name: 'Transform', icon: <Maximize class="w-3.5 h-3.5" /> });
+      tabs.push({ id: 'style', name: 'Styles', icon: <Palette class="w-3.5 h-3.5" /> });
     }
 
     if (layer.type !== 'audio' && layer.type !== 'text') {
@@ -248,10 +249,79 @@ export const PanelRight: Component = () => {
             <Settings2 class="w-3.5 h-3.5" />
             Props
           </button>
+          <button 
+            onClick={() => setProjectStore('rightPanelTab', 'project')}
+            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'project' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-neutral-500 hover:text-white hover:bg-[#1e1e1e]'}`}
+          >
+            <Settings2 class="w-3.5 h-3.5" />
+            Project
+          </button>
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Project Content */}
+        <Show when={isMobile() ? projectStore.mobileTab === 'props' && activePropTab() === 'project' : projectStore.rightPanelTab === 'project'}>
+          <div class="flex flex-col h-full overflow-y-auto p-4 md:p-6 custom-scrollbar space-y-6">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
+                <Settings2 class="w-4 h-4" />
+              </div>
+              <div>
+                <h2 class="text-sm font-black text-white uppercase tracking-tighter">Project Settings</h2>
+                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Global configuration</p>
+              </div>
+            </div>
+
+            <Section 
+              title="Canvas Background" 
+              icon={<Palette class="w-3.5 h-3.5" />} 
+              color="bg-primary"
+              isOpen={true} 
+              onToggle={() => {}}
+            >
+              <div class="space-y-4 pt-1">
+                <div class="grid grid-cols-6 gap-2">
+                  <button 
+                    onClick={() => setProjectStore('canvasBackground', 'transparent')}
+                    class={`aspect-square rounded-lg border-2 transition-all relative overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMzMzMiLz48cmVjdCB4PSI0IiB5PSI0IiB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMzMzIi8+PC9zdmc+')] ${projectStore.canvasBackground === 'transparent' ? 'border-primary' : 'border-white/5 hover:border-white/20'}`}
+                    title="Transparent"
+                  />
+                  <For each={[
+                    { name: 'Black', color: '#000000' },
+                    { name: 'Dark Gray', color: '#1a1a1a' },
+                    { name: 'Red', color: '#ff3366' },
+                    { name: 'Yellow', color: '#ffcc00' },
+                    { name: 'Green', color: '#05d590' }
+                  ]}>
+                    {(preset) => (
+                      <button 
+                        onClick={() => setProjectStore('canvasBackground', preset.color)}
+                        class={`aspect-square rounded-lg border-2 transition-all ${projectStore.canvasBackground === preset.color ? 'border-primary' : 'border-white/5 hover:border-white/20'}`}
+                        style={{ "background-color": preset.color }}
+                        title={preset.name}
+                      />
+                    )}
+                  </For>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-xl">
+                  <div class="flex items-center gap-2">
+                    <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Custom Color</label>
+                    <span class="text-[10px] text-white font-mono opacity-50 uppercase">{projectStore.canvasBackground}</span>
+                  </div>
+                  <input 
+                    type="color" 
+                    value={projectStore.canvasBackground === 'transparent' ? '#000000' : projectStore.canvasBackground} 
+                    onInput={(e) => setProjectStore('canvasBackground', e.currentTarget.value)} 
+                    class="w-8 h-5 rounded cursor-pointer bg-transparent border-none p-0" 
+                  />
+                </div>
+              </div>
+            </Section>
+          </div>
+        </Show>
+
         {/* Clips Content */}
         <Show when={isMobile() ? projectStore.mobileTab === 'clips' : projectStore.rightPanelTab === 'layers'}>
           <div class="flex flex-col p-2 gap-4">
@@ -369,6 +439,75 @@ export const PanelRight: Component = () => {
                           </div>
                         </div>
                       </div>
+                  </Section>
+                </Show>
+
+                {/* Styles Section */}
+                <Show when={activeLayer()?.type !== 'audio'}>
+                  <Section 
+                    title="Styles" 
+                    icon={<Palette class="w-3.5 h-3.5" />} 
+                    color="bg-indigo-500"
+                    isOpen={collapsed().style} 
+                    onToggle={() => toggleSection('style')}
+                    showOnMobile={activePropTab() === 'style'}
+                  >
+                    <div class="space-y-5">
+                      <Show when={activeLayer()?.type !== 'text'}>
+                        <PropSlider 
+                          label="Border Radius"
+                          value={activeLayer()?.borderRadius || 0}
+                          min={0} max={200} step={1}
+                          onChange={(v) => handlePropChange('borderRadius', v)}
+                        />
+                      </Show>
+
+                      <div class="space-y-4 pt-2 border-t border-white/5">
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Drop Shadow</label>
+                          <button 
+                            onClick={() => handlePropChange('shadowEnabled', !activeLayer()?.shadowEnabled)}
+                            class={`w-8 h-4 rounded-full transition-colors relative ${activeLayer()?.shadowEnabled ? 'bg-primary' : 'bg-white/10'}`}
+                          >
+                            <div class={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${activeLayer()?.shadowEnabled ? 'left-4.5' : 'left-0.5'}`} />
+                          </button>
+                        </div>
+
+                        <Show when={activeLayer()?.shadowEnabled}>
+                          <div class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <PropSlider 
+                              label="Shadow Blur"
+                              value={activeLayer()?.shadowBlur ?? 20}
+                              min={0} max={100} step={1}
+                              onChange={(v) => handlePropChange('shadowBlur', v)}
+                            />
+                            <div class="grid grid-cols-2 gap-4">
+                              <PropSlider 
+                                label="Offset X"
+                                value={activeLayer()?.shadowOffsetX ?? 0}
+                                min={-100} max={100} step={1}
+                                onChange={(v) => handlePropChange('shadowOffsetX', v)}
+                              />
+                              <PropSlider 
+                                label="Offset Y"
+                                value={activeLayer()?.shadowOffsetY ?? 10}
+                                min={-100} max={100} step={1}
+                                onChange={(v) => handlePropChange('shadowOffsetY', v)}
+                              />
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl">
+                              <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Shadow Color</label>
+                              <input 
+                                type="color" 
+                                value={activeLayer()?.shadowColor || '#000000'} 
+                                onInput={(e) => handlePropChange('shadowColor', e.currentTarget.value)} 
+                                class="w-8 h-5 rounded cursor-pointer bg-transparent border-none p-0" 
+                              />
+                            </div>
+                          </div>
+                        </Show>
+                      </div>
+                    </div>
                   </Section>
                 </Show>
 

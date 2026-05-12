@@ -19,6 +19,10 @@ A high-performance, professional web-based video editor prototype inspired by ma
 -   **Media Ingestion**: Support for importing Video, Audio, and Images with automatic metadata extraction.
 -   **Chroma Key & Pixel FX**: Real-time green screen removal and color correction filters (brightness, contrast).
 -   **Motion Graphics**: Keyframeless animation system with `In`, `Out`, and `Loop` states (Fade, Slide, Zoom, Rotate, etc.).
+-   **Advanced Styling & HUD**:
+    *   **Styling**: Hardware-accelerated Border Radius and multi-parameter Drop Shadows for all visual layers.
+    *   **Performance Monitoring**: Real-time FPS counter and dynamic resolution tracking in the preview window.
+    *   **Customization**: Global Canvas background control (Transparent, Solid, Custom Colors).
 
 ## 🚀 Tech Stack
 
@@ -65,7 +69,14 @@ The **Kenichi Export Engine** is designed for pro-grade background rendering:
 
 ## 📦 Version History
 
-### **v1.4 - Mobile Studio & Export Control** (Current)
+### **v1.5 - Stylist & Performance HUD** (Current)
+-   **Advanced Styling**: Customizable Border Radius and granular Drop Shadows (Blur, Offset, Color) for Video, Image, and Text.
+-   **Canvas Customization**: Global support for Transparent, Solid presets, and Custom hex backgrounds.
+-   **Performance HUD**: Real-time FPS counter and dynamic resolution metadata tracking in the preview window.
+-   **Rendering Refinement**: Implemented 'Shadow Caster' logic for rounded corners and flicker-free pausing via drift tolerance.
+-   **Custom UI Components**: Replaced native browser dropdowns with premium, high-fidelity `PropSelect` and `HeaderSelect` components.
+
+### **v1.4 - Mobile Studio & Export Control**
 -   **Interactive Export**: Added Stop, Pause, and Resume buttons to the Export Modal.
 -   **Mobile Workspace**: Scrollable navigation bar for small screens (Timeline, Media, Clips, Props, Text, Shapes).
 -   **Unified Support**: Integrated Ko-fi support for project sustainability.
