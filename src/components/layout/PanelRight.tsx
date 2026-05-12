@@ -1,7 +1,8 @@
-import { onMount, For, Show, type Component } from 'solid-js';
+import { type Component, onMount, For, Show } from 'solid-js';
 import { Layers, Sliders, Eye, EyeOff, Lock, Unlock, Settings2, Music, Type, Square, Film, Image as ImageIcon } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
+import { AudioTrimView } from '../common/AudioTrimView';
 
 export const PanelRight: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
@@ -11,6 +12,10 @@ export const PanelRight: Component = () => {
   });
 
   const activeLayer = () => projectStore.activeLayerId ? projectStore.layers.find(l => l.id === projectStore.activeLayerId) : null;
+  const media = () => {
+    const l = activeLayer();
+    return l?.mediaId ? projectStore.mediaPool[l.mediaId] : null;
+  };
 
   const handlePropChange = (key: string, value: any) => {
     if (projectStore.activeLayerId) {
@@ -174,18 +179,82 @@ export const PanelRight: Component = () => {
 
                 {/* Audio FX Section */}
                 <Show when={activeLayer()?.type === 'video' || activeLayer()?.type === 'audio'}>
-                  <div class="space-y-4">
+                  <div class="space-y-5">
                     <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-2">
-                      <div class="w-1 h-3 bg-[#f59e0b] rounded-full"></div> Audio FX
+                      <div class="w-1 h-3 bg-[#f59e0b] rounded-full"></div> Audio & Trimming
                     </h3>
                     
-                    <div class="space-y-3">
-                      <div class="space-y-1">
+                    <div class="space-y-4">
+                      {/* Advanced Trim View */}
+                      <AudioTrimView layerId={activeLayer()!.id} />
+
+                      <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Trim In (s)</label>
+                          <div class="bg-[#1a1a1a] border border-[#333] rounded px-2">
+                            <input 
+                              type="number" 
+                              step="0.01" 
+                              min="0"
+                              max={(media()?.duration || 0) - 0.1}
+                              value={activeLayer()?.inPoint.toFixed(2)} 
+                              onInput={(e) => {
+                                const val = parseFloat(e.currentTarget.value);
+                                const mediaDur = media()?.duration || 0;
+                                const currentDur = activeLayer()?.duration || 0;
+                                let newIn = Math.max(0, Math.min(mediaDur - 0.1, val));
+                                // Adjust duration if we go past media end
+                                let newDur = Math.min(currentDur, mediaDur - newIn);
+                                updateLayer(activeLayer()!.id, { inPoint: newIn, duration: newDur });
+                              }} 
+                              class="w-full bg-transparent text-xs text-white py-1.5 outline-none" 
+                            />
+                          </div>
+                        </div>
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Trim Out (s)</label>
+                          <div class="bg-[#1a1a1a] border border-[#333] rounded px-2">
+                            <input 
+                              type="number" 
+                              step="0.01"
+                              min="0"
+                              max={(media()?.duration || 0) - (activeLayer()?.inPoint || 0) - 0.1}
+                              value={( (media()?.duration || 0) - (activeLayer()?.inPoint || 0) - (activeLayer()?.duration || 0) ).toFixed(2)} 
+                              onInput={(e) => {
+                                const trimOut = parseFloat(e.currentTarget.value);
+                                const mediaDur = media()?.duration || 0;
+                                const inPoint = activeLayer()?.inPoint || 0;
+                                let newDur = Math.max(0.1, mediaDur - inPoint - trimOut);
+                                handlePropChange('duration', newDur);
+                              }} 
+                              class="w-full bg-transparent text-xs text-white py-1.5 outline-none" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="space-y-2">
                         <div class="flex justify-between items-center text-[10px] text-neutral-500 uppercase tracking-wider">
                           <label>Volume</label>
-                          <span>{Math.round(activeLayer()!.volume * 100)}%</span>
+                          <span class="text-[#f59e0b] font-bold">{Math.round(activeLayer()!.volume * 100)}%</span>
                         </div>
                         <input type="range" min="0" max="2" step="0.05" value={activeLayer()?.volume} onInput={(e) => handlePropChange('volume', parseFloat(e.currentTarget.value))} class="w-full accent-[#f59e0b]" />
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Waveform Style</label>
+                          <select value={activeLayer()?.waveformStyle || 'solid'} onChange={(e) => handlePropChange('waveformStyle', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
+                            <option value="solid">Solid</option>
+                            <option value="mirrored">Mirrored</option>
+                          </select>
+                        </div>
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-wider">Clip Color</label>
+                          <div class="flex items-center gap-2 bg-[#1a1a1a] border border-[#333] rounded p-1">
+                            <input type="color" value={activeLayer()?.clipColor || (activeLayer()?.type === 'audio' ? '#059669' : '#2563eb')} onInput={(e) => handlePropChange('clipColor', e.currentTarget.value)} class="w-full h-6 rounded cursor-pointer bg-transparent border-none" />
+                          </div>
+                        </div>
                       </div>
 
                       <div class="p-3 bg-[#1a1a1a] border border-[#333] rounded-lg space-y-3">

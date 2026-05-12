@@ -26,20 +26,20 @@ export interface LayerState {
   name: string;
   type: 'video' | 'audio' | 'image' | 'text' | 'shape';
   mediaId?: string;
-  
+
   startTime: number;
   duration: number;
   inPoint: number;
-  
+
   hidden: boolean;
   locked: boolean;
-  
+
   scale: number;
   rotation: number;
   posX: number;
   posY: number;
   radius: number;
-  
+
   brightness: number;
   contrast: number;
   chromaKey: boolean;
@@ -48,14 +48,14 @@ export interface LayerState {
   colorReplace: boolean;
   replaceFromColor: string;
   replaceToColor: string;
-  
+
   volume: number;
   fadeIn: number;
   fadeOut: number;
   echo: boolean;
   echoDelay: number;
   echoFeedback: number;
-  
+
   textContent?: string;
   fillColor?: string;
   strokeColor?: string;
@@ -86,7 +86,7 @@ export interface ProjectState {
   tracks: TrackState[];
   layers: LayerState[];
   mediaPool: Record<string, MediaItem>;
-  
+
   // Settings
   proxyRes: string;
   aspectRatio: string;
@@ -99,7 +99,7 @@ export interface ProjectState {
   showRightPanel: boolean;
   showTimelinePanel: boolean;
   mobileTab: "left" | "right" | "timeline";
-  
+
   // Source Modal State
   sourceModalOpen: boolean;
   sourceMediaId: string | null;
@@ -108,7 +108,7 @@ export interface ProjectState {
   srcCropX: number;
   srcCropY: number;
   srcCropScale: number;
-  
+
   exportModalOpen: boolean;
   isExporting: boolean;
   trackHeight: number;
@@ -128,11 +128,11 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   tracks: [{ id: 'track_1', name: 'Track 1', hidden: false, locked: false, volume: 1, muted: false }],
   layers: [],
   mediaPool: {},
-  
+
   proxyRes: "480",
   aspectRatio: "16/9",
   zoomMode: "fit",
-  
+
   layout: "layout-default",
   leftPanelTab: "pool",
   rightPanelTab: "layers",
@@ -140,7 +140,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   showRightPanel: true,
   showTimelinePanel: true,
   mobileTab: "left",
-  
+
   sourceModalOpen: false,
   sourceMediaId: null,
   srcIn: 0,
@@ -148,7 +148,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   srcCropX: 0,
   srcCropY: 0,
   srcCropScale: 1.0,
-  
+
   exportModalOpen: false,
   isExporting: false,
   trackHeight: 48,
@@ -233,9 +233,9 @@ export const deleteTrack = (id: string) => {
 };
 
 export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
-  const id = `l_${Date.now()}_${Math.random().toString(36).substring(2,9)}`;
+  const id = `l_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   let targetTrackId = projectStore.activeTrackId;
-  
+
   if (targetTrackId) {
     // Check if the active track already contains a different media type
     const trackLayers = projectStore.layers.filter(l => l.trackId === targetTrackId);

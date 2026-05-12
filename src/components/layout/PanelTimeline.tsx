@@ -59,21 +59,21 @@ export const PanelTimeline: Component = () => {
   let resizerRef: HTMLDivElement | undefined;
   let timelineAreaRef: HTMLDivElement | undefined;
   let trackListRef: HTMLDivElement | undefined;
-  
+
   createEffect(() => {
     // Only auto-scroll if toggle is on
     if (!projectStore.followPlayhead || !timelineAreaRef) return;
-    
+
     // We only want to auto-scroll if playing or if specifically jumping
     // Access signals to track them
     const pxPerSec = projectStore.pixelsPerSecond;
     const playheadPx = projectStore.currentTime * pxPerSec;
     const isPlaying = projectStore.isPlaying;
-    
+
     if (isPlaying) {
       const viewportWidth = timelineAreaRef.clientWidth;
       const stopThreshold = viewportWidth * 0.8;
-      
+
       // Continuous smooth scroll: if playhead is past 80%, scroll clips to keep it there
       if (playheadPx > stopThreshold) {
         timelineAreaRef.scrollLeft = playheadPx - stopThreshold;
@@ -87,7 +87,7 @@ export const PanelTimeline: Component = () => {
   const handleTimelineScroll = () => {
     if (trackListRef && timelineAreaRef) {
       trackListRef.scrollTop = timelineAreaRef.scrollTop;
-      
+
       // CRITICAL: Only reset audio engine on manual scroll.
       // Resetting 60fps during auto-scroll causes massive flicker and audio stutters.
       if (projectStore.isPlaying && !projectStore.followPlayhead) {
@@ -125,24 +125,39 @@ export const PanelTimeline: Component = () => {
         if (newStart < 0) newStart = 0;
         updateLayer(dragLayerId, { startTime: newStart });
       } else if (dragType === 'trim-left') {
+        const media = layer.mediaId ? projectStore.mediaPool[layer.mediaId] : null;
+        const maxMediaDuration = media ? media.duration : Infinity;
+
         let newStart = dragStartProp + dt;
         let newIn = dragStartInPoint + dt;
         let newDur = dragStartDuration - dt;
+        
+        if (newIn < 0) {
+          const over = -newIn;
+          newIn = 0;
+          newStart += over;
+          newDur -= over;
+        }
+        
         if (newDur < 0.1) {
           const over = 0.1 - newDur;
           newDur = 0.1;
           newStart -= over;
           newIn -= over;
         }
-        if (newIn < 0) {
-          const diff = 0 - newIn;
-          newIn = 0;
-          newStart += diff;
-          newDur -= diff;
-        }
+        
         updateLayer(dragLayerId, { startTime: newStart, inPoint: newIn, duration: newDur });
       } else if (dragType === 'trim-right') {
+        const media = layer.mediaId ? projectStore.mediaPool[layer.mediaId] : null;
+        const maxMediaDuration = media ? media.duration : Infinity;
+        
         let newDur = dragStartDuration + dt;
+        
+        // Constraint: inPoint + duration <= media.duration
+        if (layer.inPoint + newDur > maxMediaDuration) {
+          newDur = maxMediaDuration - layer.inPoint;
+        }
+        
         if (newDur < 0.1) newDur = 0.1;
         updateLayer(dragLayerId, { duration: newDur });
       }
@@ -349,14 +364,14 @@ export const PanelTimeline: Component = () => {
         </div>
 
         <div ref={timelineAreaRef} class="flex-1 relative overflow-x-auto overflow-y-auto custom-scrollbar" onScroll={handleTimelineScroll}>
-          <div 
-            class="relative min-h-full" 
+          <div
+            class="relative min-h-full"
             style={{ width: `${Math.max(1000, projectStore.duration * projectStore.pixelsPerSecond + 500)}px` }}
             onMouseDown={startScrub}
           >
 
             {/* Ruler */}
-            <div 
+            <div
               class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 pointer-events-none text-[9px] font-medium text-neutral-500 select-none"
               style={{ width: `${projectStore.duration * projectStore.pixelsPerSecond + 1000}px` }}
             >
@@ -428,13 +443,17 @@ export const PanelTimeline: Component = () => {
 
                             {/* Trimming Handles */}
                             <div
-                              class="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
+                              class="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize bg-white/30 hover:bg-white/60 transition-colors z-20 rounded-l"
                               onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-left')}
-                            ></div>
+                            >
+                              <div class="absolute inset-y-2 left-0.5 w-0.5 bg-black/20 rounded-full"></div>
+                            </div>
                             <div
-                              class="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 bg-white/20 hover:bg-white/40 transition-colors z-20"
+                              class="absolute right-0 top-0 bottom-0 w-1.5 cursor-ew-resize bg-white/30 hover:bg-white/60 transition-colors z-20 rounded-r"
                               onMouseDown={(e) => startLayerDrag(e, layer.id, 'trim-right')}
-                            ></div>
+                            >
+                              <div class="absolute inset-y-2 right-0.5 w-0.5 bg-black/20 rounded-full"></div>
+                            </div>
                           </div>
                         );
                       }}

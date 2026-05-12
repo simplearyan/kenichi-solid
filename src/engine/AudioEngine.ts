@@ -15,12 +15,15 @@ export class AudioEngine {
   private playbackStartAudioTime = 0;
   private playbackStartTimelineTime = 0;
   private heartbeatNode: OscillatorNode | null = null;
+  private masterGain: GainNode | null = null;
 
   init() {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)({
         latencyHint: 'interactive'
       });
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.connect(this.ctx.destination);
     }
     
     if (this.ctx.state === 'suspended') {
@@ -32,7 +35,8 @@ export class AudioEngine {
       const gain = this.ctx.createGain();
       gain.gain.value = 0.000001; 
       this.heartbeatNode.connect(gain);
-      gain.connect(this.ctx.destination);
+      if (this.masterGain) gain.connect(this.masterGain);
+      else gain.connect(this.ctx.destination);
       this.heartbeatNode.start();
     }
     
@@ -69,35 +73,41 @@ export class AudioEngine {
 
   // --- Playback Control ---
 
-  startClock(currentTimelineTime: number) {
+  async startClock(currentTimelineTime: number) {
     this.init();
     if (!this.ctx) return;
     
     if (this.ctx.state !== 'running') {
-      this.ctx.resume();
+      await this.ctx.resume();
     }
 
     this.playbackStartAudioTime = this.ctx.currentTime;
     this.playbackStartTimelineTime = currentTimelineTime;
 
     // Schedule all visible audio buffers
-    this.scheduleAll(currentTimelineTime);
+    await this.scheduleAll(currentTimelineTime);
   }
 
-  refreshScheduling() {
+  async refreshScheduling() {
     if (!this.ctx || this.ctx.state !== 'running') return;
     const currentTime = this.getPreciseTime();
     if (currentTime !== null) {
-      this.scheduleAll(currentTime);
+      await this.scheduleAll(currentTime);
     }
   }
 
-  private scheduleAll(startTime: number) {
+  private async scheduleAll(startTime: number) {
     this.stopPlayback();
     if (!this.ctx) return;
 
+    if (this.ctx.state !== 'running') {
+      console.log("[AudioEngine] Resuming context...");
+      await this.ctx.resume();
+    }
+
     const layers = projectStore.layers;
     const tracks = projectStore.tracks;
+    let scheduledCount = 0;
 
     for (const layer of layers) {
       if (layer.type !== 'audio' && layer.type !== 'video') continue;
@@ -125,7 +135,8 @@ export class AudioEngine {
       gain.gain.value = layer.volume * trackVol * globalVol;
 
       source.connect(gain);
-      gain.connect(this.ctx.destination);
+      if (this.masterGain) gain.connect(this.masterGain);
+      else gain.connect(this.ctx.destination);
 
       // Timing math
       const delay = Math.max(0, layer.startTime - startTime);
