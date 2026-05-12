@@ -354,8 +354,14 @@ export class Renderer {
             ctx.scale(layer.scale * animScale, layer.scale * animScale);
 
             let filterStr = '';
-            if (layer.brightness !== 1) filterStr += `brightness(${layer.brightness}) `;
-            if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
+            const exp = (layer.exposure ?? 1) * (layer.brightness ?? 1);
+            const con = (layer.contrast ?? 1) + (layer.whites ?? 0) - (layer.blacks ?? 0);
+            const wht = (layer.whites ?? 0) * 0.5;
+            const blk = (layer.blacks ?? 0) * 0.5;
+
+            if (exp !== 1 || wht !== 0 || blk !== 0) filterStr += `brightness(${exp + wht + blk}) `;
+            if (con !== 1) filterStr += `contrast(${con}) `;
+            if ((layer.saturation ?? 1) !== 1) filterStr += `saturate(${layer.saturation}) `;
             
             // In/Out Blur effects
             if (layer.animIn === 'blurIn' && layerTime < (layer.animInDuration || 1)) {
@@ -368,7 +374,7 @@ export class Renderer {
               filterStr += `blur(${20 * (1 - p)}px) `;
             }
 
-            if (filterStr) ctx.filter = filterStr.trim();
+            ctx.filter = filterStr.trim() || 'none';
 
             const x = -bCvs.width / 2;
             const y = -bCvs.height / 2;
@@ -394,38 +400,50 @@ export class Renderer {
               }
             }
 
-            const canDraw = layer.type === 'image' || (layer.type === 'video' && (sourceMedia as HTMLVideoElement).readyState >= 2);
+            const isVideo = layer.type === 'video';
+            const isReady = !isVideo || (sourceMedia as HTMLVideoElement).readyState >= 2;
 
-            if (canDraw) {
-              // Reset stall count for this layer
+            if (isReady) {
+              // Reset stall count
               this.stallTracker.delete(layer.id);
 
-              if (r > 0) {
-                ctx.beginPath();
-                ctx.roundRect(x, y, w, h, r);
-                ctx.clip();
-              }
-
+              // Update Buffer (Persistent per-layer)
+              bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
+              bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
+              
               if (layer.chromaKey) {
-                bCtx.clearRect(0, 0, bCvs.width, bCvs.height);
-                bCtx.drawImage(sourceMedia, 0, 0, bCvs.width, bCvs.height);
                 this.applyChromaKey(bCtx, bCvs.width, bCvs.height, layer.chromaColor, layer.chromaTolerance);
-                ctx.drawImage(bCvs, -bCvs.width / 2, -bCvs.height / 2);
-              } else {
-                ctx.drawImage(sourceMedia, -bCvs.width / 2, -bCvs.height / 2, bCvs.width, bCvs.height);
               }
-            } else if (layer.type === 'video' && isVisible) {
-              // TRACK STALLS: If video is visible but not ready
+            } else if (isVisible && isVideo) {
+              // Track stalls for recovery
               const stallCount = (this.stallTracker.get(layer.id) || 0) + 1;
               this.stallTracker.set(layer.id, stallCount);
-
-              // If stalled for > 120 frames (~2 seconds at 60fps), trigger auto-recovery
               if (stallCount > 120) {
-                console.warn(`[Renderer] Auto-recovering stalled layer: ${layer.id}`);
+                console.warn(`[Renderer] Recovery: ${layer.id}`);
                 layerRegistry.remove(layer.id);
                 layerRegistry.instantiate(layer);
-                this.stallTracker.delete(layer.id); // Reset after recovery attempt
+                this.stallTracker.delete(layer.id);
               }
+            }
+
+            // GHOSTING: Always draw the buffer. If not ready, it holds the last good frame.
+            if (r > 0) {
+              ctx.beginPath();
+              ctx.roundRect(x, y, w, h, r);
+              ctx.clip();
+            }
+            ctx.drawImage(bCvs, -bCvs.width / 2, -bCvs.height / 2, bCvs.width, bCvs.height);
+
+            // VIGNETTE EFFECT (Rendered on top of filters to stay sharp)
+            if ((layer.vignette ?? 0) > 0) {
+              const vignetteIntensity = layer.vignette ?? 0;
+              const vignetteGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.sqrt(x * x + y * y));
+              vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
+              vignetteGrad.addColorStop(0.6, `rgba(0,0,0,${vignetteIntensity * 0.2})`);
+              vignetteGrad.addColorStop(1, `rgba(0,0,0,${vignetteIntensity})`);
+              ctx.fillStyle = vignetteGrad;
+              ctx.filter = 'none'; // Vignette shouldn't be affected by filters
+              ctx.fillRect(x, y, w, h);
             }
             ctx.restore();
           }

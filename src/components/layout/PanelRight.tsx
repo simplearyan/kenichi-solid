@@ -534,6 +534,38 @@ export const PanelRight: Component = () => {
                         min={0} max={3} step={0.1}
                         onChange={(v) => handlePropChange('contrast', v)}
                       />
+                      <PropSlider 
+                        label="Saturation"
+                        value={activeLayer()?.saturation || 1}
+                        min={0} max={3} step={0.1}
+                        onChange={(v) => handlePropChange('saturation', v)}
+                      />
+                      <PropSlider 
+                        label="Exposure"
+                        value={activeLayer()?.exposure ?? 1}
+                        min={0} max={3} step={0.01}
+                        onChange={(v) => handlePropChange('exposure', v)}
+                      />
+                      <div class="grid grid-cols-2 gap-4">
+                        <PropSlider 
+                          label="Whites"
+                          value={activeLayer()?.whites ?? 0}
+                          min={-1} max={1} step={0.01}
+                          onChange={(v) => handlePropChange('whites', v)}
+                        />
+                        <PropSlider 
+                          label="Blacks"
+                          value={activeLayer()?.blacks ?? 0}
+                          min={-1} max={1} step={0.01}
+                          onChange={(v) => handlePropChange('blacks', v)}
+                        />
+                      </div>
+                      <PropSlider 
+                        label="Vignette"
+                        value={activeLayer()?.vignette || 0}
+                        min={0} max={1} step={0.01}
+                        onChange={(v) => handlePropChange('vignette', v)}
+                      />
                       
                       <div class="p-4 bg-black/20 border border-white/5 rounded-xl space-y-4">
                         <div class="flex items-center justify-between">

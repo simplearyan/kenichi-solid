@@ -406,7 +406,7 @@ export const PanelTimeline: Component = () => {
             <For each={projectStore.tracks}>
               {(track) => (
                 <div
-                  class={`border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group ${projectStore.activeTrackId === track.id ? 'bg-[#2a2a2a]' : 'hover:bg-[#1f1f1f]'}`}
+                  class={`border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group transition-colors ${projectStore.activeTrackId === track.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   style={{ height: `${projectStore.trackHeight}px` }}
                   onClick={() => setProjectStore('activeTrackId', track.id)}
                 >
@@ -479,8 +479,9 @@ export const PanelTimeline: Component = () => {
               <For each={projectStore.tracks}>
                 {(track) => (
                   <div
-                    class="border-b border-[#2a2a2a] relative w-full shrink-0"
+                    class={`border-b border-[#2a2a2a] relative w-full shrink-0 transition-colors cursor-pointer ${projectStore.activeTrackId === track.id ? 'bg-white/[0.03]' : ''}`}
                     style={{ height: `${projectStore.trackHeight}px` }}
+                    onClick={() => setProjectStore('activeTrackId', track.id)}
                   >
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
                       {(layer) => (
@@ -498,7 +499,7 @@ export const PanelTimeline: Component = () => {
                               onPointerDown={(e) => startLayerDrag(e, layer.id, 'move')}
                             >
                             <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none select-none z-10 relative drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-                              {layer.name}
+                              {layer.type === 'text' ? (layer.textContent || layer.name) : layer.name}
                             </div>
 
                             {/* Waveform */}

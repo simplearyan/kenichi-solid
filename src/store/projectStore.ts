@@ -45,6 +45,11 @@ export interface LayerState {
   chromaKey: boolean;
   chromaColor: string;
   chromaTolerance: number;
+  saturation?: number;
+  vignette?: number;
+  exposure?: number;
+  whites?: number;
+  blacks?: number;
   colorReplace: boolean;
   replaceFromColor: string;
   replaceToColor: string;
