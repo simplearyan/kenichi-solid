@@ -8,6 +8,9 @@ export interface ExportConfig {
   fps: number;
 }
 
+import ZipWorker from '../workers/zip.worker.ts?worker';
+import MediaWorker from '../workers/mediabunny.worker.ts?worker';
+
 export const exportProject = async (config: ExportConfig, onProgress: (progress: number, status: string) => void) => {
   const aspectRatioStr = projectStore.aspectRatio;
   let aspectX = 16, aspectY = 9;
@@ -17,11 +20,7 @@ export const exportProject = async (config: ExportConfig, onProgress: (progress:
   let targetH = parseInt(config.resolution);
   let targetW = Math.round(targetH * (aspectX / aspectY));
   
-  const workerUrl = config.format === 'zip' 
-    ? new URL('../workers/zip.worker.ts', import.meta.url)
-    : new URL('../workers/mediabunny.worker.ts', import.meta.url);
-    
-  const worker = new Worker(workerUrl, { type: 'module' });
+  const worker = config.format === 'zip' ? new ZipWorker() : new MediaWorker();
   
   onProgress(0, 'Initializing Web Worker...');
   
