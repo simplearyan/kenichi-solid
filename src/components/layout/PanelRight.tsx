@@ -59,8 +59,8 @@ const PropSlider: Component<{
           style={{ width: `${progress()}%` }}
         />
         <div 
-          class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg border-2 border-surface scale-0 group-hover/slider:scale-100 transition-transform duration-150"
-          style={{ left: `calc(${progress()}% - 6px)` }}
+          class="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)] border-2 border-surface transition-transform duration-150 active:scale-125"
+          style={{ left: `calc(${progress()}% - 7px)` }}
         />
       </div>
     </div>
@@ -280,29 +280,32 @@ export const PanelRight: Component = () => {
                   onToggle={() => toggleSection('transform')}
                   showOnMobile={activePropTab() === 'transform'}
                 >
-                   <div class="grid grid-cols-2 gap-4">
-                      <div class="space-y-1">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Scale</label>
-                        <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                          <input type="number" step="0.01" value={activeLayer()?.scale} onInput={(e) => handlePropChange('scale', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                   <div class="space-y-5">
+                      <PropSlider 
+                        label="Scale"
+                        value={activeLayer()?.scale || 1}
+                        min={0} max={5} step={0.05}
+                        onChange={(v) => handlePropChange('scale', v)}
+                      />
+                      <PropSlider 
+                        label="Rotation"
+                        value={activeLayer()?.rotation || 0}
+                        min={0} max={360} step={1}
+                        onChange={(v) => handlePropChange('rotation', v)}
+                      />
+                      
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position X</label>
+                          <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
+                            <input type="number" step="1" value={activeLayer()?.posX} onInput={(e) => handlePropChange('posX', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                          </div>
                         </div>
-                      </div>
-                      <div class="space-y-1">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Rotation</label>
-                        <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                          <input type="number" step="1" value={activeLayer()?.rotation} onInput={(e) => handlePropChange('rotation', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
-                        </div>
-                      </div>
-                      <div class="space-y-1">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position X</label>
-                        <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                          <input type="number" step="1" value={activeLayer()?.posX} onInput={(e) => handlePropChange('posX', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
-                        </div>
-                      </div>
-                      <div class="space-y-1">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position Y</label>
-                        <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                          <input type="number" step="1" value={activeLayer()?.posY} onInput={(e) => handlePropChange('posY', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position Y</label>
+                          <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
+                            <input type="number" step="1" value={activeLayer()?.posY} onInput={(e) => handlePropChange('posY', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -488,12 +491,24 @@ export const PanelRight: Component = () => {
                           <option value="none">None</option>
                           <option value="fade">Fade Out</option>
                           <option value="zoomOut">Zoom Out</option>
+                          <option value="rotateOut">Rotate Out</option>
+                          <option value="slideRight">Slide Right</option>
                         </select>
                       </div>
                       <div class="space-y-1.5">
                         <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
                         <input type="number" step="0.1" value={activeLayer()?.animOutDuration || 1.0} onInput={(e) => handlePropChange('animOutDuration', parseFloat(e.currentTarget.value))} class="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
                       </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Loop Anim</label>
+                      <select value={activeLayer()?.animLoop || 'none'} onChange={(e) => handlePropChange('animLoop', e.currentTarget.value)} class="w-full bg-black/40 border border-white/5 rounded-lg px-2 py-2 text-xs text-white outline-none focus:border-pink-500/50">
+                        <option value="none">None</option>
+                        <option value="pulse">Pulse (Scale)</option>
+                        <option value="wiggle">Wiggle (Rotation)</option>
+                        <option value="float">Float (Y-Axis)</option>
+                      </select>
                     </div>
                   </div>
                 </Section>
