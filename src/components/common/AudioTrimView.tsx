@@ -1,4 +1,4 @@
-import { type Component, createEffect, onCleanup, createSignal } from 'solid-js';
+import { type Component, createEffect, createSignal, onCleanup } from 'solid-js';
 import { Play, Pause } from 'lucide-solid';
 import { projectStore, updateLayer } from '../../store/projectStore';
 import { audioEngine } from '../../engine/AudioEngine';
@@ -22,17 +22,6 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
   const layer = () => projectStore.layers.find(l => l.id === props.layerId);
   const media = () => layer()?.mediaId ? projectStore.mediaPool[layer()!.mediaId!] : null;
 
-  const togglePreview = () => {
-    const l = layer();
-    if (!l || !l.mediaId) return;
-
-    if (isPlaying()) {
-      stopPreview();
-    } else {
-      startPreview();
-    }
-  };
-
   const startPreview = () => {
     const l = layer();
     if (!l || !l.mediaId) return;
@@ -52,9 +41,7 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     source.connect(gain);
     gain.connect(ctx.destination);
 
-    // Play only the trimmed portion
     source.start(0, l.inPoint, l.duration);
-    
     setPreviewNode(source);
     setIsPlaying(true);
 
@@ -69,8 +56,13 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     if (node) {
       try { node.stop(); } catch(e) {}
     }
-    setIsPlaying(false);
     setPreviewNode(null);
+    setIsPlaying(false);
+  };
+
+  const togglePreview = () => {
+    if (isPlaying()) stopPreview();
+    else startPreview();
   };
 
   onCleanup(() => {
@@ -187,7 +179,7 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     }
   };
 
-  const handleMouseDown = (e: MouseEvent, type: 'in' | 'out') => {
+  const handleMouseDown = (e: MouseEvent, type: 'in' | 'out' | 'move') => {
     const startX = e.clientX;
     const m = media();
     const l = layer();
@@ -205,9 +197,13 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
         let newIn = Math.max(0, Math.min(initialIn + initialDur - 0.1, initialIn + dt));
         let newDur = initialDur - (newIn - initialIn);
         updateLayer(l.id, { inPoint: newIn, duration: newDur });
-      } else {
+      } else if (type === 'out') {
         let newDur = Math.max(0.1, Math.min(m.duration - initialIn, initialDur + dt));
         updateLayer(l.id, { duration: newDur });
+      } else if (type === 'move') {
+        // Shift both in and out while keeping duration constant
+        let newIn = Math.max(0, Math.min(m.duration - initialDur, initialIn + dt));
+        updateLayer(l.id, { inPoint: newIn });
       }
     };
 
@@ -221,43 +217,59 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
   };
 
   return (
-    <div class="space-y-3">
-      <div class="flex justify-between items-center mb-1">
-        <label class="text-[10px] font-bold text-neutral-400 tracking-wider uppercase">Advanced Trim</label>
-        <button 
-          onClick={togglePreview}
-          class="p-1 rounded-full bg-white/5 hover:bg-white/10 text-white transition-colors"
-        >
-          {isPlaying() ? <Pause class="w-3 h-3 fill-current" /> : <Play class="w-3 h-3 fill-current ml-0.5" />}
-        </button>
-      </div>
-
-      <div 
-        ref={containerRef}
-        class="h-20 bg-black/40 rounded-lg border border-white/5 relative overflow-hidden group"
-      >
-        <canvas 
-          ref={canvasRef} 
-          width={400} 
-          height={80} 
-          class="w-full h-full"
-        ></canvas>
-
-        {/* Trim Handles */}
-        <div 
-          class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/10 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0"
-          style={{ left: `${(layer()?.inPoint || 0) / (media()?.duration || 1) * 100}%`, transform: 'translateX(-50%)' }}
-          onMouseDown={(e) => handleMouseDown(e, 'in')}
-        >
-          <div class="w-0.5 h-6 bg-white/50 rounded-full"></div>
+    <div class="space-y-4">
+      <div class="relative group">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-[9px] font-bold text-neutral-500 tracking-widest uppercase">Waveform</span>
+            <button 
+              onClick={togglePreview}
+              class="p-1 rounded-full bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white transition-colors"
+            >
+              {isPlaying() ? <Pause class="w-2.5 h-2.5 fill-current" /> : <Play class="w-2.5 h-2.5 fill-current ml-0.5" />}
+            </button>
+          </div>
+          <span class="text-[9px] text-neutral-400 truncate max-w-[120px]">{media()?.name}</span>
         </div>
         
         <div 
-          class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/10 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0"
-          style={{ left: `${((layer()?.inPoint || 0) + (layer()?.duration || 0)) / (media()?.duration || 1) * 100}%`, transform: 'translateX(-50%)' }}
-          onMouseDown={(e) => handleMouseDown(e, 'out')}
+          ref={containerRef}
+          class="relative h-20 bg-black/40 rounded-lg border border-white/5 overflow-hidden cursor-crosshair group-hover:border-white/10 transition-colors"
+          style={{ 'background-color': 'rgba(255, 255, 255, 0.05)' }}
         >
-          <div class="w-0.5 h-6 bg-white/50 rounded-full"></div>
+          <canvas 
+            ref={canvasRef} 
+            width={400} 
+            height={80} 
+            class="w-full h-full"
+          ></canvas>
+
+          {/* Draggable Mid-Area */}
+          <div 
+            class="absolute top-0 bottom-0 cursor-move transition-colors group-hover:bg-white/5 active:bg-white/10"
+            style={{ 
+              left: `${(layer()?.inPoint || 0) / (media()?.duration || 1) * 100}%`,
+              width: `${(layer()?.duration || 0) / (media()?.duration || 1) * 100}%`
+            }}
+            onMouseDown={(e) => handleMouseDown(e, 'move')}
+          />
+
+          {/* Trim Handles */}
+          <div 
+            class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0 z-10"
+            style={{ left: `${(layer()?.inPoint || 0) / (media()?.duration || 1) * 100}%`, transform: 'translateX(-50%)' }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(e, 'in'); }}
+          >
+            <div class="w-1 h-6 bg-white/70 rounded-full shadow-lg"></div>
+          </div>
+          
+          <div 
+            class="absolute top-0 bottom-0 w-3 cursor-ew-resize hover:bg-white/20 flex items-center justify-center transition-colors group-hover:opacity-100 opacity-0 z-10"
+            style={{ left: `${((layer()?.inPoint || 0) + (layer()?.duration || 0)) / (media()?.duration || 1) * 100}%`, transform: 'translateX(-50%)' }}
+            onMouseDown={(e) => { e.stopPropagation(); handleMouseDown(e, 'out'); }}
+          >
+            <div class="w-1 h-6 bg-white/70 rounded-full shadow-lg"></div>
+          </div>
         </div>
       </div>
     </div>
