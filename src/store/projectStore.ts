@@ -343,12 +343,24 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
     trackId: targetTrackId as string,
     // Apply default visual styles based on media type
     audioAppearance: layer.type === 'audio' ? 'waveform' : 'clip',
-    waveformStyle: layer.type === 'audio' ? 'clean' : 'standard'
+    waveformStyle: layer.type === 'audio' ? 'clean' : 'standard',
+    clipColor: layer.clipColor || (layer.type === 'audio' ? '#10b981' : layer.type === 'video' ? '#3b82f6' : layer.type === 'image' ? '#7c3aed' : '#d97706')
   };
   setProjectStore('layers', (prev) => [...prev, newLayer]);
   setProjectStore('activeLayerId', id);
   recalcDuration();
   return id;
+};
+
+export const moveTrack = (id: string, direction: 'up' | 'down') => {
+  setProjectStore('tracks', produce((tracks) => {
+    const index = tracks.findIndex(t => t.id === id);
+    if (index === -1) return;
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= tracks.length) return;
+    const [track] = tracks.splice(index, 1);
+    tracks.splice(newIndex, 0, track);
+  }));
 };
 
 export const updateLayer = (id: string, updates: Partial<LayerState>) => {

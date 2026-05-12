@@ -1,6 +1,6 @@
 import { onMount, onCleanup, For, Show, createEffect, type Component } from 'solid-js';
-import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX, PanelLeftOpen, PanelRightOpen, Maximize2, LayoutGrid, FoldVertical, UnfoldVertical, LocateFixed } from 'lucide-solid';
-import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack } from '../../store/projectStore';
+import { Scissors, Copy, Trash2, RefreshCcw, ZoomOut, ZoomIn, X, Eye, EyeOff, Lock, Unlock, Plus, Volume2, VolumeX, PanelLeftOpen, PanelRightOpen, Maximize2, LayoutGrid, FoldVertical, UnfoldVertical, LocateFixed, ChevronUp, ChevronDown } from 'lucide-solid';
+import { projectStore, setProjectStore, updateLayer, removeLayer, addTrack, deleteTrack, moveTrack } from '../../store/projectStore';
 import { audioEngine } from '../../engine/AudioEngine';
 import { layerRegistry } from '../../engine/LayerRegistry';
 import { setupResizer } from '../../utils/resizer';
@@ -408,8 +408,14 @@ export const PanelTimeline: Component = () => {
                   onClick={() => setProjectStore('activeTrackId', track.id)}
                 >
                   <div class="flex items-center justify-between">
-                    <span class="text-[11px] text-white font-medium truncate w-full block">{track.name}</span>
-                    <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 text-neutral-500 transition-opacity"><Trash2 class="w-3 h-3" /></button>
+                    <div class="flex items-center gap-1">
+                      <span class="text-[11px] text-white font-medium truncate max-w-[80px] block">{track.name}</span>
+                      <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'up'); }} class="p-0.5 hover:text-white text-neutral-500 transition-colors" title="Move Up"><Show when={ChevronUp}><ChevronUp class="w-3 h-3" /></Show></button>
+                        <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'down'); }} class="p-0.5 hover:text-white text-neutral-500 transition-colors" title="Move Down"><Show when={ChevronDown}><ChevronDown class="w-3 h-3" /></Show></button>
+                        <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="p-0.5 hover:text-red-400 text-neutral-500 transition-colors" title="Delete Track"><Trash2 class="w-3 h-3" /></button>
+                      </div>
+                    </div>
                   </div>
                   <div class="flex items-center gap-2 mt-1">
                     <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-neutral-500 hover:text-white" title="Toggle Visibility">
@@ -482,9 +488,9 @@ export const PanelTimeline: Component = () => {
                                 width: `${layer.duration * projectStore.pixelsPerSecond}px`,
                                 'background-color': (layer.type === 'audio' || layer.type === 'video') 
                                   ? (layer.audioAppearance === 'clip' 
-                                    ? (layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))
-                                    : `rgba(${hexToRgb(layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.15)`)
-                                  : (layer.clipColor || (layer.type === 'image' ? '#7c3aed' : layer.type === 'text' ? '#d97706' : '#4b5563')),
+                                    ? (layer.clipColor && layer.clipColor !== '#ffffff' ? layer.clipColor : (layer.type === 'audio' ? '#10b981' : '#3b82f6'))
+                                    : `rgba(${hexToRgb(layer.clipColor && layer.clipColor !== '#ffffff' ? layer.clipColor : (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.15)`)
+                                  : (layer.clipColor && layer.clipColor !== '#ffffff' ? layer.clipColor : (layer.type === 'image' ? '#7c3aed' : layer.type === 'text' ? '#d97706' : '#4b5563')),
                               }}
                               onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
                             >

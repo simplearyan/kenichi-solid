@@ -1,6 +1,6 @@
 import { type Component, onMount, For, Show } from 'solid-js';
-import { Layers, Sliders, Eye, EyeOff, Lock, Unlock, Settings2, Music, Type, Square, Film, Image as ImageIcon } from 'lucide-solid';
-import { projectStore, setProjectStore, updateLayer } from '../../store/projectStore';
+import { Layers, Sliders, Eye, EyeOff, Lock, Unlock, Settings2, Music, Type, Square, Film, Image as ImageIcon, ChevronUp, ChevronDown } from 'lucide-solid';
+import { projectStore, setProjectStore, updateLayer, moveTrack } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
 import { AudioTrimView } from '../common/AudioTrimView';
 
@@ -67,8 +67,12 @@ export const PanelRight: Component = () => {
             <For each={projectStore.tracks}>
               {(track) => (
                 <div class="space-y-1">
-                  <div class="flex items-center gap-2 px-1 py-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest border-b border-border/30 mb-2">
+                  <div class="flex items-center gap-2 px-1 py-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest border-b border-border/30 mb-2 group">
                     <span class="truncate">{track.name}</span>
+                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                      <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'up'); }} class="hover:text-white transition-colors" title="Move Track Up"><Show when={ChevronUp}><ChevronUp class="w-3 h-3" /></Show></button>
+                      <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'down'); }} class="hover:text-white transition-colors" title="Move Track Down"><Show when={ChevronDown}><ChevronDown class="w-3 h-3" /></Show></button>
+                    </div>
                     <div class="flex-1 h-[1px] bg-border/20"></div>
                   </div>
                   
