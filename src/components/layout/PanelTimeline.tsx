@@ -46,9 +46,11 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
     const baseColor = layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6');
     const isWaveformMode = appearance === 'waveform';
     
-    // Waveform translucency like v0.8
+    // Waveform translucency logic
     const rgb = hexToRgb(baseColor);
-    const waveColor = isWaveformMode ? `rgba(${rgb}, 0.85)` : 'rgba(0, 0, 0, 0.45)';
+    const waveColor = isWaveformMode 
+      ? (style === 'clean' ? `rgb(${rgb})` : `rgba(${rgb}, 0.85)`) 
+      : 'rgba(0, 0, 0, 0.45)';
     
     ctx.fillStyle = waveColor;
     ctx.globalAlpha = 1.0;
@@ -56,15 +58,40 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
     const sampleSize = visiblePeaks.length;
     if (sampleSize === 0) return;
 
-    if (style === 'viz') {
-      // Interpolated Sharp Graph Style
+    if (style === 'clean') {
+      // Razor-Sharp Continuous Path (The "Clean" look)
       ctx.beginPath();
+      // Draw top half
+      for (let x = 0; x <= w; x++) {
+        const floatIdx = (x / w) * (sampleSize - 1);
+        const i = Math.floor(floatIdx);
+        const f = floatIdx - i;
+        const p1 = visiblePeaks[i] || 0;
+        const p2 = visiblePeaks[i + 1] || p1;
+        const peak = p1 * (1 - f) + p2 * f;
+        const ph = peak * h * 0.95;
+        if (x === 0) ctx.moveTo(x, h / 2 - ph / 2);
+        else ctx.lineTo(x, h / 2 - ph / 2);
+      }
+      // Draw bottom half (backwards)
+      for (let x = w; x >= 0; x--) {
+        const floatIdx = (x / w) * (sampleSize - 1);
+        const i = Math.floor(floatIdx);
+        const f = floatIdx - i;
+        const p1 = visiblePeaks[i] || 0;
+        const p2 = visiblePeaks[i + 1] || p1;
+        const peak = p1 * (1 - f) + p2 * f;
+        const ph = peak * h * 0.95;
+        ctx.lineTo(x, h / 2 + ph / 2);
+      }
+      ctx.closePath();
+      ctx.fill();
+    } else if (style === 'viz') {
+      // Interpolated Sharp Bars
       for (let x = 0; x < w; x++) {
         const floatIdx = (x / w) * (sampleSize - 1);
         const i = Math.floor(floatIdx);
         const f = floatIdx - i;
-        
-        // Linear interpolation for smooth graph look
         const p1 = visiblePeaks[i] || 0;
         const p2 = visiblePeaks[i + 1] || p1;
         const peak = p1 * (1 - f) + p2 * f;
@@ -75,7 +102,7 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
         }
       }
     } else {
-      // Standard Bars with better spacing
+      // Standard Bars with spacing
       const barSpacing = 4;
       const bw = 2;
       for (let x = 0; x < w; x += (bw + barSpacing)) {

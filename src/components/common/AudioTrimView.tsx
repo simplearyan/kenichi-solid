@@ -91,14 +91,15 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
 
     const peaks = m.peaks;
     const barWidth = w / peaks.length;
-    const style = l!.waveformStyle || 'standard';
-    const appearance = l!.audioAppearance || 'waveform';
-    const baseColor = l!.clipColor || (l!.type === 'audio' ? '#059669' : '#2563eb');
+    const baseColor = l!.clipColor || (l!.type === 'audio' ? '#10b981' : '#3b82f6');
+
+    const vizStyle = 'clean';
+    const vizAppearance = 'waveform';
 
     // Draw background waveform (dimmed)
-    ctx.fillStyle = appearance === 'waveform' ? '#333' : 'rgba(0,0,0,0.15)';
+    ctx.fillStyle = '#333';
     ctx.globalAlpha = 0.5;
-    renderWaveform(ctx, peaks, barWidth, h, style, appearance, baseColor);
+    renderWaveform(ctx, peaks, barWidth, h, vizStyle, vizAppearance, baseColor);
     ctx.globalAlpha = 1.0;
 
     // Draw highlighted trimmed area
@@ -110,8 +111,8 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     ctx.rect(inPos, 0, durWidth, h);
     ctx.clip();
     
-    ctx.fillStyle = appearance === 'waveform' ? baseColor : 'rgba(0,0,0,0.4)';
-    renderWaveform(ctx, peaks, barWidth, h, style, appearance, baseColor);
+    ctx.fillStyle = baseColor;
+    renderWaveform(ctx, peaks, barWidth, h, vizStyle, vizAppearance, baseColor);
     ctx.restore();
 
     // Draw markers
@@ -130,8 +131,34 @@ export const AudioTrimView: Component<AudioTrimViewProps> = (props) => {
     
     ctx.fillStyle = isWaveformMode ? `rgba(${rgb}, 0.85)` : 'rgba(0, 0, 0, 0.45)';
     
-    if (style === 'viz') {
-      // Interpolated Sharp Graph Style
+    if (style === 'clean') {
+      // Razor-Sharp Continuous Path (The "Clean" look)
+      ctx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const floatIdx = (x / w) * (peaks.length - 1);
+        const i = Math.floor(floatIdx);
+        const f = floatIdx - i;
+        const p1 = peaks[i] || 0;
+        const p2 = peaks[i + 1] || p1;
+        const peak = p1 * (1 - f) + p2 * f;
+        const ph = peak * h * 0.85;
+        if (x === 0) ctx.moveTo(x, h / 2 - ph / 2);
+        else ctx.lineTo(x, h / 2 - ph / 2);
+      }
+      for (let x = w; x >= 0; x--) {
+        const floatIdx = (x / w) * (peaks.length - 1);
+        const i = Math.floor(floatIdx);
+        const f = floatIdx - i;
+        const p1 = peaks[i] || 0;
+        const p2 = peaks[i + 1] || p1;
+        const peak = p1 * (1 - f) + p2 * f;
+        const ph = peak * h * 0.85;
+        ctx.lineTo(x, h / 2 + ph / 2);
+      }
+      ctx.closePath();
+      ctx.fill();
+    } else if (style === 'viz') {
+      // Interpolated Sharp Bars
       for (let x = 0; x < w; x++) {
         const floatIdx = (x / w) * (peaks.length - 1);
         const i = Math.floor(floatIdx);

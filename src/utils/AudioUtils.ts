@@ -1,6 +1,6 @@
 import { audioEngine } from '../engine/AudioEngine';
 
-export const generatePeaks = async (url: string, buckets: number = 200): Promise<number[]> => {
+export const generatePeaks = async (url: string, buckets: number = 2000): Promise<number[]> => {
   try {
     audioEngine.init();
     if (!audioEngine.ctx) return [];

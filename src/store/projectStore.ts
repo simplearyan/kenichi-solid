@@ -71,7 +71,7 @@ export interface LayerState {
   animOut?: string;
   animOutDuration?: number;
   animLoop?: string;
-  waveformStyle?: 'standard' | 'viz';
+  waveformStyle?: 'standard' | 'viz' | 'clean';
   audioAppearance?: 'waveform' | 'clip';
   clipColor?: string;
 }

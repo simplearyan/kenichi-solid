@@ -247,6 +247,7 @@ export const PanelRight: Component = () => {
                           <select value={activeLayer()?.waveformStyle || 'standard'} onChange={(e) => handlePropChange('waveformStyle', e.currentTarget.value)} class="w-full bg-[#1a1a1a] border border-[#333] rounded px-2 py-1.5 text-xs text-white outline-none">
                             <option value="standard">Standard</option>
                             <option value="viz">Viz</option>
+                            <option value="clean">Clean</option>
                           </select>
                         </div>
                         <div class="space-y-1.5">
