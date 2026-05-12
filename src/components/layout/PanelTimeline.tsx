@@ -183,6 +183,10 @@ export const PanelTimeline: Component = () => {
       if (t < 0) t = 0;
       if (t > projectStore.duration) t = projectStore.duration;
       setProjectStore('currentTime', t);
+
+      // Keep audio state in sync during timeline scrub
+      audioEngine.stopPlayback();
+      audioEngine.reset(t);
     } else if (dragLayerId) {
       const layer = projectStore.layers.find(l => l.id === dragLayerId);
       if (!layer) return;
@@ -231,6 +235,7 @@ export const PanelTimeline: Component = () => {
     isDragging = false;
     dragType = null;
     dragLayerId = null;
+    setProjectStore('isSeeking', false);
   };
 
   onMount(() => {
@@ -245,6 +250,7 @@ export const PanelTimeline: Component = () => {
   });
 
   const startScrub = (e: PointerEvent) => {
+    audioEngine.init();
     if (projectStore.isPlaying) setProjectStore('isPlaying', false);
     if ((e.target as HTMLElement).closest('.timeline-clip')) return;
 
@@ -257,6 +263,7 @@ export const PanelTimeline: Component = () => {
     if (t > projectStore.duration) t = projectStore.duration;
 
     setProjectStore('currentTime', t);
+    setProjectStore('isSeeking', true);
 
     isDragging = true;
     dragType = 'scrub';

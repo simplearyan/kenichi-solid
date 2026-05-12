@@ -114,6 +114,7 @@ export interface ProjectState {
 
   exportModalOpen: boolean;
   isExporting: boolean;
+  isSeeking: boolean;
   trackHeight: number;
   followPlayhead: boolean;
   rippleEnabled: boolean;
@@ -155,6 +156,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
 
   exportModalOpen: false,
   isExporting: false,
+  isSeeking: false,
   trackHeight: 64,
   followPlayhead: true,
   rippleEnabled: false,

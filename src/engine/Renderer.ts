@@ -153,7 +153,7 @@ export class Renderer {
     
     if (this.syncFramesRemaining > 0) this.syncFramesRemaining--;
 
-    this.renderFrame(this.ctx as any, targetWidth, targetHeight, projectStore.currentTime, playbackStarted || this.syncFramesRemaining > 0);
+    this.renderFrame(this.ctx as any, targetWidth, targetHeight, projectStore.currentTime, playbackStarted || projectStore.isSeeking || this.syncFramesRemaining > 0);
   }
 
   public renderFrame(ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, targetWidth: number, targetHeight: number, time: number, forceSync = false) {
@@ -220,17 +220,17 @@ export class Renderer {
               const absDrift = Math.abs(drift);
               
               if (!projectStore.isPlaying) {
-                // SCRUBBING/IDLE: Hard seek visuals
-                if (absDrift > 0.05) media.currentTime = localTime;
+                // SCRUBBING/IDLE: Hard seek visuals for immediate feedback
+                if (absDrift > 0.03 || forceSync) media.currentTime = localTime;
                 media.playbackRate = 1.0;
                 if (!media.paused) media.pause();
               } else {
-                // PLAYING: Video visual sync only
-                if (absDrift > 0.3 || forceSync) {
+                // PLAYING: Video visual sync with smoothing
+                if (absDrift > 0.5 || forceSync) {
                   media.currentTime = localTime;
                   media.playbackRate = 1.0;
                 } else if (absDrift > 0.02) {
-                  const nudgeFactor = Math.min(0.05, absDrift * 0.2);
+                  const nudgeFactor = Math.min(0.08, absDrift * 0.25);
                   media.playbackRate = drift > 0 ? (1.0 - nudgeFactor) : (1.0 + nudgeFactor);
                 } else {
                   media.playbackRate = 1.0;

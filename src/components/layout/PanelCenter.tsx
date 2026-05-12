@@ -2,6 +2,7 @@ import { Show, onMount, onCleanup, type Component } from 'solid-js';
 import { MonitorPlay, Play, Pause, Volume2, VolumeX } from 'lucide-solid';
 import { projectStore, togglePlay, setProjectStore } from '../../store/projectStore';
 import { renderer } from '../../engine/Renderer';
+import { audioEngine } from '../../engine/AudioEngine';
 
 export const PanelCenter: Component = () => {
   let canvasRef: HTMLCanvasElement | undefined;
@@ -60,7 +61,42 @@ export const PanelCenter: Component = () => {
           {projectStore.currentTime.toFixed(1)}s
         </div>
 
-        <div class="flex-1 relative h-6 flex items-center cursor-pointer group" id="main-scrubber">
+        <div 
+          class="flex-1 relative h-6 flex items-center cursor-pointer group select-none touch-none" 
+          id="main-scrubber"
+          onPointerDown={(e) => {
+            audioEngine.init();
+            const rect = e.currentTarget.getBoundingClientRect();
+            const wasPlaying = projectStore.isPlaying;
+            if (wasPlaying) setProjectStore('isPlaying', false);
+            setProjectStore('isSeeking', true);
+
+            const update = (ex: number) => {
+              const x = Math.max(0, Math.min(rect.width, ex - rect.left));
+              let time = (x / rect.width) * projectStore.duration;
+              if (!Number.isFinite(time)) time = 0;
+              
+              setProjectStore('currentTime', time);
+              
+              // Keep audio state in sync without starting nodes during the scrub
+              audioEngine.stopPlayback();
+              audioEngine.reset(time);
+            };
+            
+            update(e.clientX);
+            e.currentTarget.setPointerCapture(e.pointerId);
+
+            const onMove = (moveEvent: PointerEvent) => update(moveEvent.clientX);
+            const onUp = () => {
+              setProjectStore('isSeeking', false);
+              if (wasPlaying) setProjectStore('isPlaying', true);
+              window.removeEventListener('pointermove', onMove);
+              window.removeEventListener('pointerup', onUp);
+            };
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+          }}
+        >
           <div class="w-full h-1 md:h-1.5 bg-[#1e1e1e] rounded-full overflow-hidden border border-border">
             <div class="h-full bg-primary transition-all duration-75 pointer-events-none" style={{ width: `${(projectStore.currentTime / projectStore.duration) * 100}%` }}></div>
           </div>
