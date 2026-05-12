@@ -7,7 +7,8 @@ import { setupResizer } from '../../utils/resizer';
 
 const hexToRgb = (hex: string) => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '255, 255, 255';
+  // Fallback to a neutral blue-gray if hex is invalid, preventing "white clip" bugs
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '59, 130, 246';
 };
 
 const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props) => {
@@ -15,24 +16,23 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
 
   createEffect(() => {
     const layer = props.layer;
+    const { mediaId, duration, inPoint, waveformStyle: style, audioAppearance: appearance, clipColor } = layer;
     const pxPerSec = props.pixelsPerSecond;
     if (layer.type !== 'audio' && layer.type !== 'video') return;
-    if (!layer.mediaId || !canvasRef) return;
+    if (!mediaId || !canvasRef) return;
 
-    const media = projectStore.mediaPool[layer.mediaId];
+    const media = projectStore.mediaPool[mediaId];
     if (!media || !media.peaks) return;
 
     const ctx = canvasRef.getContext('2d');
     if (!ctx) return;
 
     // Resize internal resolution to match DOM size
-    canvasRef.width = layer.duration * pxPerSec;
+    canvasRef.width = duration * pxPerSec;
     const w = canvasRef.width;
     const h = canvasRef.height;
     ctx.clearRect(0, 0, w, h);
 
-    const duration = layer.duration;
-    const inPoint = layer.inPoint;
     const totalDuration = media.duration || 1;
 
     const startIdx = Math.floor((inPoint / totalDuration) * media.peaks.length);
@@ -41,9 +41,7 @@ const TrackWaveform: Component<{ layer: any; pixelsPerSecond: number }> = (props
     const visiblePeaks = media.peaks.slice(startIdx, endIdx);
     if (visiblePeaks.length === 0) return;
 
-    const style = layer.waveformStyle || 'standard';
-    const appearance = layer.audioAppearance || 'waveform';
-    const baseColor = layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6');
+    const baseColor = clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6');
     const isWaveformMode = appearance === 'waveform';
     
     // Waveform translucency logic
@@ -478,7 +476,7 @@ export const PanelTimeline: Component = () => {
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
                       {(layer) => (
                             <div
-                              class={`timeline-clip absolute top-1 bottom-1 rounded shadow-lg group border transition-[background-color,border-color,box-shadow,opacity] duration-150 ${projectStore.activeLayerId === layer.id ? 'z-20 border-white/60 ring-1 ring-white/10' : 'border-white/5'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
+                              class={`timeline-clip absolute top-1 bottom-1 rounded shadow-xl group border-2 transition-[border-color,ring,box-shadow,opacity] duration-150 cursor-pointer ${projectStore.activeLayerId === layer.id ? 'z-20 border-white ring-2 ring-white/20' : 'border-white/5'} ${track.locked || layer.locked ? 'opacity-50 pointer-events-none' : ''} ${track.hidden || layer.hidden ? 'opacity-30' : ''}`}
                               style={{
                                 left: `${layer.startTime * projectStore.pixelsPerSecond}px`,
                                 width: `${layer.duration * projectStore.pixelsPerSecond}px`,
@@ -487,13 +485,10 @@ export const PanelTimeline: Component = () => {
                                     ? (layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))
                                     : `rgba(${hexToRgb(layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.15)`)
                                   : (layer.clipColor || (layer.type === 'image' ? '#7c3aed' : layer.type === 'text' ? '#d97706' : '#4b5563')),
-                                'border-color': (layer.audioAppearance === 'clip')
-                                  ? 'rgba(255,255,255,0.15)'
-                                  : `rgba(${hexToRgb(layer.clipColor || (layer.type === 'audio' ? '#10b981' : '#3b82f6'))}, 0.4)`
                               }}
                               onMouseDown={(e) => startLayerDrag(e, layer.id, 'move')}
                             >
-                            <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none z-10 relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                            <div class="px-2 py-1 text-[10px] text-white font-bold truncate pointer-events-none select-none z-10 relative drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                               {layer.name}
                             </div>
 

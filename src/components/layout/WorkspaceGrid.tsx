@@ -29,7 +29,7 @@ export const WorkspaceGrid: Component<Props> = (props) => {
         {`
           @media (min-width: 768px) {
             #workspace-grid {
-              --left-w: 280px; --right-w: 300px; --timeline-h: 220px; 
+              --left-w: 280px; --right-w: 300px; --timeline-h: 420px; 
               display: grid !important;
               grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w);
               grid-template-rows: minmax(0, 1fr) var(--timeline-h);

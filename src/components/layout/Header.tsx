@@ -1,5 +1,5 @@
 import { type Component } from 'solid-js';
-import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch } from 'lucide-solid';
+import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 export const Header: Component = () => {
@@ -58,6 +58,15 @@ export const Header: Component = () => {
             onClick={() => setProjectStore('showRightPanel', p => !p)}
             class={`p-1 rounded text-white transition-all ${projectStore.showRightPanel ? 'bg-[#2a2a2a]' : 'bg-[#1e1e1e] hover:bg-[#2a2a2a]'}`}
           ><PanelRight class="w-4 h-4" /></button>
+          <div class="w-px h-5 bg-border mx-1"></div>
+          <button 
+            onClick={() => setProjectStore('rippleEnabled', p => !p)}
+            title="Ripple Edit (Push clips to the right)"
+            class={`p-1 rounded transition-all flex items-center gap-1.5 px-2 ${projectStore.rippleEnabled ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-[#1e1e1e] text-neutral-400 hover:text-white border border-transparent'}`}
+          >
+            <ArrowRightFromLine class="w-4 h-4" />
+            <span class="text-[10px] font-bold uppercase tracking-tight hidden lg:inline">Ripple</span>
+          </button>
         </div>
       </div>
 

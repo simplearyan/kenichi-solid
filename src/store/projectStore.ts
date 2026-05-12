@@ -116,6 +116,7 @@ export interface ProjectState {
   isExporting: boolean;
   trackHeight: number;
   followPlayhead: boolean;
+  rippleEnabled: boolean;
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -154,8 +155,9 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
 
   exportModalOpen: false,
   isExporting: false,
-  trackHeight: 48,
+  trackHeight: 64,
   followPlayhead: true,
+  rippleEnabled: false,
 });
 
 import { audioEngine } from '../engine/AudioEngine';
@@ -237,16 +239,98 @@ export const deleteTrack = (id: string) => {
 
 export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
   const id = `l_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const startTime = layer.startTime;
+  const duration = layer.duration;
+  const endTime = startTime + duration;
+
   let targetTrackId = projectStore.activeTrackId;
 
-  if (targetTrackId) {
-    // Check if the active track already contains a different media type
-    const trackLayers = projectStore.layers.filter(l => l.trackId === targetTrackId);
-    if (trackLayers.length > 0 && trackLayers[0].type !== layer.type) {
-      targetTrackId = null; // Force creating a new track
+  // Collision detection helper
+  const hasCollision = (trackId: string, start: number, end: number) => {
+    return projectStore.layers.some(l => 
+      l.trackId === trackId && 
+      !(end <= l.startTime || start >= l.startTime + l.duration)
+    );
+  };
+
+  if (projectStore.rippleEnabled) {
+    // RIPPLE MODE
+    // Priority: Active track (if type matches) -> Existing track of same type -> New track
+    if (targetTrackId) {
+      const trackLayers = projectStore.layers.filter(l => l.trackId === targetTrackId);
+      if (trackLayers.length > 0 && trackLayers[0].type !== layer.type) {
+        targetTrackId = null;
+      }
+    }
+
+    if (!targetTrackId) {
+      const sameTypeTrack = projectStore.tracks.find(t => {
+        const layers = projectStore.layers.filter(l => l.trackId === t.id);
+        return layers.length > 0 && layers[0].type === layer.type;
+      });
+      if (sameTypeTrack) targetTrackId = sameTypeTrack.id;
+    }
+
+    if (targetTrackId) {
+      const insertionPoint = startTime;
+      
+      // 1. Shift everything that starts at or after the insertion point
+      setProjectStore('layers', 
+        (l) => l.trackId === targetTrackId && l.startTime >= insertionPoint - 0.001, 
+        produce((l: any) => { l.startTime += duration; })
+      );
+
+      // 2. Professional Split: Handle clips that are intersected by the insertion point
+      // We use a clone to avoid issues while iterating/modifying
+      const intersectedClips = projectStore.layers.filter(l => 
+        l.trackId === targetTrackId && 
+        l.startTime < insertionPoint - 0.001 && 
+        (l.startTime + l.duration) > insertionPoint + 0.001
+      );
+
+      for (const clip of intersectedClips) {
+        const originalDuration = clip.duration;
+        const headDuration = insertionPoint - clip.startTime;
+        const tailDuration = originalDuration - headDuration;
+
+        // Shorten the head clip
+        setProjectStore('layers', (l) => l.id === clip.id, { duration: headDuration });
+
+        // Create the tail clip
+        const tailId = `l_${Date.now()}_${Math.random().toString(36).substring(2, 9)}_tail`;
+        const tailLayer: LayerState = {
+          ...clip,
+          id: tailId,
+          startTime: insertionPoint + duration,
+          duration: tailDuration,
+          inPoint: clip.inPoint + headDuration
+        };
+        setProjectStore('layers', (prev) => [...prev, tailLayer]);
+      }
+    }
+  } else {
+    // SMART PLACEMENT MODE (Default - Overlap Avoidance)
+    // 1. Try active track first if no collision and type matches
+    if (targetTrackId) {
+      const trackLayers = projectStore.layers.filter(l => l.trackId === targetTrackId);
+      const isTypeMatch = trackLayers.length === 0 || trackLayers[0].type === layer.type;
+      if (!isTypeMatch || hasCollision(targetTrackId, startTime, endTime)) {
+        targetTrackId = null; 
+      }
+    }
+
+    // 2. Search other existing tracks of same type for a gap
+    if (!targetTrackId) {
+      const suitableTrack = projectStore.tracks.find(t => {
+        const layers = projectStore.layers.filter(l => l.trackId === t.id);
+        const isTypeMatch = layers.length === 0 || layers[0].type === layer.type;
+        return isTypeMatch && !hasCollision(t.id, startTime, endTime);
+      });
+      if (suitableTrack) targetTrackId = suitableTrack.id;
     }
   }
 
+  // 3. Create new track if still no target
   if (!targetTrackId) {
     targetTrackId = `track_${Date.now()}`;
     const prefix = layer.type.charAt(0).toUpperCase() + layer.type.slice(1);
@@ -256,7 +340,7 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
   const newLayer: LayerState = { 
     ...layer, 
     id, 
-    trackId: targetTrackId,
+    trackId: targetTrackId as string,
     // Apply default visual styles based on media type
     audioAppearance: layer.type === 'audio' ? 'waveform' : 'clip',
     waveformStyle: layer.type === 'audio' ? 'clean' : 'standard'
