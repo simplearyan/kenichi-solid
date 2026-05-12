@@ -1,5 +1,5 @@
 import { type Component } from 'solid-js';
-import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download } from 'lucide-solid';
+import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 export const Header: Component = () => {
@@ -61,7 +61,16 @@ export const Header: Component = () => {
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
+        <a 
+          href="https://github.com/simplearyan/kenichi-solid" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="text-neutral-400 hover:text-white transition-colors"
+          title="View on GitHub"
+        >
+          <GitBranch class="w-4 h-4" />
+        </a>
         <button 
           onClick={() => setProjectStore('exportModalOpen', true)}
           class="px-3 md:px-4 py-1 rounded bg-primary hover:bg-primaryHover text-background text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(5,213,144,0.2)]"

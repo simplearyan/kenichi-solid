@@ -253,7 +253,14 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
     setProjectStore('tracks', (t) => [...t, { id: targetTrackId as string, name: `${prefix} Track`, hidden: false, locked: false, volume: 1, muted: false }]);
   }
 
-  const newLayer = { ...layer, id, trackId: targetTrackId };
+  const newLayer: LayerState = { 
+    ...layer, 
+    id, 
+    trackId: targetTrackId,
+    // Apply default visual styles based on media type
+    audioAppearance: layer.type === 'audio' ? 'waveform' : 'clip',
+    waveformStyle: layer.type === 'audio' ? 'clean' : 'standard'
+  };
   setProjectStore('layers', (prev) => [...prev, newLayer]);
   setProjectStore('activeLayerId', id);
   recalcDuration();

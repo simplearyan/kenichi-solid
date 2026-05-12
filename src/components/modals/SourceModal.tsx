@@ -1,5 +1,5 @@
 import { Show, createSignal, onMount, onCleanup, createEffect, type Component } from 'solid-js';
-import { X, Play, Pause, ZoomIn, Maximize, Navigation, CheckCircle } from 'lucide-solid';
+import { X, Play, Pause, ZoomIn, Maximize, Navigation, CheckCircle, Music } from 'lucide-solid';
 import { projectStore, closeSourceModal, updateSourceModalState, addLayer } from '../../store/projectStore';
 import { layerRegistry } from '../../engine/LayerRegistry';
 
@@ -11,6 +11,7 @@ export const SourceModal: Component = () => {
   const [isPlaying, setIsPlaying] = createSignal(false);
   const [currentTime, setCurrentTime] = createSignal(0);
   const [audioOnly, setAudioOnly] = createSignal(false);
+  const [extractAudio, setExtractAudio] = createSignal(false);
 
   // Image pan/zoom state
   let isPanning = false;
@@ -47,28 +48,55 @@ export const SourceModal: Component = () => {
     if (!ctx) return;
     ctx.clearRect(0, 0, w, h);
 
-    const step = w / m.peaks.length;
-    const inPx = (projectStore.srcIn / duration()) * w;
-    const outPx = (projectStore.srcOut / duration()) * w;
+    const peaks = m.peaks;
+    const duration_val = duration();
+    const inPx = (projectStore.srcIn / duration_val) * w;
+    const outPx = (projectStore.srcOut / duration_val) * w;
 
-    for (let i = 0; i < m.peaks.length; i++) {
-      const x = i * step;
-      const barW = Math.max(1, step - 1);
-      const barH = Math.max(2, m.peaks[i] * h * 0.8);
-      const y = (h - barH) / 2;
+    // Background (unselected part)
+    ctx.fillStyle = 'rgba(79, 70, 229, 0.15)';
+    renderCleanPath(ctx, peaks, w, h);
 
-      if (x + barW / 2 >= inPx && x + barW / 2 <= outPx) {
-        ctx.fillStyle = '#6366f1';
-      } else {
-        ctx.fillStyle = '#1e1b4b';
-      }
-      ctx.fillRect(x, y, barW, barH);
+    // Selected part (Indigo)
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(inPx, 0, outPx - inPx, h);
+    ctx.clip();
+    ctx.fillStyle = '#6366f1';
+    renderCleanPath(ctx, peaks, w, h);
+    ctx.restore();
+  };
+
+  const renderCleanPath = (ctx: CanvasRenderingContext2D, peaks: number[], w: number, h: number) => {
+    ctx.beginPath();
+    for (let x = 0; x <= w; x++) {
+      const floatIdx = (x / w) * (peaks.length - 1);
+      const i = Math.floor(floatIdx);
+      const f = floatIdx - i;
+      const p1 = peaks[i] || 0;
+      const p2 = peaks[i + 1] || p1;
+      const peak = p1 * (1 - f) + p2 * f;
+      const ph = peak * h * 0.85;
+      if (x === 0) ctx.moveTo(x, h / 2 - ph / 2);
+      else ctx.lineTo(x, h / 2 - ph / 2);
     }
+    for (let x = w; x >= 0; x--) {
+      const floatIdx = (x / w) * (peaks.length - 1);
+      const i = Math.floor(floatIdx);
+      const f = floatIdx - i;
+      const p1 = peaks[i] || 0;
+      const p2 = peaks[i + 1] || p1;
+      const peak = p1 * (1 - f) + p2 * f;
+      const ph = peak * h * 0.85;
+      ctx.lineTo(x, h / 2 + ph / 2);
+    }
+    ctx.closePath();
+    ctx.fill();
   };
 
   createEffect(() => {
-    if (projectStore.sourceModalOpen && media()?.type === 'audio') {
-      // Need a small delay for canvas to size properly
+    const m = media();
+    if (projectStore.sourceModalOpen && (m?.type === 'audio' || (m?.type === 'video' && extractAudio()))) {
       setTimeout(drawWaveform, 50);
     }
   });
@@ -77,7 +105,7 @@ export const SourceModal: Component = () => {
   createEffect(() => {
     projectStore.srcIn;
     projectStore.srcOut;
-    if (audioOnly()) drawWaveform();
+    if (audioOnly() || (media()?.type === 'video' && extractAudio())) drawWaveform();
   });
 
   const loop = () => {
@@ -236,7 +264,7 @@ export const SourceModal: Component = () => {
 
     const layerId = addLayer({
       name: m.name,
-      type: m.type,
+      type: extractAudio() ? 'audio' : m.type,
       mediaId: m.id,
       startTime: projectStore.currentTime,
       duration: projectStore.srcOut - projectStore.srcIn,
@@ -291,11 +319,11 @@ export const SourceModal: Component = () => {
           <Show when={media()?.type !== 'image'}>
             <video
               ref={videoRef}
-              class={`max-w-full max-h-full object-contain ${audioOnly() ? 'hidden' : ''}`}
+              class={`max-w-full max-h-full object-contain ${(audioOnly() || extractAudio()) ? 'hidden' : ''}`}
               playsinline
               onEnded={() => setIsPlaying(false)}
             />
-            <Show when={audioOnly()}>
+            <Show when={audioOnly() || extractAudio()}>
               <div class="absolute inset-0 bg-indigo-500/5 group/audio">
                 <canvas ref={waveCanvasRef} class="absolute inset-0 w-full h-full opacity-80"></canvas>
 
@@ -316,19 +344,19 @@ export const SourceModal: Component = () => {
                     onMouseDown={(e) => onHandleMouseDown(e, 'move')}
                   />
 
-                  {/* Playhead */}
+                  {/* Playhead (No Glow) */}
                   <div
-                    class="absolute top-0 bottom-0 w-px bg-[#05d590] shadow-[0_0_8px_rgba(5,213,144,0.8)] z-20 pointer-events-none"
+                    class="absolute top-0 bottom-0 w-px bg-primary z-20 pointer-events-none"
                     style={{ left: `${(currentTime() / duration()) * 100}%` }}
                   />
 
-                  {/* Clean Trim Handles */}
+                  {/* Clean Trim Handles (No Glow) */}
                   <div
                     class="absolute top-0 bottom-0 w-4 -ml-2 cursor-ew-resize flex items-center justify-center group/h z-30"
                     style={{ left: `${(projectStore.srcIn / duration()) * 100}%` }}
                     onMouseDown={(e) => onHandleMouseDown(e, 'in')}
                   >
-                    <div class="w-1 h-12 bg-white rounded-full shadow-xl transition-transform group-hover/h:scale-x-150"></div>
+                    <div class="w-1 h-12 bg-white rounded-full transition-transform group-hover/h:scale-x-150"></div>
                   </div>
 
                   <div
@@ -336,7 +364,7 @@ export const SourceModal: Component = () => {
                     style={{ left: `${(projectStore.srcOut / duration()) * 100}%` }}
                     onMouseDown={(e) => onHandleMouseDown(e, 'out')}
                   >
-                    <div class="w-1 h-12 bg-white rounded-full shadow-xl transition-transform group-hover/h:scale-x-150"></div>
+                    <div class="w-1 h-12 bg-white rounded-full transition-transform group-hover/h:scale-x-150"></div>
                   </div>
                 </div>
               </div>
@@ -406,12 +434,23 @@ export const SourceModal: Component = () => {
               <button
                 onClick={handlePlayPause}
                 disabled={media()?.type === 'image'}
-                class="w-8 h-8 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white flex items-center justify-center transition-all disabled:opacity-50"
+                class="w-9 h-9 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white flex items-center justify-center transition-all disabled:opacity-50"
               >
                 <Show when={!isPlaying()} fallback={<Pause class="w-4 h-4 fill-current" />}>
                   <Play class="w-4 h-4 fill-current ml-0.5" />
                 </Show>
               </button>
+              
+              <Show when={media()?.type === 'video'}>
+                <button
+                  onClick={() => setExtractAudio(!extractAudio())}
+                  class={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${extractAudio() ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-transparent border-white/10 text-neutral-400 hover:border-white/20'}`}
+                >
+                  <Music class="w-3.5 h-3.5" />
+                  <span class="text-[10px] font-bold uppercase tracking-tight">Extract Audio</span>
+                </button>
+              </Show>
+
               <div class="flex flex-col">
                 <div class="text-[10px] font-mono text-neutral-400">
                   {currentTime().toFixed(1)}s <span class="text-neutral-600">/ {duration().toFixed(1)}s</span>
@@ -425,39 +464,39 @@ export const SourceModal: Component = () => {
             </div>
 
             <div class="flex items-center gap-2">
-              <div class="flex items-center bg-[#121212] rounded p-1 border border-white/5 gap-1">
-                <div class="flex flex-col items-center px-2">
-                  <span class="text-[8px] text-neutral-500 font-bold uppercase mb-0.5">In</span>
+              <div class="flex items-center bg-black/40 rounded-lg p-1.5 border border-white/5 gap-3 backdrop-blur-sm">
+                <div class="flex flex-col items-start px-2">
+                  <span class="text-[7px] text-neutral-600 font-black uppercase tracking-tighter mb-0.5">Start</span>
                   <input
                     type="number" step="0.1" min="0" max={projectStore.srcOut}
                     value={projectStore.srcIn.toFixed(1)}
                     onInput={(e) => updateSourceModalState({ srcIn: parseFloat(e.currentTarget.value) || 0 })}
-                    class="bg-transparent text-white text-[10px] font-mono w-12 text-center focus:outline-none border-b border-white/5 hover:border-white/20 transition-colors"
+                    class="bg-transparent text-primary text-[11px] font-mono w-14 focus:outline-none border-b border-transparent focus:border-primary/50 transition-all hover:text-white"
                   />
                 </div>
-                <div class="w-px h-6 bg-white/10 self-center mx-1"></div>
-                <div class="flex flex-col items-center px-2">
-                  <span class="text-[8px] text-neutral-500 font-bold uppercase mb-0.5">Out</span>
+                <div class="w-px h-5 bg-white/5 self-center"></div>
+                <div class="flex flex-col items-start px-2">
+                  <span class="text-[7px] text-neutral-600 font-black uppercase tracking-tighter mb-0.5">End</span>
                   <input
                     type="number" step="0.1" min={projectStore.srcIn} max={duration()}
                     value={projectStore.srcOut.toFixed(1)}
                     onInput={(e) => updateSourceModalState({ srcOut: parseFloat(e.currentTarget.value) || duration() })}
-                    class="bg-transparent text-white text-[10px] font-mono w-12 text-center focus:outline-none border-b border-white/5 hover:border-white/20 transition-colors"
+                    class="bg-transparent text-primary text-[11px] font-mono w-14 focus:outline-none border-b border-transparent focus:border-primary/50 transition-all hover:text-white"
                   />
                 </div>
               </div>
 
-              <div class="flex bg-[#121212] rounded p-1 border border-white/5 ml-1">
-                <button onClick={handleSetIn} class="px-3 py-1 hover:bg-white/5 text-neutral-400 hover:text-white rounded text-[10px] font-bold uppercase transition-colors">
+              <div class="flex bg-white/5 rounded-lg p-1 border border-white/5 ml-1 overflow-hidden">
+                <button onClick={handleSetIn} class="px-4 py-1.5 hover:bg-white/10 text-neutral-400 hover:text-white rounded-md text-[9px] font-black uppercase tracking-wider transition-all active:scale-95">
                   Mark In
                 </button>
-                <button onClick={handleSetOut} class="px-3 py-1 hover:bg-white/5 text-neutral-400 hover:text-white rounded text-[10px] font-bold uppercase transition-colors">
+                <button onClick={handleSetOut} class="px-4 py-1.5 hover:bg-white/10 text-neutral-400 hover:text-white rounded-md text-[9px] font-black uppercase tracking-wider transition-all active:scale-95">
                   Mark Out
                 </button>
               </div>
 
-              <button onClick={addToTimeline} class="ml-2 px-4 py-1.5 bg-[#05d590] hover:bg-[#04b077] text-black rounded text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-[#05d590]/20 active:scale-95">
-                <CheckCircle class="w-3.5 h-3.5" />
+              <button onClick={addToTimeline} class="ml-2 px-5 py-2.5 bg-primary hover:bg-primaryHover text-black rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 uppercase">
+                <CheckCircle class="w-4 h-4" />
                 Add to Timeline
               </button>
             </div>

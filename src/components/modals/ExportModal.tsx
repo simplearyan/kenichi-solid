@@ -1,12 +1,12 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { X, Download, Loader2 } from 'lucide-solid';
-import { projectStore, setProjectStore } from '../../store/projectStore';
+import { setProjectStore } from '../../store/projectStore';
 import { exportProject, type ExportConfig } from '../../engine/ExportEngine';
 
 export const ExportModal: Component = () => {
   const [format, setFormat] = createSignal<ExportConfig['format']>('mp4');
   const [resolution, setResolution] = createSignal<ExportConfig['resolution']>('1080');
-  const [fps, setFps] = createSignal<number>(projectStore.fps || 30);
+  const [fps, setFps] = createSignal<number>(30);
   
   const [isExporting, setIsExporting] = createSignal(false);
   const [progress, setProgress] = createSignal(0);
