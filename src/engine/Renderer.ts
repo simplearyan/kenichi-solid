@@ -280,37 +280,62 @@ export class Renderer {
         let animX = 0;
         let animY = 0;
 
+        const Easing: Record<string, (t: number) => number> = {
+          linear: (t) => t,
+          easeIn: (t) => t * t * t,
+          easeOut: (t) => 1 - Math.pow(1 - t, 3),
+          easeInOut: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+          bounce: (t) => {
+            const n1 = 7.5625; const d1 = 2.75;
+            if (t < 1 / d1) return n1 * t * t;
+            else if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + 0.75;
+            else if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
+            else return n1 * (t -= 2.625 / d1) * t + 0.984375;
+          }
+        };
+
         const layerTime = time - layer.startTime; // Time since layer start
 
         if (isVisible) {
           // In Animation
           if (layer.animIn && layer.animIn !== 'none' && layerTime < (layer.animInDuration || 1)) {
-            let p = layerTime / (layer.animInDuration || 1);
-            p = 1 - Math.pow(1 - p, 3); // easeOutCubic
+            const easeFunc = Easing[layer.animInEase || 'easeOut'] || Easing.easeOut;
+            let p = easeFunc(Math.max(0, Math.min(1, layerTime / (layer.animInDuration || 1))));
 
             if (layer.animIn === 'fade') animAlpha = p;
-            else if (layer.animIn === 'slideLeft') { animX = -W * (1 - p); animAlpha = p; }
+            else if (layer.animIn === 'slideLeft') { animX = -500 * (1 - p); animAlpha = p; }
+            else if (layer.animIn === 'slideRight') { animX = 500 * (1 - p); animAlpha = p; }
             else if (layer.animIn === 'zoomIn') { animScale = p; animAlpha = p; }
-            else if (layer.animIn === 'rotateIn') { animRot = (1 - p) * Math.PI; animScale = p; animAlpha = p; }
+            else if (layer.animIn === 'riseUp') { animY = 100 * (1 - p); animAlpha = p; }
+            else if (layer.animIn === 'blurIn') { animAlpha = p; } // Handled in filter
+            else if (layer.animIn === 'rotateIn') { animRot = (1 - p) * Math.PI * 0.5; animScale = p; animAlpha = p; }
           }
 
           // Out Animation
           let timeFromEnd = layer.duration - layerTime;
           if (layer.animOut && layer.animOut !== 'none' && timeFromEnd < (layer.animOutDuration || 1)) {
-            let p = timeFromEnd / (layer.animOutDuration || 1);
-            p = 1 - Math.pow(1 - p, 3); // easeOutCubic (reversed since it's going backwards from end)
+            const easeFunc = Easing[layer.animOutEase || 'easeOut'] || Easing.easeOut;
+            let p = easeFunc(Math.max(0, Math.min(1, timeFromEnd / (layer.animOutDuration || 1))));
 
             if (layer.animOut === 'fade') animAlpha *= p;
-            else if (layer.animOut === 'slideRight') { animX += W * (1 - p); animAlpha *= p; }
+            else if (layer.animOut === 'slideLeft') { animX -= 500 * (1 - p); animAlpha *= p; }
+            else if (layer.animOut === 'slideRight') { animX += 500 * (1 - p); animAlpha *= p; }
+            else if (layer.animOut === 'slideDown') { animY += 200 * (1 - p); animAlpha *= p; }
             else if (layer.animOut === 'zoomOut') { animScale *= p; animAlpha *= p; }
-            else if (layer.animOut === 'rotateOut') { animRot += (1 - p) * Math.PI; animScale *= p; animAlpha *= p; }
+            else if (layer.animOut === 'blurOut') { animAlpha *= p; }
+            else if (layer.animOut === 'rotateOut') { animRot += (1 - p) * Math.PI * 0.5; animScale *= p; animAlpha *= p; }
           }
 
           // Loop Animation
           if (layer.animLoop && layer.animLoop !== 'none') {
-            if (layer.animLoop === 'pulse') animScale *= 1 + Math.sin(layerTime * Math.PI * 2) * 0.05;
-            else if (layer.animLoop === 'wiggle') animRot += Math.sin(layerTime * Math.PI * 4) * 0.05;
-            else if (layer.animLoop === 'float') animY += Math.sin(layerTime * Math.PI * 2) * 20;
+            const loopSpeed = layer.animLoopSpeed || 1;
+            if (layer.animLoop === 'pulse') animScale *= 1 + Math.sin(layerTime * Math.PI * 2 * loopSpeed) * 0.05;
+            else if (layer.animLoop === 'wiggle') animRot += Math.sin(layerTime * Math.PI * 4 * loopSpeed) * 0.05;
+            else if (layer.animLoop === 'float') animY += Math.sin(layerTime * Math.PI * 2 * loopSpeed) * 20;
+            else if (layer.animLoop === 'jitter') {
+              animX += (Math.random() - 0.5) * 5 * loopSpeed;
+              animY += (Math.random() - 0.5) * 5 * loopSpeed;
+            }
           }
         }
 
@@ -331,6 +356,18 @@ export class Renderer {
             let filterStr = '';
             if (layer.brightness !== 1) filterStr += `brightness(${layer.brightness}) `;
             if (layer.contrast !== 1) filterStr += `contrast(${layer.contrast}) `;
+            
+            // In/Out Blur effects
+            if (layer.animIn === 'blurIn' && layerTime < (layer.animInDuration || 1)) {
+              const p = layerTime / (layer.animInDuration || 1);
+              filterStr += `blur(${20 * (1 - p)}px) `;
+            }
+            let timeFromEnd = layer.duration - layerTime;
+            if (layer.animOut === 'blurOut' && timeFromEnd < (layer.animOutDuration || 1)) {
+              const p = timeFromEnd / (layer.animOutDuration || 1);
+              filterStr += `blur(${20 * (1 - p)}px) `;
+            }
+
             if (filterStr) ctx.filter = filterStr.trim();
 
             const x = -bCvs.width / 2;
@@ -419,13 +456,50 @@ export class Renderer {
             (ctx as any).letterSpacing = `${layer.letterSpacing}px`;
           }
 
-          ctx.fillStyle = layer.fillColor || '#ffffff';
-          ctx.fillText(text, 0, 0);
+          // Advanced Text Effects (Typewriter, Word-based)
+          const isInAnim = layer.animIn && layer.animIn !== 'none' && layerTime < (layer.animInDuration || 1);
 
-          if (layer.strokeWidth) {
-            ctx.lineWidth = layer.strokeWidth;
-            ctx.strokeStyle = layer.strokeColor || '#000000';
-            ctx.strokeText(text, 0, 0);
+          if (isInAnim && (layer.animIn === 'typewriter' || layer.animIn === 'typewriter+')) {
+            const p = layerTime / (layer.animInDuration || 1);
+            const chars = Array.from(text);
+            const visibleCharsCount = Math.floor(chars.length * p);
+            ctx.fillStyle = layer.fillColor || '#ffffff';
+            ctx.fillText(chars.slice(0, visibleCharsCount).join(''), 0, 0);
+          } else if (isInAnim && (layer.animIn === 'fadeWord' || layer.animIn === 'bounceWord')) {
+            const words = text.split(' ');
+            const p = layerTime / (layer.animInDuration || 1);
+            const totalWords = words.length;
+            
+            // Measuring total width to center words manually
+            const wordMetrics = words.map(w => ctx.measureText(w).width);
+            const spaceWidth = ctx.measureText(' ').width;
+            const totalWidth = wordMetrics.reduce((a, b) => a + b, 0) + (words.length - 1) * spaceWidth;
+            
+            let currentX = -totalWidth / 2;
+            words.forEach((word, i) => {
+              const wordStart = (i / totalWords) * 0.5; // Stagger over first 50% of duration
+              const wordP = Math.max(0, Math.min(1, (p - wordStart) / 0.5));
+              
+              ctx.save();
+              const wordEase = layer.animIn === 'bounceWord' ? Easing.bounce(wordP) : Easing.easeOut(wordP);
+              ctx.globalAlpha *= (layer.animIn === 'fadeWord' ? wordP : (wordP > 0 ? 1 : 0));
+              if (layer.animIn === 'bounceWord') {
+                ctx.translate(currentX + wordMetrics[i] / 2, -50 * (1 - wordEase));
+              } else {
+                ctx.translate(currentX + wordMetrics[i] / 2, 0);
+              }
+              ctx.fillText(word, 0, 0);
+              ctx.restore();
+              currentX += wordMetrics[i] + spaceWidth;
+            });
+          } else {
+            ctx.fillStyle = layer.fillColor || '#ffffff';
+            ctx.fillText(text, 0, 0);
+            if (layer.strokeWidth) {
+              ctx.lineWidth = layer.strokeWidth;
+              ctx.strokeStyle = layer.strokeColor || '#000000';
+              ctx.strokeText(text, 0, 0);
+            }
           }
 
           ctx.restore();

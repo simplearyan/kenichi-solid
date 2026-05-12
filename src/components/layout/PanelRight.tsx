@@ -646,8 +646,25 @@ export const PanelRight: Component = () => {
                           ]}
                           onChange={(v) => handlePropChange('fontFamily', v)}
                         />
+                        <PropSelect 
+                          label="Weight"
+                          value={activeLayer()?.fontWeight || '700'}
+                          options={[
+                            { label: 'Light', value: '300' },
+                            { label: 'Regular', value: '400' },
+                            { label: 'Medium', value: '500' },
+                            { label: 'SemiBold', value: '600' },
+                            { label: 'Bold', value: '700' },
+                            { label: 'ExtraBold', value: '800' },
+                            { label: 'Black', value: '900' }
+                          ]}
+                          onChange={(v) => handlePropChange('fontWeight', v)}
+                        />
+                      </div>
+
+                      <div class="grid grid-cols-1 gap-4">
                         <div class="space-y-1.5">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Size</label>
+                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Font Size</label>
                           <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-indigo-500/50" />
                         </div>
                       </div>
@@ -656,6 +673,13 @@ export const PanelRight: Component = () => {
                         <label class="text-[10px] text-white font-black uppercase tracking-widest">Text Color</label>
                         <input type="color" value={activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-white/5 border-none p-0.5" />
                       </div>
+
+                      <PropSlider 
+                        label="Letter Spacing"
+                        value={activeLayer()?.letterSpacing || 0}
+                        min={-10} max={50} step={1}
+                        onChange={(v) => handlePropChange('letterSpacing', v)}
+                      />
                     </div>
                   </Section>
                 </Show>
@@ -670,55 +694,120 @@ export const PanelRight: Component = () => {
                     onToggle={() => toggleSection('anim')}
                     showOnMobile={activePropTab() === 'anim'}
                   >
-                    <div class="space-y-5">
-                      <div class="grid grid-cols-2 gap-4">
-                        <PropSelect 
-                          label="In Anim"
-                          value={activeLayer()?.animIn || 'none'}
-                          options={[
-                            { label: 'None', value: 'none' },
-                            { label: 'Fade In', value: 'fade' },
-                            { label: 'Zoom In', value: 'zoomIn' },
-                            { label: 'Slide Left', value: 'slideLeft' }
-                          ]}
-                          onChange={(v) => handlePropChange('animIn', v)}
-                        />
-                        <div class="space-y-1.5">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
-                          <input type="number" step="0.1" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                    <div class="space-y-6">
+                      {/* IN ANIMATION */}
+                      <div class="space-y-4 p-4 bg-black/20 border border-white/5 rounded-2xl relative">
+                        <div class="flex items-center gap-2 mb-1">
+                          <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span class="text-[9px] font-black text-white uppercase tracking-widest">In Effect</span>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                          <PropSelect 
+                            label="Effect"
+                            value={activeLayer()?.animIn || 'none'}
+                            options={[
+                              { label: 'None', value: 'none' },
+                              { label: 'Fade & Scale In', value: 'zoomIn' },
+                              { label: 'Slide In From Left', value: 'slideLeft' },
+                              { label: 'Slide In From Right', value: 'slideRight' },
+                              { label: 'Typewriter', value: 'typewriter' },
+                              { label: 'Typewriter+', value: 'typewriter+' },
+                              { label: 'Fade In (Word)', value: 'fadeWord' },
+                              { label: 'Bounce In (Word)', value: 'bounceWord' },
+                              { label: 'Blur In', value: 'blurIn' },
+                              { label: 'Rise Up', value: 'riseUp' },
+                              { label: 'Rotate In', value: 'rotateIn' }
+                            ]}
+                            onChange={(v) => handlePropChange('animIn', v)}
+                          />
+                          <div class="grid grid-cols-2 gap-4">
+                            <PropSelect 
+                              label="Ease"
+                              value={activeLayer()?.animInEase || 'easeOut'}
+                              options={[
+                                { label: 'Linear', value: 'linear' },
+                                { label: 'Ease In', value: 'easeIn' },
+                                { label: 'Ease Out', value: 'easeOut' },
+                                { label: 'Ease In-Out', value: 'easeInOut' },
+                                { label: 'Bounce', value: 'bounce' }
+                              ]}
+                              onChange={(v) => handlePropChange('animInEase', v)}
+                            />
+                            <div class="space-y-1.5">
+                              <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration (s)</label>
+                              <input type="number" step="0.1" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div class="grid grid-cols-2 gap-4">
-                        <PropSelect 
-                          label="Out Anim"
-                          value={activeLayer()?.animOut || 'none'}
-                          options={[
-                            { label: 'None', value: 'none' },
-                            { label: 'Fade Out', value: 'fade' },
-                            { label: 'Zoom Out', value: 'zoomOut' },
-                            { label: 'Rotate Out', value: 'rotateOut' },
-                            { label: 'Slide Right', value: 'slideRight' }
-                          ]}
-                          onChange={(v) => handlePropChange('animOut', v)}
-                        />
-                        <div class="space-y-1.5">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration</label>
-                          <input type="number" step="0.1" value={activeLayer()?.animOutDuration || 1.0} onInput={(e) => handlePropChange('animOutDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                      {/* OUT ANIMATION */}
+                      <div class="space-y-4 p-4 bg-black/20 border border-white/5 rounded-2xl relative">
+                        <div class="flex items-center gap-2 mb-1">
+                          <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                          <span class="text-[9px] font-black text-white uppercase tracking-widest">Out Effect</span>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                          <PropSelect 
+                            label="Effect"
+                            value={activeLayer()?.animOut || 'none'}
+                            options={[
+                              { label: 'None', value: 'none' },
+                              { label: 'Fade Out', value: 'fade' },
+                              { label: 'Fade & Scale Out', value: 'zoomOut' },
+                              { label: 'Slide Down', value: 'slideDown' },
+                              { label: 'Slide Left', value: 'slideLeft' },
+                              { label: 'Slide Right', value: 'slideRight' },
+                              { label: 'Blur Out', value: 'blurOut' },
+                              { label: 'Rotate Out', value: 'rotateOut' }
+                            ]}
+                            onChange={(v) => handlePropChange('animOut', v)}
+                          />
+                          <div class="grid grid-cols-2 gap-4">
+                            <PropSelect 
+                              label="Ease"
+                              value={activeLayer()?.animOutEase || 'easeOut'}
+                              options={[
+                                { label: 'Linear', value: 'linear' },
+                                { label: 'Ease In', value: 'easeIn' },
+                                { label: 'Ease Out', value: 'easeOut' },
+                                { label: 'Ease In-Out', value: 'easeInOut' }
+                              ]}
+                              onChange={(v) => handlePropChange('animOutEase', v)}
+                            />
+                            <div class="space-y-1.5">
+                              <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration (s)</label>
+                              <input type="number" step="0.1" value={activeLayer()?.animOutDuration || 1.0} onInput={(e) => handlePropChange('animOutDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <PropSelect 
-                        label="Loop Anim"
-                        value={activeLayer()?.animLoop || 'none'}
-                        options={[
-                          { label: 'None', value: 'none' },
-                          { label: 'Pulse (Scale)', value: 'pulse' },
-                          { label: 'Wiggle (Rotation)', value: 'wiggle' },
-                          { label: 'Float (Y-Axis)', value: 'float' }
-                        ]}
-                        onChange={(v) => handlePropChange('animLoop', v)}
-                      />
+                      {/* LOOP ANIMATION */}
+                      <div class="space-y-4 p-4 bg-black/20 border border-white/5 rounded-2xl relative">
+                        <div class="flex items-center gap-2 mb-1">
+                          <div class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          <span class="text-[9px] font-black text-white uppercase tracking-widest">Continuous Loop</span>
+                        </div>
+                        <PropSelect 
+                          label="Loop Type"
+                          value={activeLayer()?.animLoop || 'none'}
+                          options={[
+                            { label: 'Static (None)', value: 'none' },
+                            { label: 'Pulsing (Scale)', value: 'pulse' },
+                            { label: 'Wiggle (Rotation)', value: 'wiggle' },
+                            { label: 'Floating (Y-Axis)', value: 'float' },
+                            { label: 'Jitter (Chaos)', value: 'jitter' }
+                          ]}
+                          onChange={(v) => handlePropChange('animLoop', v)}
+                        />
+                        <PropSlider 
+                          label="Loop Speed"
+                          value={activeLayer()?.animLoopSpeed || 1}
+                          min={0.1} max={5} step={0.1}
+                          onChange={(v) => handlePropChange('animLoopSpeed', v)}
+                        />
+                      </div>
                     </div>
                   </Section>
                 </Show>

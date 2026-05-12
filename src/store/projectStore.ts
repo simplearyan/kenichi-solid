@@ -68,9 +68,13 @@ export interface LayerState {
 
   animIn?: string;
   animInDuration?: number;
+  animInEase?: string;
   animOut?: string;
   animOutDuration?: number;
+  animOutEase?: string;
   animLoop?: string;
+  animLoopEase?: string;
+  animLoopSpeed?: number;
   
   // Style & Effects
   borderRadius?: number;
