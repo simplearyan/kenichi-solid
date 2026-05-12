@@ -23,6 +23,9 @@ A high-performance, professional web-based video editor prototype inspired by ma
     *   **Styling**: Hardware-accelerated Border Radius and multi-parameter Drop Shadows for all visual layers.
     *   **Performance Monitoring**: Real-time FPS counter and dynamic resolution tracking in the preview window.
     *   **Customization**: Global Canvas background control (Transparent, Solid, Custom Colors).
+-   **Cinematic Color Grading**: Professional-grade **Exposure, Whites, Blacks, Saturation, Temperature, and Tint** controls with hardware-accelerated rendering.
+-   **Flicker-Free Scrubbing**: Advanced **Frame Ghosting** engine that eliminates black-frame glitches during timeline seeking and scrubbing.
+-   **Pro Typography**: Granular control over **Letter Spacing**, **Font Weight** (300-900), and emoji-safe text animations.
 
 ## 🚀 Tech Stack
 
@@ -69,7 +72,17 @@ The **Kenichi Export Engine** is designed for pro-grade background rendering:
 
 ## 📦 Version History
 
-### **v1.5 - Stylist & Performance HUD** (Current)
+### **v1.5.1 - Cinematic Engine & Grading Suite** (Current)
+-   **Professional Grading Suite**: Full control over Exposure, Whites, Blacks, Saturation, and white balance (Temperature & Tint).
+-   **Frame Ghosting Engine**: Implemented persistent per-layer buffering to eliminate visual flickers during timeline scrubbing and seeking.
+-   **Timeline UX Overhaul**: 
+    -   **Active Track Highlighting**: Dynamic visual feedback for selected tracks and lanes.
+    -   **Content-Aware Labels**: Timeline clips now dynamically display text content as titles.
+    -   **Playback Persistence**: Automatic resumption of playback after seeking or clip manipulation.
+-   **High-Fidelity Typography**: Added support for Letter Spacing and granular Font Weight (300-900) selection.
+-   **Performance HUD v2**: Consolidated filter pipeline into a single hardware-accelerated pass for smoother 60fps previews and mobile-safe exports.
+
+### **v1.5 - Stylist & Performance HUD**
 -   **Advanced Styling**: Customizable Border Radius and granular Drop Shadows (Blur, Offset, Color) for Video, Image, and Text.
 -   **Canvas Customization**: Global support for Transparent, Solid presets, and Custom hex backgrounds.
 -   **Performance HUD**: Real-time FPS counter and dynamic resolution metadata tracking in the preview window.

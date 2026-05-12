@@ -171,6 +171,7 @@ export const PanelTimeline: Component = () => {
   let dragStartProp = 0;
   let dragStartDuration = 0;
   let dragStartInPoint = 0;
+  let wasPlayingBeforeDrag = false;
 
   const onWindowPointerMove = (e: PointerEvent) => {
     if (!isDragging) return;
@@ -236,6 +237,12 @@ export const PanelTimeline: Component = () => {
     dragType = null;
     dragLayerId = null;
     setProjectStore('isSeeking', false);
+
+    // RESTORE PLAYBACK: If we were playing before the interaction, resume now.
+    if (wasPlayingBeforeDrag) {
+      setProjectStore('isPlaying', true);
+      wasPlayingBeforeDrag = false;
+    }
   };
 
   onMount(() => {
@@ -251,6 +258,7 @@ export const PanelTimeline: Component = () => {
 
   const startScrub = (e: PointerEvent) => {
     audioEngine.init();
+    wasPlayingBeforeDrag = projectStore.isPlaying;
     if (projectStore.isPlaying) setProjectStore('isPlaying', false);
     if ((e.target as HTMLElement).closest('.timeline-clip')) return;
 
@@ -274,6 +282,7 @@ export const PanelTimeline: Component = () => {
 
   const startLayerDrag = (e: PointerEvent, layerId: string, type: 'move' | 'trim-left' | 'trim-right') => {
     e.stopPropagation();
+    wasPlayingBeforeDrag = projectStore.isPlaying;
     if (projectStore.isPlaying) setProjectStore('isPlaying', false);
 
     const layer = projectStore.layers.find(l => l.id === layerId);

@@ -50,6 +50,8 @@ export interface LayerState {
   exposure?: number;
   whites?: number;
   blacks?: number;
+  temperature?: number;
+  tint?: number;
   colorReplace: boolean;
   replaceFromColor: string;
   replaceToColor: string;

@@ -548,6 +548,20 @@ export const PanelRight: Component = () => {
                       />
                       <div class="grid grid-cols-2 gap-4">
                         <PropSlider 
+                          label="Temperature"
+                          value={activeLayer()?.temperature ?? 0}
+                          min={-1} max={1} step={0.01}
+                          onChange={(v) => handlePropChange('temperature', v)}
+                        />
+                        <PropSlider 
+                          label="Tint"
+                          value={activeLayer()?.tint ?? 0}
+                          min={-1} max={1} step={0.01}
+                          onChange={(v) => handlePropChange('tint', v)}
+                        />
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <PropSlider 
                           label="Whites"
                           value={activeLayer()?.whites ?? 0}
                           min={-1} max={1} step={0.01}

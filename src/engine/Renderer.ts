@@ -434,6 +434,26 @@ export class Renderer {
             }
             ctx.drawImage(bCvs, -bCvs.width / 2, -bCvs.height / 2, bCvs.width, bCvs.height);
 
+            // WHITE BALANCE (Temp & Tint) - Optimized soft-light blend
+            const temp = layer.temperature ?? 0;
+            const tint = layer.tint ?? 0;
+            if (temp !== 0 || tint !== 0) {
+              ctx.save();
+              ctx.globalCompositeOperation = 'soft-light';
+              ctx.globalAlpha = Math.max(Math.abs(temp), Math.abs(tint)) * 0.4;
+              
+              let r = 128, g = 128, b = 128;
+              if (temp > 0) { r += 100; g += 40; b -= 40; } // Warm/Orange shift
+              else if (temp < 0) { r -= 40; g += 20; b += 100; } // Cool/Blue shift
+              
+              if (tint > 0) { r += 60; g -= 60; b += 60; } // Magenta shift
+              else if (tint < 0) { r -= 60; g += 60; b -= 60; } // Green shift
+              
+              ctx.fillStyle = `rgb(${Math.max(0, Math.min(255, r))}, ${Math.max(0, Math.min(255, g))}, ${Math.max(0, Math.min(255, b))})`;
+              ctx.fillRect(x, y, w, h);
+              ctx.restore();
+            }
+
             // VIGNETTE EFFECT (Rendered on top of filters to stay sharp)
             if ((layer.vignette ?? 0) > 0) {
               const vignetteIntensity = layer.vignette ?? 0;
