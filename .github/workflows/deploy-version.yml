@@ -36,17 +36,17 @@ jobs:
         run: |
           mkdir -p deploy_root
           
-          # Initialize versions.json
+          # Initialize versions.json in the archive folder
+          mkdir -p deploy_root/archive
           git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages-branch || mkdir gh-pages-branch
-          if [ -f gh-pages-branch/versions.json ]; then
-            cp gh-pages-branch/versions.json deploy_root/versions.json
+          if [ -f gh-pages-branch/archive/versions.json ]; then
+            cp gh-pages-branch/archive/versions.json deploy_root/archive/versions.json
           else
-            echo '{"versions": []}' > deploy_root/versions.json
+            echo '{"versions": []}' > deploy_root/archive/versions.json
           fi
 
           if [ "${{ github.event.inputs.mode }}" == "bootstrap-last-4" ]; then
             echo "Running Bootstrap Mode for last 4 tags..."
-            # Get last 4 tags (sorted by version/date)
             TAGS=$(git tag -l 'v*' --sort=-v:refname | head -n 4)
             for TAG in $TAGS; do
               echo "Processing $TAG..."
@@ -56,17 +56,15 @@ jobs:
               mkdir -p "deploy_root/$TAG"
               cp -r dist/* "deploy_root/$TAG/"
               
-              # Add to versions.json if missing
               node -e "
                 const fs = require('fs');
-                const data = JSON.parse(fs.readFileSync('deploy_root/versions.json'));
+                const data = JSON.parse(fs.readFileSync('deploy_root/archive/versions.json'));
                 if (!data.versions.find(v => v.tag === '$TAG')) {
                   data.versions.push({ tag: '$TAG', date: new Date().toISOString() });
-                  fs.writeFileSync('deploy_root/versions.json', JSON.stringify(data, null, 2));
+                  fs.writeFileSync('deploy_root/archive/versions.json', JSON.stringify(data, null, 2));
                 }
               "
             done
-            # Return to main for the portal file
             git checkout ${{ github.event.repository.default_branch }}
           else
             echo "Running Single Version Mode for ${{ github.ref_name }}..."
@@ -77,16 +75,16 @@ jobs:
             
             node -e "
               const fs = require('fs');
-              const data = JSON.parse(fs.readFileSync('deploy_root/versions.json'));
+              const data = JSON.parse(fs.readFileSync('deploy_root/archive/versions.json'));
               if (!data.versions.find(v => v.tag === '${{ github.ref_name }}')) {
                 data.versions.push({ tag: '${{ github.ref_name }}', date: new Date().toISOString() });
-                fs.writeFileSync('deploy_root/versions.json', JSON.stringify(data, null, 2));
+                fs.writeFileSync('deploy_root/archive/versions.json', JSON.stringify(data, null, 2));
               }
             "
           fi
           
-          # Copy the portal landing page from the current branch
-          cp portal/index.html deploy_root/index.html
+          # Copy the portal landing page to the archive subfolder
+          cp portal/index.html deploy_root/archive/index.html
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4

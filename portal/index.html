@@ -257,7 +257,7 @@
                 content.innerHTML = `
                     <div class="version-grid">
                         ${sortedVersions.map(v => `
-                            <a href="${v.tag}/" class="version-card">
+                            <a href="../${v.tag}/" class="version-card">
                                 <div class="version-tag">${v.tag}</div>
                                 <div class="version-info">
                                     <div class="version-date">${new Date(v.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>

@@ -4,6 +4,12 @@
 
 A high-performance, professional web-based video editor prototype inspired by macOS aesthetics. Built with **SolidJS**, **TypeScript**, and **Tailwind CSS**.
 
+## 🌐 Live Preview
+**[Launch Latest Version](https://simplearyan.github.io/kenichi-solid/)**
+
+## 📚 Version Archive
+**[Explore Previous Versions (Selection Portal)](https://simplearyan.github.io/kenichi-solid/archive/)**
+
 ## ✨ Features
 
 -   **Modular UI Architecture**: A responsive three-panel workspace with toggleable sidebars and a bottom-docked timeline.
@@ -72,7 +78,14 @@ The **Kenichi Export Engine** is designed for pro-grade background rendering:
 
 ## 📦 Version History
 
-### **v1.5.1 - Cinematic Engine & Grading Suite** (Current)
+### **v1.5.2 - Pro Pitch Black & Multi-Version Portal** (Current)
+-   **Pro Pitch Black Aesthetic**: Solidified the "Kenichi Studio" identity with a high-contrast, deep black design language and Teal Green (#10b981) accent synchronization.
+-   **Clips Panel Re-engineering**: Implemented a collapsible track hierarchy and unified global reorder controls for better project management.
+-   **Multi-Version Deployment**: Automated GitHub Actions pipeline that deploys every tagged release to a versioned subfolder.
+-   **Selection Portal**: A premium version selection landing page allowing users to preview and jump between different builds.
+-   **Build & CSS Optimization**: Flattened design tokens and optimized the build pipeline, reducing production build times to under 5 seconds.
+
+### **v1.5.1 - Cinematic Engine & Grading Suite** (Stable)
 -   **Professional Grading Suite**: Full control over Exposure, Whites, Blacks, Saturation, and white balance (Temperature & Tint).
 -   **Frame Ghosting Engine**: Implemented persistent per-layer buffering to eliminate visual flickers during timeline scrubbing and seeking.
 -   **Timeline UX Overhaul**: 
