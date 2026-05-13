@@ -82,7 +82,7 @@ export interface LayerState {
   animLoop?: string;
   animLoopEase?: string;
   animLoopSpeed?: number;
-  
+
   // Style & Effects
   borderRadius?: number;
   shadowEnabled?: boolean;
@@ -140,6 +140,7 @@ export interface ProjectState {
   followPlayhead: boolean;
   rippleEnabled: boolean;
   canvasBackground: string;
+  theme: "light" | "dark";
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
@@ -180,10 +181,11 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   exportModalOpen: false,
   isExporting: false,
   isSeeking: false,
-  trackHeight: 64,
+  trackHeight: 120,
   followPlayhead: true,
   rippleEnabled: false,
-  canvasBackground: "#000000",
+  canvasBackground: 'transparent',
+  theme: 'dark',
 });
 
 import { audioEngine } from '../engine/AudioEngine';
@@ -191,8 +193,11 @@ import { audioEngine } from '../engine/AudioEngine';
 export const togglePlay = () => {
   setProjectStore("isPlaying", (p) => {
     const next = !p;
-    if (next && audioEngine.ctx?.state === 'suspended') {
-      audioEngine.ctx.resume();
+    if (next) {
+      const ctx = audioEngine.init();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume();
+      }
     }
     return next;
   });
@@ -273,8 +278,8 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
 
   // Collision detection helper
   const hasCollision = (trackId: string, start: number, end: number) => {
-    return projectStore.layers.some(l => 
-      l.trackId === trackId && 
+    return projectStore.layers.some(l =>
+      l.trackId === trackId &&
       !(end <= l.startTime || start >= l.startTime + l.duration)
     );
   };
@@ -299,18 +304,18 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
 
     if (targetTrackId) {
       const insertionPoint = startTime;
-      
+
       // 1. Shift everything that starts at or after the insertion point
-      setProjectStore('layers', 
-        (l) => l.trackId === targetTrackId && l.startTime >= insertionPoint - 0.001, 
+      setProjectStore('layers',
+        (l) => l.trackId === targetTrackId && l.startTime >= insertionPoint - 0.001,
         produce((l: any) => { l.startTime += duration; })
       );
 
       // 2. Professional Split: Handle clips that are intersected by the insertion point
       // We use a clone to avoid issues while iterating/modifying
-      const intersectedClips = projectStore.layers.filter(l => 
-        l.trackId === targetTrackId && 
-        l.startTime < insertionPoint - 0.001 && 
+      const intersectedClips = projectStore.layers.filter(l =>
+        l.trackId === targetTrackId &&
+        l.startTime < insertionPoint - 0.001 &&
         (l.startTime + l.duration) > insertionPoint + 0.001
       );
 
@@ -341,7 +346,7 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
       const trackLayers = projectStore.layers.filter(l => l.trackId === targetTrackId);
       const isTypeMatch = trackLayers.length === 0 || trackLayers[0].type === layer.type;
       if (!isTypeMatch || hasCollision(targetTrackId, startTime, endTime)) {
-        targetTrackId = null; 
+        targetTrackId = null;
       }
     }
 
@@ -363,9 +368,9 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
     setProjectStore('tracks', (t) => [...t, { id: targetTrackId as string, name: `${prefix} Track`, hidden: false, locked: false, volume: 1, muted: false }]);
   }
 
-  const newLayer: LayerState = { 
-    ...layer, 
-    id, 
+  const newLayer: LayerState = {
+    ...layer,
+    id,
     trackId: targetTrackId as string,
     // Apply default visual styles based on media type
     audioAppearance: layer.type === 'audio' ? 'waveform' : 'clip',

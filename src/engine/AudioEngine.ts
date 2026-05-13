@@ -11,7 +11,7 @@ export class AudioEngine {
   private urlCache = new Map<string, AudioBuffer>();
   private bufferRegistry = new Map<string, AudioBuffer>();
   private activeNodes: ActiveNode[] = [];
-  
+
   private playbackStartAudioTime = 0;
   private playbackStartTimelineTime = 0;
   private heartbeatNode: OscillatorNode | null = null;
@@ -23,9 +23,10 @@ export class AudioEngine {
         latencyHint: 'interactive'
       });
       this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.value = 1;
       this.masterGain.connect(this.ctx.destination);
     }
-    
+
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
@@ -33,13 +34,13 @@ export class AudioEngine {
     if (!this.heartbeatNode && this.ctx) {
       this.heartbeatNode = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      gain.gain.value = 0.000001; 
+      gain.gain.value = 0.000001;
       this.heartbeatNode.connect(gain);
       if (this.masterGain) gain.connect(this.masterGain);
       else gain.connect(this.ctx.destination);
       this.heartbeatNode.start();
     }
-    
+
     return this.ctx;
   }
 
@@ -52,16 +53,17 @@ export class AudioEngine {
       this.bufferRegistry.set(id, this.urlCache.get(url)!);
       return;
     }
-    
+
     try {
       console.log(`[AudioEngine] Fetching and decoding: ${url}`);
       const res = await fetch(url);
       const arrayBuffer = await res.arrayBuffer();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      
+
       this.urlCache.set(url, audioBuffer);
       this.bufferRegistry.set(id, audioBuffer);
       console.log(`[AudioEngine] Successfully stored buffer for ${id}`);
+      this.refreshScheduling();
     } catch (e) {
       console.error(`[AudioEngine] Failed to decode ${id}`, e);
     }
@@ -76,7 +78,7 @@ export class AudioEngine {
   async startClock(currentTimelineTime: number) {
     this.init();
     if (!this.ctx) return;
-    
+
     if (this.ctx.state !== 'running') {
       await this.ctx.resume();
     }
@@ -121,7 +123,7 @@ export class AudioEngine {
       // Calculate when to play
       // layer.startTime: when the clip starts in the project
       // layer.inPoint: where we start inside the audio file
-      
+
       const clipEnd = layer.startTime + layer.duration;
       if (clipEnd <= startTime) continue; // Already passed
 
@@ -156,7 +158,7 @@ export class AudioEngine {
         node.source.stop();
         node.source.disconnect();
         node.gain.disconnect();
-      } catch (e) {}
+      } catch (e) { }
     });
     this.activeNodes = [];
   }
@@ -175,7 +177,7 @@ export class AudioEngine {
       const trackVol = track.muted ? 0 : track.volume;
       const globalVol = projectStore.globalMuted ? 0 : projectStore.globalVolume;
       const targetVol = layer.volume * trackVol * globalVol;
-      
+
       // Use ramp for smoother volume changes
       node.gain.gain.setTargetAtTime(targetVol, this.ctx!.currentTime, 0.05);
     });

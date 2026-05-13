@@ -20,17 +20,17 @@ export const PanelCenter: Component = () => {
   return (
     <main class="w-full h-full flex flex-col gap-2 relative">
       <div class="flex-1 glass-panel bg-surface border border-border rounded-lg md:rounded-xl flex items-center justify-center relative overflow-hidden p-1 md:p-2 min-h-0">
-        <div id="stats-overlay" class="absolute top-3 left-3 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-3 py-1.5 z-10 flex items-center gap-3 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-500 pointer-events-none select-none">
+        <div id="stats-overlay" class="absolute top-3 left-3 bg-surface/80 backdrop-blur-xl border border-border rounded-full px-3 py-1.5 z-10 flex items-center gap-3 shadow-2xl animate-in fade-in slide-in-from-left-4 duration-500 pointer-events-none select-none transition-colors duration-200">
           <div class="flex items-center gap-2">
-            <div class={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(5,213,144,0.6)] ${projectStore.isPlaying ? 'bg-primary animate-pulse' : 'bg-neutral-600'}`} />
-            <span class="text-[9px] font-black text-white uppercase tracking-tight">Preview</span>
+            <div class={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] ${projectStore.isPlaying ? 'bg-primary animate-pulse' : 'bg-textMuted'}`} />
+            <span class="text-[9px] font-black text-textMain uppercase tracking-tight">Preview</span>
           </div>
           
-          <div class="w-px h-3 bg-white/10" />
+          <div class="w-px h-3 bg-border" />
           
           <div class="flex items-center gap-1.5">
-            <span class="text-neutral-500 text-[8px] font-black uppercase tracking-widest">Res</span>
-            <span class="text-white font-mono text-[10px] font-bold">
+            <span class="text-textMuted text-[8px] font-black uppercase tracking-widest">Res</span>
+            <span class="text-textMain font-mono text-[10px] font-bold">
               {(() => {
                 const h = parseInt(projectStore.proxyRes);
                 const ar = projectStore.aspectRatio === '16/9' ? 16/9 : projectStore.aspectRatio === '9/16' ? 9/16 : 1;
@@ -39,10 +39,10 @@ export const PanelCenter: Component = () => {
             </span>
           </div>
 
-          <div class="w-px h-3 bg-white/10" />
+          <div class="w-px h-3 bg-border" />
           
           <div class="flex items-center gap-1.5">
-            <span class="text-neutral-500 text-[8px] font-black uppercase tracking-widest">Perf</span>
+            <span class="text-textMuted text-[8px] font-black uppercase tracking-widest">Perf</span>
             <span class={`font-mono text-[10px] font-bold transition-colors duration-300 ${projectStore.currentFPS < 24 ? 'text-red-400' : projectStore.currentFPS < 50 ? 'text-yellow-400' : 'text-primary'}`}>
                {projectStore.currentFPS} FPS
             </span>
@@ -69,8 +69,8 @@ export const PanelCenter: Component = () => {
         </div>
       </div>
 
-      <div class="h-[44px] md:h-[48px] glass-panel bg-surface border border-border rounded-lg md:rounded-xl flex items-center px-3 md:px-4 gap-3 md:gap-4 shrink-0 mt-1 md:mt-0">
-        <button onClick={togglePlay} class="text-white transition-colors">
+      <div class="h-[44px] md:h-[48px] glass-panel bg-surface border border-border rounded-lg md:rounded-xl flex items-center px-3 md:px-4 gap-3 md:gap-4 shrink-0 mt-1 md:mt-0 transition-colors duration-200">
+        <button onClick={togglePlay} class="text-textMain hover:text-primary transition-colors outline-none">
           <Show when={projectStore.isPlaying} fallback={<Play class="w-4 h-4 md:w-5 md:h-5 fill-current" />}>
             <Pause class="w-4 h-4 md:w-5 md:h-5 fill-current" />
           </Show>
@@ -116,18 +116,18 @@ export const PanelCenter: Component = () => {
             window.addEventListener('pointerup', onUp);
           }}
         >
-          <div class="w-full h-1 md:h-1.5 bg-[#1e1e1e] rounded-full overflow-hidden border border-border">
+          <div class="w-full h-1 md:h-1.5 bg-surfaceHover rounded-full overflow-hidden border border-border">
             <div class="h-full bg-primary transition-all duration-75 pointer-events-none" style={{ width: `${(projectStore.currentTime / projectStore.duration) * 100}%` }}></div>
           </div>
-          <div class="absolute w-2.5 h-2.5 md:w-3 md:h-3 bg-primary rounded-full shadow-[0_0_8px_rgba(5,213,144,0.6)] -ml-1.5 transform scale-0 group-hover:scale-100 transition-transform pointer-events-none" style={{ left: `${(projectStore.currentTime / projectStore.duration) * 100}%` }}></div>
+          <div class="absolute w-2.5 h-2.5 md:w-3 md:h-3 bg-primary rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)] -ml-1.5 transform scale-0 group-hover:scale-100 transition-transform pointer-events-none" style={{ left: `${(projectStore.currentTime / projectStore.duration) * 100}%` }}></div>
         </div>
 
-        <div class="font-mono text-neutral-500 text-[10px] md:text-xs font-medium w-auto md:w-12 shrink-0 text-right">
+        <div class="font-mono text-textMuted text-[10px] md:text-xs font-medium w-auto md:w-12 shrink-0 text-right">
           {projectStore.duration.toFixed(1)}s
         </div>
 
         <div class="hidden sm:flex items-center gap-2 shrink-0 pl-2 border-l border-border">
-          <button onClick={() => setProjectStore('globalMuted', !projectStore.globalMuted)} class="text-neutral-400 hover:text-white transition-colors" title="Global Mute">
+          <button onClick={() => setProjectStore('globalMuted', !projectStore.globalMuted)} class="text-textMuted hover:text-textMain transition-colors" title="Global Mute">
             {projectStore.globalMuted ? <VolumeX class="w-4 h-4 md:w-4 md:h-4 text-red-400" /> : <Volume2 class="w-4 h-4 md:w-4 md:h-4" />}
           </button>
           <input 

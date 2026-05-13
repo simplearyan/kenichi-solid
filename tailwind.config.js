@@ -4,6 +4,7 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -11,13 +12,15 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        background: '#0a0a0a',
-        surface: '#141414',
-        border: '#262626',
-        primary: '#05d590',
-        primaryHover: '#04b077',
-        textMain: '#e5e5e5',
-        textMuted: '#737373',
+        background: 'var(--bg-background)',
+        surface: 'var(--bg-surface)',
+        surfaceHover: 'var(--bg-surface-hover)',
+        border: 'var(--border-color)',
+        borderLight: 'var(--border-light)',
+        primary: 'var(--color-primary)',
+        primaryHover: 'var(--color-primary-hover)',
+        textMain: 'var(--text-main)',
+        textMuted: 'var(--text-muted)',
       }
     },
   },

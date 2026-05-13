@@ -1,5 +1,5 @@
 import { type Component, createSignal, For, onMount, Show } from 'solid-js';
-import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown } from 'lucide-solid';
+import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown, Sun, Moon } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 const HeaderSelect: Component<{
@@ -27,17 +27,17 @@ const HeaderSelect: Component<{
         onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen()); }}
         class="flex items-center gap-1.5 hover:text-primary transition-colors py-1 outline-none"
       >
-        <span class="text-white font-medium">{currentLabel()}</span>
-        <ChevronDown class={`w-3 h-3 text-neutral-500 transition-transform ${isOpen() ? 'rotate-180' : ''}`} />
+        <span class="text-textMain font-medium">{currentLabel()}</span>
+        <ChevronDown class={`w-3 h-3 text-textMuted transition-transform ${isOpen() ? 'rotate-180' : ''}`} />
       </button>
 
       <Show when={isOpen()}>
-        <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 min-w-[140px] backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-200">
+        <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-surface border border-border rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 min-w-[140px] backdrop-blur-xl animate-in fade-in slide-in-from-top-1 duration-200">
           <For each={props.options}>
             {(opt) => (
               <button 
                 onClick={() => { props.onChange(opt.value); setIsOpen(false); }}
-                class={`w-full px-4 py-2 text-left text-[11px] transition-colors flex items-center justify-between ${props.value === opt.value ? 'bg-primary/10 text-primary font-bold' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+                class={`w-full px-4 py-2 text-left text-[11px] transition-colors flex items-center justify-between ${props.value === opt.value ? 'bg-primary/10 text-primary font-bold' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
               >
                 {opt.label}
               </button>
@@ -51,16 +51,16 @@ const HeaderSelect: Component<{
 
 export const Header: Component = () => {
   return (
-    <header class="h-[44px] md:h-[48px] border-b border-border bg-[#141414] flex items-center justify-between px-3 md:px-5 shrink-0 z-20">
+    <header class="h-[44px] md:h-[48px] border-b border-border bg-surface flex items-center justify-between px-3 md:px-5 shrink-0 z-20 transition-colors duration-200">
       <div class="flex items-center gap-2">
-        <div class="w-6 h-6 bg-primary rounded flex items-center justify-center text-background shadow-[0_0_15px_rgba(5,213,144,0.3)]">
+        <div class="w-6 h-6 bg-primary rounded flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
           <LayoutGrid class="w-3.5 h-3.5" />
         </div>
-        <span class="font-bold text-white tracking-wide text-sm">KenichiStudio <span class="text-neutral-500 font-normal hidden sm:inline">Pro</span></span>
+        <span class="font-bold text-textMain tracking-wide text-sm">KenichiStudio <span class="text-textMuted font-normal hidden sm:inline">Pro</span></span>
       </div>
 
       <div class="hidden md:flex items-center gap-6">
-        <div class="flex items-center gap-6 text-[11px] font-medium text-neutral-400">
+        <div class="flex items-center gap-6 text-[11px] font-medium text-textMuted">
           <HeaderSelect 
             value={projectStore.proxyRes} 
             onChange={(v) => setProjectStore('proxyRes', v as any)}
@@ -98,21 +98,21 @@ export const Header: Component = () => {
         <div class="flex items-center gap-1">
           <button 
             onClick={() => setProjectStore('showLeftPanel', p => !p)} 
-            class={`p-1 rounded text-white transition-all ${projectStore.showLeftPanel ? 'bg-[#2a2a2a]' : 'bg-[#1e1e1e] hover:bg-[#2a2a2a]'}`}
+            class={`p-1 rounded text-textMain transition-all ${projectStore.showLeftPanel ? 'bg-surfaceHover shadow-sm' : 'hover:bg-surfaceHover'}`}
           ><PanelLeft class="w-4 h-4" /></button>
           <button 
             onClick={() => setProjectStore('showTimelinePanel', p => !p)}
-            class={`p-1 rounded text-white transition-all ${projectStore.showTimelinePanel ? 'bg-[#2a2a2a]' : 'bg-[#1e1e1e] hover:bg-[#2a2a2a]'}`}
+            class={`p-1 rounded text-textMain transition-all ${projectStore.showTimelinePanel ? 'bg-surfaceHover shadow-sm' : 'hover:bg-surfaceHover'}`}
           ><PanelBottom class="w-4 h-4" /></button>
           <button 
             onClick={() => setProjectStore('showRightPanel', p => !p)}
-            class={`p-1 rounded text-white transition-all ${projectStore.showRightPanel ? 'bg-[#2a2a2a]' : 'bg-[#1e1e1e] hover:bg-[#2a2a2a]'}`}
+            class={`p-1 rounded text-textMain transition-all ${projectStore.showRightPanel ? 'bg-surfaceHover shadow-sm' : 'hover:bg-surfaceHover'}`}
           ><PanelRight class="w-4 h-4" /></button>
           <div class="w-px h-5 bg-border mx-1"></div>
           <button 
             onClick={() => setProjectStore('rippleEnabled', p => !p)}
             title="Ripple Edit (Push clips to the right)"
-            class={`p-1 rounded transition-all flex items-center gap-1.5 px-2 ${projectStore.rippleEnabled ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-[#1e1e1e] text-neutral-400 hover:text-white border border-transparent'}`}
+            class={`p-1 rounded transition-all flex items-center gap-1.5 px-2 ${projectStore.rippleEnabled ? 'bg-primary/20 text-primary border border-primary/30' : 'text-textMuted hover:text-textMain border border-transparent'}`}
           >
             <ArrowRightFromLine class="w-4 h-4" />
             <span class="text-[10px] font-bold uppercase tracking-tight hidden lg:inline">Ripple</span>
@@ -125,11 +125,20 @@ export const Header: Component = () => {
           href="https://github.com/simplearyan/kenichi-solid" 
           target="_blank" 
           rel="noopener noreferrer"
-          class="text-neutral-400 hover:text-white transition-colors"
+          class="text-textMuted hover:text-textMain transition-colors"
           title="View on GitHub"
         >
           <GitBranch class="w-4 h-4" />
         </a>
+        <button 
+          onClick={() => setProjectStore('theme', t => t === 'light' ? 'dark' : 'light')}
+          class="text-textMuted hover:text-textMain transition-colors p-1"
+          title={projectStore.theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+        >
+          <Show when={projectStore.theme === 'light'} fallback={<Sun class="w-4 h-4" />}>
+            <Moon class="w-4 h-4" />
+          </Show>
+        </button>
         <a 
           href="https://ko-fi.com/simplearyan" 
           target="_blank" 
@@ -142,7 +151,7 @@ export const Header: Component = () => {
         </a>
         <button 
           onClick={() => setProjectStore('exportModalOpen', true)}
-          class="px-3 md:px-4 py-1 rounded bg-primary hover:bg-primaryHover text-background text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(5,213,144,0.2)]"
+          class="px-3 md:px-4 py-1 rounded bg-primary hover:bg-primaryHover text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
         >
           <Download class="w-3.5 h-3.5" /> Export
         </button>

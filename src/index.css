@@ -3,8 +3,67 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg-background: #f4f4f5; /* Zinc 100 */
+    --bg-surface: #ffffff;
+    --bg-surface-hover: #e4e4e7; /* Zinc 200 */
+    --border-color: #d4d4d8; /* Zinc 300 */
+    --border-light: #e4e4e7; /* Zinc 200 */
+    --color-primary: #3b82f6; /* Blue 500 - Professional */
+    --color-primary-hover: #2563eb; /* Blue 600 */
+    --text-main: #27272a; /* Zinc 800 */
+    --text-muted: #71717a; /* Zinc 500 */
+  }
+
+  .dark {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --bg-background: #000000;
+    --bg-surface: #0a0a0a;
+    --bg-surfaceHover: #1a1a1a;
+    --text-main: #ffffff;
+    --text-muted: #a3a3a3;
+    --border: #262626;
+    --selection-bg: rgba(59, 130, 246, 0.3);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
+  }
+
+  /* Custom Scrollbar for Webkit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+
+  ::selection {
+    background-color: var(--selection-bg);
+    color: var(--text-main);
+  }
+
   body {
-    @apply bg-background text-textMain overflow-hidden font-sans;
+    @apply bg-background text-textMain overflow-hidden font-sans transition-colors duration-200 ease-in-out;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

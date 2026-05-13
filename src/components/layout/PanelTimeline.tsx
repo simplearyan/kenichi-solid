@@ -329,47 +329,47 @@ export const PanelTimeline: Component = () => {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
   return (
-    <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative touch-none">
+    <div class="w-full h-full glass-panel bg-surface border border-border rounded-xl flex flex-col overflow-hidden relative touch-none transition-colors duration-200">
       <div ref={resizerRef} class="resizer resizer-t" id="resizer-timeline"></div>
 
-      <div class="h-10 border-b border-border bg-[#1a1a1a] flex items-center px-4 justify-between shrink-0">
-        <div class="flex items-center gap-4 text-neutral-400">
-          <button class="hover:text-white transition-colors" title="Split"><Scissors class="w-4 h-4" /></button>
-          <button class="hover:text-white transition-colors" title="Copy"><Copy class="w-4 h-4" /></button>
+      <div class="h-10 border-b border-border bg-surface flex items-center px-4 justify-between shrink-0 transition-colors">
+        <div class="flex items-center gap-4 text-textMuted">
+          <button class="hover:text-textMain transition-colors" title="Split"><Scissors class="w-4 h-4" /></button>
+          <button class="hover:text-textMain transition-colors" title="Copy"><Copy class="w-4 h-4" /></button>
           <button onClick={() => { if (projectStore.activeLayerId) { layerRegistry.remove(projectStore.activeLayerId); removeLayer(projectStore.activeLayerId); } }} class="hover:text-red-400 transition-colors" title="Delete Clip"><Trash2 class="w-4 h-4" /></button>
-          <div class="w-px h-4 bg-[#333] mx-1"></div>
+          <div class="w-px h-4 bg-border mx-1"></div>
           <button onClick={addTrack} class="hover:text-green-400 transition-colors" title="Add Track"><Plus class="w-4 h-4" /></button>
           <button onClick={() => {
             layerRegistry.clear();
             projectStore.layers.forEach(l => layerRegistry.instantiate(l));
           }} class="hover:text-cyan-400 transition-colors" title="Refresh Engine"><RefreshCcw class="w-4 h-4" /></button>
-          <div class="w-px h-4 bg-[#333] mx-1"></div>
+          <div class="w-px h-4 bg-border mx-1"></div>
           <div class="flex items-center gap-2" title="Timeline Zoom">
-            <button onClick={zoomOut} class="hover:text-white transition-colors p-1" title="Zoom Out"><ZoomOut class="w-3.5 h-3.5" /></button>
+            <button onClick={zoomOut} class="hover:text-textMain transition-colors p-1" title="Zoom Out"><ZoomOut class="w-3.5 h-3.5" /></button>
             <input type="range" min="10" max="500" value={projectStore.pixelsPerSecond} onInput={setZoom} class="w-20 cursor-pointer accent-primary hidden md:block" />
-            <button onClick={zoomIn} class="hover:text-white transition-colors p-1" title="Zoom In"><ZoomIn class="w-3.5 h-3.5" /></button>
+            <button onClick={zoomIn} class="hover:text-textMain transition-colors p-1" title="Zoom In"><ZoomIn class="w-3.5 h-3.5" /></button>
           </div>
-          <div class="w-px h-4 bg-[#333] mx-1 hidden md:block"></div>
+          <div class="w-px h-4 bg-border mx-1 hidden md:block"></div>
           <div class="hidden md:flex items-center gap-1.5" title="Track Height">
             <button
               onClick={() => setProjectStore('trackHeight', h => Math.max(32, h - 8))}
-              class="p-1 hover:bg-white/10 rounded transition-colors text-neutral-400 hover:text-white"
+              class="p-1 hover:bg-surfaceHover rounded transition-colors text-textMuted hover:text-textMain"
               title="Decrease Track Height"
             >
               <FoldVertical class="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setProjectStore('trackHeight', h => Math.min(120, h + 8))}
-              class="p-1 hover:bg-white/10 rounded transition-colors text-neutral-400 hover:text-white"
+              class="p-1 hover:bg-surfaceHover rounded transition-colors text-textMuted hover:text-textMain"
               title="Increase Track Height"
             >
               <UnfoldVertical class="w-3.5 h-3.5" />
             </button>
           </div>
-          <div class="w-px h-4 bg-[#333] mx-1"></div>
+          <div class="w-px h-4 bg-border mx-1"></div>
           <button
             onClick={() => setProjectStore('followPlayhead', p => !p)}
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.followPlayhead ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
+            class={`p-1.5 rounded-md transition-all ${projectStore.followPlayhead ? 'text-primary bg-primary/20' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
             title="Follow Playhead"
           >
             <LocateFixed class="w-4 h-4" />
@@ -379,64 +379,64 @@ export const PanelTimeline: Component = () => {
         <div class="hidden md:flex items-center gap-1">
           <button
             onClick={() => setProjectStore('layout', 'layout-default')}
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-default' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
+            class={`p-1.5 rounded-md transition-all ${projectStore.layout === 'layout-default' ? 'text-primary bg-primary/20' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
             title="Standard Layout"
           ><LayoutGrid class="w-4 h-4" /></button>
 
           <button
             onClick={() => setProjectStore('layout', 'layout-wide-left')}
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-left' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
+            class={`p-1.5 rounded-md transition-all ${projectStore.layout === 'layout-wide-left' ? 'text-primary bg-primary/20' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
             title="Expand Left"
           ><PanelLeftOpen class="w-4 h-4" /></button>
 
           <button
             onClick={() => setProjectStore('layout', 'layout-wide-right')}
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-wide-right' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
+            class={`p-1.5 rounded-md transition-all ${projectStore.layout === 'layout-wide-right' ? 'text-primary bg-primary/20' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
             title="Expand Right"
           ><PanelRightOpen class="w-4 h-4" /></button>
 
           <button
             onClick={() => setProjectStore('layout', 'layout-full')}
-            class={`p-1.5 rounded-md hover:bg-[#2a2a2a] transition-all ${projectStore.layout === 'layout-full' ? 'text-[#05d590] bg-[#1a2a24]' : 'text-neutral-500 hover:text-neutral-300'}`}
+            class={`p-1.5 rounded-md transition-all ${projectStore.layout === 'layout-full' ? 'text-primary bg-primary/20' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
             title="Theater Mode"
           ><Maximize2 class="w-4 h-4" /></button>
 
-          <div class="w-px h-4 bg-[#333] mx-1"></div>
-          <button onClick={() => setProjectStore('showTimelinePanel', false)} class="text-neutral-500 hover:text-white transition-colors ml-1"><X class="w-4 h-4" /></button>
+          <div class="w-px h-4 bg-border mx-1"></div>
+          <button onClick={() => setProjectStore('showTimelinePanel', false)} class="text-textMuted hover:text-textMain transition-colors ml-1"><X class="w-4 h-4" /></button>
         </div>
       </div>
 
       <div class="flex flex-1 overflow-hidden relative bg-background">
         <div class="w-[100px] md:w-[140px] bg-surface border-r border-border flex flex-col shrink-0 z-10 overflow-y-hidden">
-          <div class="h-8 border-b border-border bg-[#1e1e1e] shrink-0 flex items-center justify-center">
-            <span class="text-[10px] font-bold text-neutral-500">TRACKS</span>
+          <div class="h-8 border-b border-border bg-surface shrink-0 flex items-center justify-center">
+            <span class="text-[10px] font-bold text-textMuted uppercase tracking-wider">TRACKS</span>
           </div>
           <div ref={trackListRef} class="flex-1 overflow-y-hidden no-scrollbar">
             <For each={projectStore.tracks}>
               {(track) => (
                 <div
-                  class={`border-b border-[#1a1a1a] flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group transition-colors ${projectStore.activeTrackId === track.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                  class={`border-b border-border flex flex-col justify-center px-2 shrink-0 cursor-pointer pointer-events-auto group transition-colors ${projectStore.activeTrackId === track.id ? 'bg-surfaceHover/50' : 'hover:bg-surfaceHover/30'}`}
                   style={{ height: `${projectStore.trackHeight}px` }}
                   onClick={() => setProjectStore('activeTrackId', track.id)}
                 >
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-1">
-                      <span class="text-[11px] text-white font-medium truncate max-w-[80px] block">{track.name}</span>
+                      <span class="text-[11px] text-textMain font-medium truncate max-w-[80px] block">{track.name}</span>
                       <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'up'); }} class="p-0.5 hover:text-white text-neutral-500 transition-colors" title="Move Up"><Show when={ChevronUp}><ChevronUp class="w-3 h-3" /></Show></button>
-                        <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'down'); }} class="p-0.5 hover:text-white text-neutral-500 transition-colors" title="Move Down"><Show when={ChevronDown}><ChevronDown class="w-3 h-3" /></Show></button>
-                        <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="p-0.5 hover:text-red-400 text-neutral-500 transition-colors" title="Delete Track"><Trash2 class="w-3 h-3" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'up'); }} class="p-0.5 hover:text-textMain text-textMuted transition-colors" title="Move Up"><Show when={ChevronUp}><ChevronUp class="w-3 h-3" /></Show></button>
+                        <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'down'); }} class="p-0.5 hover:text-textMain text-textMuted transition-colors" title="Move Down"><Show when={ChevronDown}><ChevronDown class="w-3 h-3" /></Show></button>
+                        <button onClick={(e) => { e.stopPropagation(); deleteTrack(track.id); }} class="p-0.5 hover:text-red-400 text-textMuted transition-colors" title="Delete Track"><Trash2 class="w-3 h-3" /></button>
                       </div>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 mt-1">
-                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-neutral-500 hover:text-white" title="Toggle Visibility">
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-textMuted hover:text-textMain" title="Toggle Visibility">
                       {track.hidden ? <EyeOff class="w-3 h-3" /> : <Eye class="w-3 h-3" />}
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { locked: !track.locked }); }} class="text-neutral-500 hover:text-white" title="Toggle Lock">
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { locked: !track.locked }); }} class="text-textMuted hover:text-textMain" title="Toggle Lock">
                       {track.locked ? <Lock class="w-3 h-3" /> : <Unlock class="w-3 h-3" />}
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { muted: !track.muted }); }} class="text-neutral-500 hover:text-white" title="Toggle Mute">
+                    <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { muted: !track.muted }); }} class="text-textMuted hover:text-textMain" title="Toggle Mute">
                       {track.muted ? <VolumeX class="w-3 h-3 text-red-400" /> : <Volume2 class="w-3 h-3" />}
                     </button>
                   </div>
@@ -455,7 +455,7 @@ export const PanelTimeline: Component = () => {
 
             {/* Ruler */}
             <div
-              class="h-8 border-b border-border bg-[#141414] sticky top-0 z-20 pointer-events-none text-[9px] font-medium text-neutral-500 select-none"
+              class="h-8 border-b border-border bg-background sticky top-0 z-20 pointer-events-none text-[9px] font-medium text-textMuted select-none"
               style={{ width: `${projectStore.duration * projectStore.pixelsPerSecond + 1000}px` }}
             >
               <For each={Array.from({ length: Math.ceil(projectStore.duration / tickConfig().minor) + 1 })}>
@@ -464,11 +464,11 @@ export const PanelTimeline: Component = () => {
                   const isMajor = Math.abs(time % tickConfig().label) < 0.001 || Math.abs(time % tickConfig().label - tickConfig().label) < 0.001;
                   return (
                     <div
-                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-neutral-700 h-full' : 'border-neutral-800 h-1/2'} transition-all`}
+                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-border h-full' : 'border-border/30 h-1/2'} transition-all`}
                       style={{ left: `${time * projectStore.pixelsPerSecond}px` }}
                     >
                       <Show when={isMajor}>
-                        <span class="pl-1.5 pt-1 block text-neutral-400 font-bold">{formatTime(time)}</span>
+                        <span class="pl-1.5 pt-1 block text-textMuted font-bold">{formatTime(time)}</span>
                       </Show>
                     </div>
                   );
@@ -477,9 +477,9 @@ export const PanelTimeline: Component = () => {
             </div>
 
             {/* Playhead */}
-            <div class="absolute top-0 bottom-0 w-[1px] bg-[#ff3366] z-30 pointer-events-none" style={{ left: `${projectStore.currentTime * projectStore.pixelsPerSecond}px` }}>
-              <div class="absolute top-0 -left-1.5 w-3 h-3.5 bg-[#ff3366] rounded-b-sm flex items-center justify-center">
-                <div class="w-0.5 h-1.5 bg-black rounded-full"></div>
+            <div class="absolute top-0 bottom-0 w-[1px] bg-primary z-30 pointer-events-none" style={{ left: `${projectStore.currentTime * projectStore.pixelsPerSecond}px` }}>
+              <div class="absolute top-0 -left-1.5 w-3 h-3.5 bg-primary rounded-b-sm flex items-center justify-center">
+                <div class="w-0.5 h-1.5 bg-background rounded-full"></div>
               </div>
             </div>
 
@@ -488,7 +488,7 @@ export const PanelTimeline: Component = () => {
               <For each={projectStore.tracks}>
                 {(track) => (
                   <div
-                    class={`border-b border-[#2a2a2a] relative w-full shrink-0 transition-colors cursor-pointer ${projectStore.activeTrackId === track.id ? 'bg-white/[0.03]' : ''}`}
+                    class={`border-b border-border relative w-full shrink-0 transition-colors cursor-pointer ${projectStore.activeTrackId === track.id ? 'bg-primary/5' : ''}`}
                     style={{ height: `${projectStore.trackHeight}px` }}
                     onClick={() => setProjectStore('activeTrackId', track.id)}
                   >

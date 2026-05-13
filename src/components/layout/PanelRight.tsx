@@ -34,23 +34,23 @@ const PropSelect: Component<{
   return (
     <div class={`space-y-1.5 relative ${props.class || ''}`} ref={containerRef}>
       <Show when={props.label}>
-        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold ml-0.5">{props.label}</label>
+        <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold ml-0.5">{props.label}</label>
       </Show>
       <button 
         onClick={(e) => { e.stopPropagation(); setIsOpen(!isOpen()); }}
-        class="w-full h-10 bg-black/40 border border-white/5 hover:border-white/10 hover:bg-black/60 rounded-xl px-3.5 flex items-center justify-between text-xs text-white transition-all outline-none focus:border-primary/50"
+        class="w-full h-10 bg-surfaceHover border border-border hover:border-textMuted hover:bg-surface rounded-xl px-3.5 flex items-center justify-between text-xs text-textMain transition-all outline-none focus:border-primary/50"
       >
         <span class="truncate font-medium">{currentLabel()}</span>
-        <ChevronDown class={`w-3.5 h-3.5 text-neutral-500 transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`} />
+        <ChevronDown class={`w-3.5 h-3.5 text-textMuted transition-transform duration-200 ${isOpen() ? 'rotate-180' : ''}`} />
       </button>
 
       <Show when={isOpen()}>
-        <div class="absolute left-0 right-0 top-full mt-1.5 bg-[#141414] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
+        <div class="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border rounded-xl shadow-2xl z-50 overflow-hidden py-1.5 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl">
           <For each={props.options}>
             {(opt) => (
               <button 
                 onClick={() => { props.onChange(opt.value); setIsOpen(false); }}
-                class={`w-full px-3.5 py-2.5 text-left text-xs transition-colors flex items-center justify-between ${props.value === opt.value ? 'bg-primary/10 text-primary font-bold' : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+                class={`w-full px-3.5 py-2.5 text-left text-xs transition-colors flex items-center justify-between ${props.value === opt.value ? 'bg-primary/10 text-primary font-bold' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover'}`}
               >
                 {opt.label}
                 <Show when={props.value === opt.value}>
@@ -102,13 +102,13 @@ const PropSlider: Component<{
 
   return (
     <div class="space-y-2 group/slider">
-      <div class="flex justify-between items-center text-[10px] text-neutral-500 uppercase tracking-widest font-bold">
-        <label class="group-hover/slider:text-neutral-300 transition-colors">{props.label}</label>
-        <span class={`${props.color || 'text-primary'} font-mono bg-white/5 px-1.5 py-0.5 rounded`}>{props.value}</span>
+      <div class="flex justify-between items-center text-[10px] text-textMuted uppercase tracking-widest font-bold">
+        <label class="group-hover/slider:text-textMain transition-colors">{props.label}</label>
+        <span class={`${props.color || 'text-primary'} font-mono bg-surfaceHover px-1.5 py-0.5 rounded`}>{props.value}</span>
       </div>
       <div 
         ref={trackRef}
-        class="relative h-1.5 bg-white/5 rounded-full cursor-pointer touch-none"
+        class="relative h-1.5 bg-surfaceHover rounded-full cursor-pointer touch-none"
         onPointerDown={handlePointerDown}
       >
         <div 
@@ -134,20 +134,20 @@ const Section: Component<{
   showOnMobile?: boolean;
 }> = (props) => {
   return (
-    <div class={`flex flex-col border-b border-white/[0.03] last:border-b-0 ${props.showOnMobile ? 'block' : 'hidden md:block'}`}>
+    <div class={`flex flex-col border-b border-border last:border-b-0 ${props.showOnMobile ? 'block' : 'hidden md:block'}`}>
       <button 
         onClick={props.onToggle}
-        class={`flex items-center justify-between p-4 transition-colors group ${props.isOpen ? 'bg-white/[0.02]' : 'hover:bg-white/[0.04]'}`}
+        class={`flex items-center justify-between p-4 transition-colors group ${props.isOpen ? 'bg-surface/30' : 'hover:bg-surfaceHover/50'}`}
       >
         <div class="flex items-center gap-3">
-          <div class={`transition-colors ${props.isOpen ? (props.color?.replace('bg-', 'text-') || 'text-primary') : 'text-neutral-500 group-hover:text-neutral-300'}`}>
+          <div class={`transition-colors ${props.isOpen ? (props.color?.replace('bg-', 'text-') || 'text-primary') : 'text-textMuted group-hover:text-textMain'}`}>
             {props.icon}
           </div>
-          <span class={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${props.isOpen ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-300'}`}>
+          <span class={`text-[10px] font-black uppercase tracking-[0.15em] transition-colors ${props.isOpen ? 'text-textMain' : 'text-textMuted group-hover:text-textMain'}`}>
             {props.title}
           </span>
         </div>
-        <div class={`text-neutral-600 transition-transform ${props.isOpen ? 'rotate-90 text-neutral-400' : 'group-hover:text-neutral-400'}`}>
+        <div class={`text-textMuted transition-transform ${props.isOpen ? 'rotate-90 text-textMain' : 'group-hover:text-textMain'}`}>
           <ChevronRight class="w-3.5 h-3.5" />
         </div>
       </button>
@@ -229,29 +229,29 @@ export const PanelRight: Component = () => {
   const isMobile = () => window.innerWidth < 768;
 
   return (
-    <div class="flex w-full h-full glass-panel bg-surface border border-border rounded-xl flex-col overflow-hidden shrink-0 relative">
+    <div class="flex w-full h-full glass-panel bg-surface border border-border rounded-xl flex-col overflow-hidden shrink-0 relative transition-colors duration-200">
       <div ref={resizerRef} class="resizer resizer-l" id="resizer-right"></div>
       
       {/* Internal Toggle - Hidden on Mobile because global nav handles it */}
-      <div class="hidden md:flex h-12 border-b border-border bg-[#1a1a1a] items-center p-1 shrink-0">
-        <div class="flex bg-black p-1 rounded-lg w-full">
+      <div class="hidden md:flex h-12 border-b border-border bg-surface items-center p-1 shrink-0">
+        <div class="flex bg-background p-1 rounded-lg w-full">
             <button 
             onClick={() => setProjectStore('rightPanelTab', 'layers')}
-            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'layers' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-neutral-500 hover:text-white hover:bg-[#1e1e1e]'}`}
+            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'layers' ? 'bg-surfaceHover text-textMain shadow-sm' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover/50'}`}
           >
             <Layers class="w-3.5 h-3.5" />
             Clips
           </button>
           <button 
             onClick={() => setProjectStore('rightPanelTab', 'props')}
-            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'props' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-neutral-500 hover:text-white hover:bg-[#1e1e1e]'}`}
+            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'props' ? 'bg-surfaceHover text-textMain shadow-sm' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover/50'}`}
           >
             <Settings2 class="w-3.5 h-3.5" />
             Props
           </button>
           <button 
             onClick={() => setProjectStore('rightPanelTab', 'project')}
-            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'project' ? 'bg-[#2a2a2a] text-white shadow-sm' : 'text-neutral-500 hover:text-white hover:bg-[#1e1e1e]'}`}
+            class={`flex-1 flex items-center justify-center gap-2 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${projectStore.rightPanelTab === 'project' ? 'bg-surfaceHover text-textMain shadow-sm' : 'text-textMuted hover:text-textMain hover:bg-surfaceHover/50'}`}
           >
             <Settings2 class="w-3.5 h-3.5" />
             Project
@@ -268,8 +268,8 @@ export const PanelRight: Component = () => {
                 <Settings2 class="w-4 h-4" />
               </div>
               <div>
-                <h2 class="text-sm font-black text-white uppercase tracking-tighter">Project Settings</h2>
-                <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Global configuration</p>
+                <h2 class="text-sm font-black text-textMain uppercase tracking-tighter">Project Settings</h2>
+                <p class="text-[10px] text-textMuted font-bold uppercase tracking-widest">Global configuration</p>
               </div>
             </div>
 
@@ -305,10 +305,10 @@ export const PanelRight: Component = () => {
                   </For>
                 </div>
                 
-                <div class="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-xl">
+                <div class="flex items-center justify-between p-3 bg-surfaceHover border border-border rounded-xl">
                   <div class="flex items-center gap-2">
-                    <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Custom Color</label>
-                    <span class="text-[10px] text-white font-mono opacity-50 uppercase">{projectStore.canvasBackground}</span>
+                    <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Custom Color</label>
+                    <span class="text-[10px] text-textMain font-mono opacity-50 uppercase">{projectStore.canvasBackground}</span>
                   </div>
                   <input 
                     type="color" 
@@ -345,18 +345,18 @@ export const PanelRight: Component = () => {
                     <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
                       {(layer) => (
                         <div 
-                          class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border ${projectStore.activeLayerId === layer.id ? 'bg-primary/10 border-primary/30' : 'bg-[#1a1a1a] border-transparent hover:bg-[#222]'}`}
+                          class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border ${projectStore.activeLayerId === layer.id ? 'bg-primary/10 border-primary/30' : 'bg-surface border-transparent hover:bg-surfaceHover'}`}
                           onClick={() => setProjectStore('activeLayerId', layer.id)}
                         >
-                          <div class="text-neutral-400">
+                          <div class="text-textMuted">
                             {getIcon(layer.type)}
                           </div>
-                          <span class="text-xs text-white truncate flex-1">{layer.name}</span>
+                          <span class="text-xs text-textMain truncate flex-1">{layer.name}</span>
                           <div class="flex items-center gap-2">
-                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-neutral-500 hover:text-white">
+                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-textMuted hover:text-textMain">
                               {layer.hidden ? <EyeOff class="w-3.5 h-3.5" /> : <Eye class="w-3.5 h-3.5" />}
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-neutral-500 hover:text-white">
+                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-textMuted hover:text-textMain">
                               {layer.locked ? <Lock class="w-3.5 h-3.5" /> : <Unlock class="w-3.5 h-3.5" />}
                             </button>
                           </div>
@@ -383,7 +383,7 @@ export const PanelRight: Component = () => {
               </div>
             }>
               {/* Mobile Category Tab Bar */}
-              <div class="flex md:hidden border-b border-border bg-black/20 overflow-x-auto no-scrollbar shrink-0">
+              <div class="flex md:hidden border-b border-border bg-background overflow-x-auto no-scrollbar shrink-0">
                 <For each={categories()}>
                   {(cat) => (
                     <button 
@@ -426,15 +426,15 @@ export const PanelRight: Component = () => {
                         
                         <div class="grid grid-cols-2 gap-4">
                           <div class="space-y-1">
-                            <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position X</label>
-                            <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                              <input type="number" step="1" value={activeLayer()?.posX} onInput={(e) => handlePropChange('posX', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                            <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Position X</label>
+                            <div class="flex items-center bg-surfaceHover border border-border rounded-lg px-2 group-hover:border-textMuted focus-within:border-primary/50 transition-colors">
+                              <input type="number" step="1" value={activeLayer()?.posX} onInput={(e) => handlePropChange('posX', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-textMain py-2 outline-none font-mono" />
                             </div>
                           </div>
                           <div class="space-y-1">
-                            <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Position Y</label>
-                            <div class="flex items-center bg-black/40 border border-white/5 rounded-lg px-2 group-hover:border-white/10 focus-within:border-primary/50 transition-colors">
-                              <input type="number" step="1" value={activeLayer()?.posY} onInput={(e) => handlePropChange('posY', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" />
+                            <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Position Y</label>
+                            <div class="flex items-center bg-surfaceHover border border-border rounded-lg px-2 group-hover:border-textMuted focus-within:border-primary/50 transition-colors">
+                              <input type="number" step="1" value={activeLayer()?.posY} onInput={(e) => handlePropChange('posY', parseFloat(e.currentTarget.value))} class="w-full bg-transparent text-xs text-textMain py-2 outline-none font-mono" />
                             </div>
                           </div>
                         </div>
@@ -464,12 +464,12 @@ export const PanelRight: Component = () => {
 
                       <div class="space-y-4 pt-2 border-t border-white/5">
                         <div class="flex items-center justify-between">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Drop Shadow</label>
+                          <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Drop Shadow</label>
                           <button 
                             onClick={() => handlePropChange('shadowEnabled', !activeLayer()?.shadowEnabled)}
-                            class={`w-8 h-4 rounded-full transition-colors relative ${activeLayer()?.shadowEnabled ? 'bg-primary' : 'bg-white/10'}`}
+                            class={`w-8 h-4 rounded-full transition-colors relative ${activeLayer()?.shadowEnabled ? 'bg-primary' : 'bg-surfaceHover'}`}
                           >
-                            <div class={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${activeLayer()?.shadowEnabled ? 'left-4.5' : 'left-0.5'}`} />
+                            <div class={`absolute top-0.5 w-3 h-3 rounded-full bg-textMain transition-all ${activeLayer()?.shadowEnabled ? 'left-4.5' : 'left-0.5'}`} />
                           </button>
                         </div>
 
@@ -495,8 +495,8 @@ export const PanelRight: Component = () => {
                                 onChange={(v) => handlePropChange('shadowOffsetY', v)}
                               />
                             </div>
-                            <div class="flex items-center justify-between p-3 bg-black/20 border border-white/5 rounded-xl">
-                              <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Shadow Color</label>
+                            <div class="flex items-center justify-between p-3 bg-surfaceHover border border-border rounded-xl">
+                              <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Shadow Color</label>
                               <input 
                                 type="color" 
                                 value={activeLayer()?.shadowColor || '#000000'} 
@@ -581,25 +581,25 @@ export const PanelRight: Component = () => {
                         onChange={(v) => handlePropChange('vignette', v)}
                       />
                       
-                      <div class="p-4 bg-black/20 border border-white/5 rounded-xl space-y-4">
+                      <div class="p-4 bg-background border border-border rounded-xl space-y-4">
                         <div class="flex items-center justify-between">
-                          <label class="text-[10px] text-white font-black uppercase tracking-widest">Chroma Key</label>
+                          <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Chroma Key</label>
                           <button 
                             onClick={() => handlePropChange('chromaKey', !activeLayer()?.chromaKey)}
-                            class={`w-8 h-4 rounded-full transition-colors relative ${activeLayer()?.chromaKey ? 'bg-primary' : 'bg-white/10'}`}
+                            class={`w-8 h-4 rounded-full transition-colors relative ${activeLayer()?.chromaKey ? 'bg-primary' : 'bg-surfaceHover'}`}
                           >
-                            <div class={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${activeLayer()?.chromaKey ? 'left-4.5' : 'left-0.5'}`} />
+                            <div class={`absolute top-0.5 w-3 h-3 rounded-full bg-textMain transition-all ${activeLayer()?.chromaKey ? 'left-4.5' : 'left-0.5'}`} />
                           </button>
                         </div>
                         <Show when={activeLayer()?.chromaKey}>
                           <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-1">
-                              <label class="text-[9px] text-neutral-500 uppercase tracking-widest font-bold">Key Color</label>
-                              <input type="color" value={activeLayer()?.chromaColor} onInput={(e) => handlePropChange('chromaColor', e.currentTarget.value)} class="w-full h-8 cursor-pointer rounded-lg bg-white/5 border-none p-1" />
+                              <label class="text-[9px] text-textMuted uppercase tracking-widest font-bold">Key Color</label>
+                              <input type="color" value={activeLayer()?.chromaColor} onInput={(e) => handlePropChange('chromaColor', e.currentTarget.value)} class="w-full h-8 cursor-pointer rounded-lg bg-surfaceHover border-none p-1" />
                             </div>
                             <div class="space-y-1">
-                              <label class="text-[9px] text-neutral-500 uppercase tracking-widest font-bold">Tolerance</label>
-                              <input type="number" step="0.05" min="0" max="1" value={activeLayer()?.chromaTolerance} onInput={(e) => handlePropChange('chromaTolerance', parseFloat(e.currentTarget.value))} class="w-full h-8 bg-black/40 border border-white/5 rounded-lg text-white text-xs px-2 font-mono outline-none focus:border-primary/50" />
+                              <label class="text-[9px] text-textMuted uppercase tracking-widest font-bold">Tolerance</label>
+                              <input type="number" step="0.05" min="0" max="1" value={activeLayer()?.chromaTolerance} onInput={(e) => handlePropChange('chromaTolerance', parseFloat(e.currentTarget.value))} class="w-full h-8 bg-surfaceHover border border-border rounded-lg text-textMain text-xs px-2 font-mono outline-none focus:border-primary/50" />
                             </div>
                           </div>
                         </Show>
@@ -623,26 +623,26 @@ export const PanelRight: Component = () => {
 
                       <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Trim In (s)</label>
-                          <div class="bg-black/40 border border-white/5 rounded-lg px-2">
+                          <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Trim In (s)</label>
+                          <div class="bg-surfaceHover border border-border rounded-lg px-2">
                             <input 
                               type="number" 
                               step="0.01" 
                               value={activeLayer()?.inPoint.toFixed(2)} 
                               onInput={(e) => updateLayer(activeLayer()!.id, { inPoint: parseFloat(e.currentTarget.value) })} 
-                              class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" 
+                              class="w-full bg-transparent text-xs text-textMain py-2 outline-none font-mono" 
                             />
                           </div>
                         </div>
                         <div class="space-y-1">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration (s)</label>
-                          <div class="bg-black/40 border border-white/5 rounded-lg px-2">
+                          <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Duration (s)</label>
+                          <div class="bg-surfaceHover border border-border rounded-lg px-2">
                             <input 
                               type="number" 
                               step="0.01"
                               value={activeLayer()?.duration.toFixed(2)} 
                               onInput={(e) => handlePropChange('duration', parseFloat(e.currentTarget.value))} 
-                              class="w-full bg-transparent text-xs text-white py-2 outline-none font-mono" 
+                              class="w-full bg-transparent text-xs text-textMain py-2 outline-none font-mono" 
                             />
                           </div>
                         </div>
@@ -656,9 +656,9 @@ export const PanelRight: Component = () => {
                         onChange={(v) => handlePropChange('volume', v / 100)}
                       />
 
-                      <div class="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl">
-                        <label class="text-[10px] text-white font-black uppercase tracking-widest">Clip Color</label>
-                        <input type="color" value={activeLayer()?.clipColor || '#05d590'} onInput={(e) => handlePropChange('clipColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-white/5 border-none p-0.5" />
+                      <div class="flex items-center justify-between p-4 bg-background border border-border rounded-xl">
+                        <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Clip Color</label>
+                        <input type="color" value={activeLayer()?.clipColor || '#05d590'} onInput={(e) => handlePropChange('clipColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-surface border-none p-0.5" />
                       </div>
                     </div>
                   </Section>
@@ -676,8 +676,8 @@ export const PanelRight: Component = () => {
                   >
                     <div class="space-y-5">
                       <div class="space-y-1.5">
-                        <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Content</label>
-                        <textarea value={activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('textContent', e.currentTarget.value)} class="w-full bg-black/40 border border-white/5 rounded-xl px-3 py-3 text-sm text-white outline-none min-h-[80px] focus:border-indigo-500/50 transition-colors" />
+                        <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Content</label>
+                        <textarea value={activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('textContent', e.currentTarget.value)} class="w-full bg-surfaceHover border border-border rounded-xl px-3 py-3 text-sm text-textMain outline-none min-h-[80px] focus:border-primary/50 transition-colors" />
                       </div>
                       
                       <div class="grid grid-cols-2 gap-4">
@@ -710,14 +710,14 @@ export const PanelRight: Component = () => {
 
                       <div class="grid grid-cols-1 gap-4">
                         <div class="space-y-1.5">
-                          <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Font Size</label>
-                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-indigo-500/50" />
+                          <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Font Size</label>
+                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-surfaceHover border border-border rounded-xl px-3 text-xs text-textMain outline-none font-mono focus:border-primary/50" />
                         </div>
                       </div>
 
-                      <div class="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl">
-                        <label class="text-[10px] text-white font-black uppercase tracking-widest">Text Color</label>
-                        <input type="color" value={activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-white/5 border-none p-0.5" />
+                      <div class="flex items-center justify-between p-4 bg-background border border-border rounded-xl">
+                        <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Text Color</label>
+                        <input type="color" value={activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-surface border-none p-0.5" />
                       </div>
 
                       <PropSlider 
@@ -742,10 +742,10 @@ export const PanelRight: Component = () => {
                   >
                     <div class="space-y-6">
                       {/* IN ANIMATION */}
-                      <div class="space-y-4 p-4 bg-black/20 border border-white/5 rounded-2xl relative">
+                      <div class="space-y-4 p-4 bg-background border border-border rounded-2xl relative">
                         <div class="flex items-center gap-2 mb-1">
                           <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span class="text-[9px] font-black text-white uppercase tracking-widest">In Effect</span>
+                          <span class="text-[9px] font-black text-textMain uppercase tracking-widest">In Effect</span>
                         </div>
                         <div class="grid grid-cols-1 gap-4">
                           <PropSelect 
@@ -780,18 +780,18 @@ export const PanelRight: Component = () => {
                               onChange={(v) => handlePropChange('animInEase', v)}
                             />
                             <div class="space-y-1.5">
-                              <label class="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Duration (s)</label>
-                              <input type="number" step="0.1" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-black/40 border border-white/5 rounded-xl px-3 text-xs text-white outline-none font-mono focus:border-pink-500/50" />
+                              <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Duration (s)</label>
+                              <input type="number" step="0.1" value={activeLayer()?.animInDuration || 1.0} onInput={(e) => handlePropChange('animInDuration', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-surfaceHover border border-border rounded-xl px-3 text-xs text-textMain outline-none font-mono focus:border-primary/50" />
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* OUT ANIMATION */}
-                      <div class="space-y-4 p-4 bg-black/20 border border-white/5 rounded-2xl relative">
+                      <div class="space-y-4 p-4 bg-background border border-border rounded-2xl relative">
                         <div class="flex items-center gap-2 mb-1">
                           <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                          <span class="text-[9px] font-black text-white uppercase tracking-widest">Out Effect</span>
+                          <span class="text-[9px] font-black text-textMain uppercase tracking-widest">Out Effect</span>
                         </div>
                         <div class="grid grid-cols-1 gap-4">
                           <PropSelect 

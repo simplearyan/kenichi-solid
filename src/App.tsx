@@ -1,4 +1,4 @@
-import { type Component, Show } from 'solid-js';
+import { type Component, Show, createEffect } from 'solid-js';
 import { Header } from './components/layout/Header';
 import { WorkspaceGrid } from './components/layout/WorkspaceGrid';
 import { PanelLeft } from './components/layout/PanelLeft';
@@ -10,6 +10,14 @@ import { ExportModal } from './components/modals/ExportModal';
 import { projectStore } from './store/projectStore';
 
 const App: Component = () => {
+  createEffect(() => {
+    if (projectStore.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  });
+
   return (
     <div class="h-screen w-screen flex flex-col font-sans overflow-hidden text-sm bg-background">
       {/* HIDDEN DOM FOR MEDIA ELEMENTS */}
