@@ -313,11 +313,11 @@ export const PanelTimeline: Component = () => {
 
   const tickConfig = () => {
     const pps = projectStore.pixelsPerSecond;
-    if (pps < 10) return { label: 120, minor: 30 };
-    if (pps < 20) return { label: 60, minor: 15 };
-    if (pps < 40) return { label: 10, minor: 2 };
-    if (pps < 80) return { label: 5, minor: 1 };
-    if (pps < 150) return { label: 2, minor: 0.5 };
+    if (pps < 10) return { label: 60, minor: 10 };
+    if (pps < 25) return { label: 30, minor: 5 };
+    if (pps < 50) return { label: 10, minor: 2 };
+    if (pps < 100) return { label: 5, minor: 1 };
+    if (pps < 200) return { label: 2, minor: 0.5 };
     return { label: 1, minor: 0.1 };
   };
 
@@ -456,19 +456,22 @@ export const PanelTimeline: Component = () => {
             {/* Ruler */}
             <div
               class="h-8 border-b border-border bg-background sticky top-0 z-20 pointer-events-none text-[9px] font-medium text-textMuted select-none"
-              style={{ width: `${projectStore.duration * projectStore.pixelsPerSecond + 1000}px` }}
+              style={{ width: `${Math.max(projectStore.duration * projectStore.pixelsPerSecond + 1000, 2000)}px` }}
             >
-              <For each={Array.from({ length: Math.ceil(projectStore.duration / tickConfig().minor) + 1 })}>
+              <For each={Array.from({ length: Math.ceil((Math.max(projectStore.duration, 2000 / projectStore.pixelsPerSecond)) / tickConfig().minor) + 1 })}>
                 {(_, i) => {
                   const time = i() * tickConfig().minor;
-                  const isMajor = Math.abs(time % tickConfig().label) < 0.001 || Math.abs(time % tickConfig().label - tickConfig().label) < 0.001;
+                  const labelInterval = tickConfig().label;
+                  // Use a small epsilon for floating point comparison
+                  const isMajor = Math.abs(time % labelInterval) < 0.0001 || Math.abs((time % labelInterval) - labelInterval) < 0.0001;
+                  
                   return (
                     <div
-                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-border h-full' : 'border-border/30 h-1/2'} transition-all`}
+                      class={`absolute top-0 bottom-0 border-l ${isMajor ? 'border-border h-full' : 'border-border/20 h-1/3'} transition-none`}
                       style={{ left: `${time * projectStore.pixelsPerSecond}px` }}
                     >
                       <Show when={isMajor}>
-                        <span class="pl-1.5 pt-1 block text-textMuted font-bold">{formatTime(time)}</span>
+                        <span class="pl-1.5 pt-1.5 block text-textMuted font-bold tracking-tighter">{formatTime(time)}</span>
                       </Show>
                     </div>
                   );

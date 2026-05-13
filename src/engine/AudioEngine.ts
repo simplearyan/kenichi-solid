@@ -91,7 +91,7 @@ export class AudioEngine {
   }
 
   async refreshScheduling() {
-    if (!this.ctx || this.ctx.state !== 'running') return;
+    if (!this.ctx || this.ctx.state !== 'running' || !projectStore.isPlaying) return;
     const currentTime = this.getPreciseTime();
     if (currentTime !== null) {
       await this.scheduleAll(currentTime);
@@ -100,7 +100,7 @@ export class AudioEngine {
 
   private async scheduleAll(startTime: number) {
     this.stopPlayback();
-    if (!this.ctx) return;
+    if (!this.ctx || !projectStore.isPlaying) return;
 
     if (this.ctx.state !== 'running') {
       console.log("[AudioEngine] Resuming context...");

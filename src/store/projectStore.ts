@@ -144,7 +144,7 @@ export interface ProjectState {
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({
-  duration: 10,
+  duration: 300,
   currentTime: 0,
   fps: 60,
   currentFPS: 0,
@@ -181,7 +181,7 @@ export const [projectStore, setProjectStore] = createStore<ProjectState>({
   exportModalOpen: false,
   isExporting: false,
   isSeeking: false,
-  trackHeight: 120,
+  trackHeight: 80,
   followPlayhead: true,
   rippleEnabled: false,
   canvasBackground: 'transparent',

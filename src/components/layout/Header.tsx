@@ -1,5 +1,5 @@
 import { type Component, createSignal, For, onMount, Show } from 'solid-js';
-import { LayoutGrid, PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown, Sun, Moon } from 'lucide-solid';
+import { PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown, Sun, Moon } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 const HeaderSelect: Component<{
@@ -59,9 +59,9 @@ export const Header: Component = () => {
           </div>
           <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#a855f7] border-2 border-surface rounded-full shadow-sm"></div>
         </div>
-        <div class="flex flex-col leading-none">
-          <span class="font-bold text-textMain tracking-tight text-[15px]">KenichiStudio</span>
-          <span class="text-[9px] text-textMuted font-semibold uppercase tracking-[0.2em] mt-0.5">Professional</span>
+        <div class="flex items-center">
+          <span class="font-extrabold text-textMain tracking-tight text-[16px]">Kenichi</span>
+          <span class="font-light text-textMain tracking-tight text-[16px]">Studio</span>
         </div>
       </div>
 
