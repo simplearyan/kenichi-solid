@@ -143,17 +143,18 @@ export const Header: Component = () => {
           href="https://ko-fi.com/simplearyan" 
           target="_blank" 
           rel="noopener noreferrer"
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#29abe0] text-white text-[10px] font-bold hover:bg-[#2499c9] transition-all shadow-sm active:scale-95"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff5f5f] to-[#f06292] text-white text-[10px] font-bold hover:shadow-lg hover:shadow-red-500/20 transition-all shadow-sm active:scale-95"
           title="Support on Ko-fi"
         >
           <Heart class="w-3.5 h-3.5 fill-current" />
-          <span class="hidden lg:inline">Support on Ko-fi</span>
+          <span class="hidden lg:inline uppercase tracking-wider">Support</span>
         </a>
         <button 
           onClick={() => setProjectStore('exportModalOpen', true)}
-          class="px-3 md:px-4 py-1 rounded bg-primary hover:bg-primaryHover text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+          class="px-3 md:px-4 py-1.5 rounded-lg bg-primary hover:bg-primaryHover text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)] active:scale-95"
         >
-          <Download class="w-3.5 h-3.5" /> Export
+          <Download class="w-3.5 h-3.5" /> 
+          <span class="uppercase tracking-tight">Export</span>
         </button>
       </div>
     </header>
