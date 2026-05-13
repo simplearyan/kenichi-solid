@@ -1,0 +1,74 @@
+name: Deploy Multi-Version
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Node ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install and Build 🏗️
+        run: |
+          npm install
+          npm run build
+
+      - name: Prepare Deployment 📦
+        run: |
+          # Create a temporary deployment directory
+          mkdir -p deploy_root
+          
+          # Move the build output to a versioned subfolder
+          mkdir -p "deploy_root/${{ github.ref_name }}"
+          cp -r dist/* "deploy_root/${{ github.ref_name }}/"
+          
+          # Copy the portal landing page to root
+          cp portal/index.html deploy_root/index.html
+          
+          # Handle versions.json update
+          # We fetch the existing versions.json from the gh-pages branch if it exists
+          # Using a temporary clone to avoid branch switching issues
+          git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages-branch || mkdir gh-pages-branch
+          
+          if [ -f gh-pages-branch/versions.json ]; then
+            cp gh-pages-branch/versions.json deploy_root/versions.json
+          else
+            echo '{"versions": []}' > deploy_root/versions.json
+          fi
+          
+          # Update versions.json with new entry (using node for reliable JSON manipulation)
+          node -e "
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('deploy_root/versions.json'));
+            const newVersion = {
+              tag: '${{ github.ref_name }}',
+              date: new Date().toISOString()
+            };
+            // Only add if not already present
+            if (!data.versions.find(v => v.tag === newVersion.tag)) {
+              data.versions.push(newVersion);
+            }
+            fs.writeFileSync('deploy_root/versions.json', JSON.stringify(data, null, 2));
+          "
+
+      - name: Deploy to GitHub Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: deploy_root
+          branch: gh-pages
+          clean: false # IMPORTANT: Do not delete previous versions
+          single-commit: true # Keep the history clean
