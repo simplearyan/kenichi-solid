@@ -1,8 +1,8 @@
 import { type Component, onMount, For, Show, createSignal, createMemo } from 'solid-js';
 import { 
   Layers, Sliders, Eye, EyeOff, Lock, Unlock, Settings2, Music, Type, 
-  Square, Film, Image as ImageIcon, ChevronUp, ChevronDown, 
-  Maximize, Zap, PlayCircle, ChevronRight, Palette
+  Square, Film, Image as ImageIcon, ChevronDown, 
+  Maximize, Zap, PlayCircle, ChevronRight, Palette, ArrowUp, ArrowDown
 } from 'lucide-solid';
 import { projectStore, setProjectStore, updateLayer, moveTrack } from '../../store/projectStore';
 import { setupResizer } from '../../utils/resizer';
@@ -175,6 +175,17 @@ export const PanelRight: Component = () => {
     setCollapsed(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const [collapsedTracks, setCollapsedTracks] = createSignal<Set<string>>(new Set());
+  
+  const toggleTrackCollapse = (id: string) => {
+    setCollapsedTracks(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   onMount(() => {
     if (resizerRef) setupResizer(resizerRef, 'right');
   });
@@ -324,52 +335,95 @@ export const PanelRight: Component = () => {
 
         {/* Clips Content */}
         <Show when={isMobile() ? projectStore.mobileTab === 'clips' : projectStore.rightPanelTab === 'layers'}>
-          <div class="flex flex-col p-2 gap-4">
-            <Show when={projectStore.layers.length === 0}>
-              <div class="text-xs text-neutral-500 text-center py-8">No clips on timeline.</div>
-            </Show>
-            
-            <For each={projectStore.tracks}>
-              {(track) => (
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2 px-1 py-1 text-[10px] font-bold text-neutral-500 uppercase tracking-widest border-b border-border/30 mb-2 group">
-                    <span class="truncate">{track.name}</span>
-                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                      <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'up'); }} class="hover:text-white transition-colors" title="Move Track Up"><ChevronUp class="w-3 h-3" /></button>
-                      <button onClick={(e) => { e.stopPropagation(); moveTrack(track.id, 'down'); }} class="hover:text-white transition-colors" title="Move Track Down"><ChevronDown class="w-3 h-3" /></button>
+          <div class="flex flex-col h-full">
+            {/* Global Actions Header */}
+            <div class="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-surface/30 shrink-0">
+               <div class="flex items-center gap-2">
+                 <Layers class="w-4 h-4 text-primary" />
+                 <span class="text-[10px] font-black uppercase tracking-widest text-textMain">Timeline Clips</span>
+               </div>
+               <div class="flex items-center gap-1">
+                 <button 
+                  disabled={!projectStore.activeTrackId}
+                  onClick={() => projectStore.activeTrackId && moveTrack(projectStore.activeTrackId, 'up')} 
+                  class={`p-1 rounded transition-colors ${projectStore.activeTrackId ? 'text-textMuted hover:text-primary hover:bg-surfaceHover' : 'opacity-20 pointer-events-none'}`}
+                  title="Move Selected Track Up"
+                >
+                  <ArrowUp class="w-3.5 h-3.5" />
+                </button>
+                <button 
+                  disabled={!projectStore.activeTrackId}
+                  onClick={() => projectStore.activeTrackId && moveTrack(projectStore.activeTrackId, 'down')} 
+                  class={`p-1 rounded transition-colors ${projectStore.activeTrackId ? 'text-textMuted hover:text-primary hover:bg-surfaceHover' : 'opacity-20 pointer-events-none'}`}
+                  title="Move Selected Track Down"
+                >
+                  <ArrowDown class="w-3.5 h-3.5" />
+                </button>
+               </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-2 flex flex-col gap-4 custom-scrollbar">
+              <Show when={projectStore.layers.length === 0}>
+                <div class="text-xs text-neutral-500 text-center py-8">No clips on timeline.</div>
+              </Show>
+              
+              <For each={projectStore.tracks}>
+                {(track) => (
+                  <div class={`space-y-1 rounded-xl transition-all ${projectStore.activeTrackId === track.id ? 'bg-primary/5 ring-1 ring-[#10b981]/20' : ''}`}>
+                    <div 
+                      onClick={() => {
+                        setProjectStore('activeTrackId', track.id);
+                        toggleTrackCollapse(track.id);
+                      }}
+                      class="flex items-center gap-2 px-3 py-2 cursor-pointer group hover:bg-surfaceHover/30 rounded-t-xl transition-colors"
+                    >
+                      <ChevronRight class={`w-3 h-3 text-textMuted transition-transform duration-200 ${!collapsedTracks().has(track.id) ? 'rotate-90 text-[#10b981]' : ''}`} />
+                      <span class={`text-[10px] font-bold uppercase tracking-widest flex-1 ${projectStore.activeTrackId === track.id ? 'text-primary' : 'text-neutral-500'}`}>{track.name}</span>
+                      
+                      <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { hidden: !track.hidden }); }} class="text-textMuted hover:text-textMain">
+                          {track.hidden ? <EyeOff class="w-3 h-3" /> : <Eye class="w-3 h-3" />}
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setProjectStore('tracks', t => t.id === track.id, { locked: !track.locked }); }} class="text-textMuted hover:text-textMain">
+                          {track.locked ? <Lock class="w-3 h-3" /> : <Unlock class="w-3 h-3" />}
+                        </button>
+                      </div>
                     </div>
-                    <div class="flex-1 h-[1px] bg-border/20"></div>
-                  </div>
-                  
-                  <div class="flex flex-col gap-1 pl-1">
-                    <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
-                      {(layer) => (
-                        <div 
-                          class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border ${projectStore.activeLayerId === layer.id ? 'bg-primary/10 border-primary/30' : 'bg-surface border-transparent hover:bg-surfaceHover'}`}
-                          onClick={() => setProjectStore('activeLayerId', layer.id)}
-                        >
-                          <div class="text-textMuted">
-                            {getIcon(layer.type)}
-                          </div>
-                          <span class="text-xs text-textMain truncate flex-1">{layer.name}</span>
-                          <div class="flex items-center gap-2">
-                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-textMuted hover:text-textMain">
-                              {layer.hidden ? <EyeOff class="w-3.5 h-3.5" /> : <Eye class="w-3.5 h-3.5" />}
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-textMuted hover:text-textMain">
-                              {layer.locked ? <Lock class="w-3.5 h-3.5" /> : <Unlock class="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </For>
-                    <Show when={projectStore.layers.filter(l => l.trackId === track.id).length === 0}>
-                       <div class="text-[10px] text-neutral-600 italic pl-2 py-1">Empty track</div>
+                    
+                    <Show when={!collapsedTracks().has(track.id)}>
+                      <div class="flex flex-col gap-0.5 px-1 pb-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <For each={projectStore.layers.filter(l => l.trackId === track.id)}>
+                          {(layer) => (
+                            <div 
+                              class={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${projectStore.activeLayerId === layer.id ? 'bg-primary/20 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.2)]' : 'bg-transparent hover:bg-surfaceHover/50'}`}
+                              onClick={(e) => { e.stopPropagation(); setProjectStore('activeLayerId', layer.id); setProjectStore('activeTrackId', track.id); }}
+                            >
+                              <div class="text-textMuted shrink-0">
+                                {getIcon(layer.type)}
+                              </div>
+                              <div class="flex-1 min-w-0">
+                                <span class={`text-[11px] truncate block ${projectStore.activeLayerId === layer.id ? 'text-white font-medium' : 'text-textMuted hover:text-textMain'}`}>{layer.name}</span>
+                              </div>
+                              <div class="flex items-center gap-2 shrink-0">
+                                <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { hidden: !layer.hidden }); }} class="text-textMuted hover:text-textMain transition-colors">
+                                  {layer.hidden ? <EyeOff class="w-3.5 h-3.5" /> : <Eye class="w-3.5 h-3.5" />}
+                                </button>
+                                <button onClick={(e) => { e.stopPropagation(); updateLayer(layer.id, { locked: !layer.locked }); }} class="text-textMuted hover:text-textMain transition-colors">
+                                  {layer.locked ? <Lock class="w-3.5 h-3.5" /> : <Unlock class="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </For>
+                        <Show when={projectStore.layers.filter(l => l.trackId === track.id).length === 0}>
+                          <div class="text-[10px] text-neutral-700 italic pl-8 py-1">Empty track</div>
+                        </Show>
+                      </div>
                     </Show>
                   </div>
-                </div>
-              )}
-            </For>
+                )}
+              </For>
+            </div>
           </div>
         </Show>
 
