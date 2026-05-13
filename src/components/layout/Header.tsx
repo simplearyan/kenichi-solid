@@ -52,11 +52,17 @@ const HeaderSelect: Component<{
 export const Header: Component = () => {
   return (
     <header class="h-[44px] md:h-[48px] border-b border-border bg-surface flex items-center justify-between px-3 md:px-5 shrink-0 z-20 transition-colors duration-200">
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 bg-primary rounded flex items-center justify-center text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-          <LayoutGrid class="w-3.5 h-3.5" />
+      <div class="flex items-center gap-3 select-none group cursor-default">
+        <div class="relative">
+          <div class="w-8 h-8 bg-white rounded-[9px] flex items-center justify-center shadow-sm transition-transform group-hover:scale-105 duration-300">
+            <span class="text-black font-extrabold text-[13px] tracking-tighter">KS</span>
+          </div>
+          <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#a855f7] border-2 border-surface rounded-full shadow-sm"></div>
         </div>
-        <span class="font-bold text-textMain tracking-wide text-sm">KenichiStudio <span class="text-textMuted font-normal hidden sm:inline">Pro</span></span>
+        <div class="flex flex-col leading-none">
+          <span class="font-bold text-textMain tracking-tight text-[15px]">KenichiStudio</span>
+          <span class="text-[9px] text-textMuted font-semibold uppercase tracking-[0.2em] mt-0.5">Professional</span>
+        </div>
       </div>
 
       <div class="hidden md:flex items-center gap-6">
