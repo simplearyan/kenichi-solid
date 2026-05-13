@@ -36,6 +36,9 @@ jobs:
         run: |
           mkdir -p deploy_root
           
+          # Ensure all tags are available locally
+          git fetch --tags --force
+          
           # Initialize versions.json in the archive folder
           mkdir -p deploy_root/archive
           git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages-branch || mkdir gh-pages-branch
@@ -85,6 +88,9 @@ jobs:
           
           # Copy the portal landing page to the archive subfolder
           cp portal/index.html deploy_root/archive/index.html
+          
+          echo "Final deployment structure:"
+          ls -R deploy_root
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
