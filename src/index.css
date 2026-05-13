@@ -1,31 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --bg-background: #f4f4f5; /* Zinc 100 */
-    --bg-surface: #ffffff;
-    --bg-surface-hover: #e4e4e7; /* Zinc 200 */
-    --border-color: #d4d4d8; /* Zinc 300 */
-    --border-light: #e4e4e7; /* Zinc 200 */
-    --color-primary: #3b82f6; /* Blue 500 - Professional */
-    --color-primary-hover: #2563eb; /* Blue 600 */
-    --text-main: #27272a; /* Zinc 800 */
-    --text-muted: #71717a; /* Zinc 500 */
-  }
-
-  .dark {
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
+    /* Pro Pitch Black & Teal Green Palette */
+    --primary: #10b981;
+    --primary-hover: #059669;
     --bg-background: #000000;
     --bg-surface: #0a0a0a;
-    --bg-surfaceHover: #1a1a1a;
+    --bg-surface-hover: #171717;
     --text-main: #ffffff;
-    --text-muted: #a3a3a3;
-    --border: #262626;
-    --selection-bg: rgba(59, 130, 246, 0.3);
+    --text-muted: #888888;
+    --border: #1f1f1f;
+    --border-light: #262626;
+    --selection-bg: rgba(16, 185, 129, 0.3);
+    
+    /* Legacy variables mapping for compatibility */
+    --bg-surfaceHover: var(--bg-surface-hover);
+    --border-color: var(--border);
+    --color-primary: var(--primary);
+    --color-primary-hover: var(--primary-hover);
   }
 
   * {
@@ -91,11 +87,13 @@
   }
   
   .glass-panel {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
   }
   
   .timeline-grid {
-    background-image: linear-gradient(to right, #262626 1px, transparent 1px);
+    background-image: linear-gradient(to right, #1f1f1f 1px, transparent 1px);
   }
   
   .input-base {
@@ -106,7 +104,7 @@
   }
 
   .resizer { position: absolute; background: transparent; z-index: 50; }
-  .resizer:hover, .resizer.active { background: var(--color-primary); opacity: 0.5; }
+  .resizer:hover, .resizer.active { background: var(--primary); opacity: 0.5; }
   .resizer-r { right: 0; top: 0; bottom: 0; width: 6px; cursor: col-resize; }
   .resizer-l { left: 0; top: 0; bottom: 0; width: 6px; cursor: col-resize; }
   .resizer-t { top: 0; left: 0; right: 0; height: 6px; cursor: row-resize; }
@@ -124,14 +122,14 @@ input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 4px;
   cursor: pointer;
-  background: #333;
+  background: #1a1a1a;
   border-radius: 2px;
 }
 input[type=range]::-webkit-slider-thumb {
   height: 12px; width: 12px; border-radius: 50%;
-  background: var(--color-primary); cursor: pointer;
+  background: var(--primary); cursor: pointer;
   -webkit-appearance: none; margin-top: -4px;
-  box-shadow: 0 0 10px var(--color-primary);
+  box-shadow: 0 0 10px var(--primary);
   transition: transform 0.1s;
 }
 input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
@@ -140,17 +138,17 @@ input[type=range]:disabled::-webkit-slider-thumb { background: var(--text-muted)
 /* Custom Checkbox */
 input[type="checkbox"] {
   appearance: none; width: 16px; height: 16px;
-  border: 1px solid #262626; border-radius: 4px;
-  background-color: #0a0a0a; cursor: pointer; display: grid; place-content: center;
+  border: 1px solid var(--border); border-radius: 4px;
+  background-color: #000; cursor: pointer; display: grid; place-content: center;
 }
 input[type="checkbox"]::before {
   content: ""; width: 10px; height: 10px; transform: scale(0); transition: 120ms transform ease-in-out;
-  box-shadow: inset 1em 1em var(--color-primary); transform-origin: center;
+  box-shadow: inset 1em 1em var(--primary); transform-origin: center;
   clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
 }
 input[type="checkbox"]:checked::before { transform: scale(1); }
 
 /* Color input */
-input[type="color"] { background-color: transparent; border: 1px solid #262626; border-radius: 4px; padding: 0; }
+input[type="color"] { background-color: transparent; border: 1px solid var(--border); border-radius: 4px; padding: 0; }
 input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 input[type="color"]::-webkit-color-swatch { border: none; border-radius: 3px; }

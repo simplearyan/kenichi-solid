@@ -140,7 +140,7 @@ export interface ProjectState {
   followPlayhead: boolean;
   rippleEnabled: boolean;
   canvasBackground: string;
-  theme: "light" | "dark";
+  theme: "dark";
 }
 
 export const [projectStore, setProjectStore] = createStore<ProjectState>({

@@ -1,5 +1,5 @@
 import { type Component, createSignal, For, onMount, Show } from 'solid-js';
-import { PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown, Sun, Moon } from 'lucide-solid';
+import { PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 const HeaderSelect: Component<{
@@ -57,7 +57,7 @@ export const Header: Component = () => {
           <div class="w-8 h-8 bg-white rounded-[9px] flex items-center justify-center shadow-sm transition-transform group-hover:scale-105 duration-300">
             <span class="text-black font-extrabold text-[13px] tracking-tighter">KS</span>
           </div>
-          <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#a855f7] border-2 border-surface rounded-full shadow-sm"></div>
+          <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-primary border-2 border-surface rounded-full shadow-sm"></div>
         </div>
         <div class="flex items-center">
           <span class="font-extrabold text-textMain tracking-tight text-[16px]">Kenichi</span>
@@ -136,15 +136,6 @@ export const Header: Component = () => {
         >
           <GitBranch class="w-4 h-4" />
         </a>
-        <button 
-          onClick={() => setProjectStore('theme', t => t === 'light' ? 'dark' : 'light')}
-          class="text-textMuted hover:text-textMain transition-colors p-1"
-          title={projectStore.theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-        >
-          <Show when={projectStore.theme === 'light'} fallback={<Sun class="w-4 h-4" />}>
-            <Moon class="w-4 h-4" />
-          </Show>
-        </button>
         <a 
           href="https://ko-fi.com/simplearyan" 
           target="_blank" 
