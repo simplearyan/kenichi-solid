@@ -9,7 +9,21 @@ import { SourceModal } from './components/modals/SourceModal';
 import { ExportModal } from './components/modals/ExportModal';
 import { projectStore } from './store/projectStore';
 
+import { audioEngine } from './engine/AudioEngine';
+import { onMount } from 'solid-js';
+
 const App: Component = () => {
+  onMount(() => {
+    // Standard Browser Audio Wakeup
+    const wakeup = () => {
+      audioEngine.init();
+      window.removeEventListener('mousedown', wakeup);
+      window.removeEventListener('keydown', wakeup);
+    };
+    window.addEventListener('mousedown', wakeup);
+    window.addEventListener('keydown', wakeup);
+  });
+
   return (
     <div class="h-screen w-screen flex flex-col font-sans overflow-hidden text-sm bg-background select-none">
       {/* HIDDEN DOM FOR MEDIA ELEMENTS */}

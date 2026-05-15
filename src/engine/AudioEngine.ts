@@ -28,7 +28,12 @@ export class AudioEngine {
     }
 
     if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      console.log("[AudioEngine] Context is suspended. Attempting to resume...");
+      this.ctx.resume().then(() => {
+        console.log("[AudioEngine] Context resumed successfully. State:", this.ctx?.state);
+      }).catch(err => {
+        console.warn("[AudioEngine] Failed to resume context:", err);
+      });
     }
 
     if (!this.heartbeatNode && this.ctx) {
