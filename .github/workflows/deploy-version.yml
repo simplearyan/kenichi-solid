@@ -32,57 +32,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # Temporarily disable cache to force a fresh build of the new UI
+          # cache: 'npm'
 
       - name: Process Versions 🔄
         run: |
-          set -e # Exit immediately if a command fails
+          set -e
           mkdir -p deploy_root
           
-          # 1. Fetch all tags for versioning
-          echo "Fetching tags..."
+          echo ">>> 1. Fetching Tags"
           git fetch --tags --force
           
-          # 2. Clone the EXISTING gh-pages branch content (Authenticated)
-          echo "Cloning existing deployment from gh-pages..."
+          echo ">>> 2. Cloning existing gh-pages"
           git clone --depth 1 --branch gh-pages "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages-temp || mkdir gh-pages-temp
           
           if [ -d "gh-pages-temp" ]; then
-            echo "Merging existing files into deploy_root..."
+            echo "Merging existing archive and versions..."
             cp -r gh-pages-temp/* deploy_root/ 2>/dev/null || true
             rm -rf gh-pages-temp
           fi
           rm -rf deploy_root/.git
 
-          # 3. Handle bootstrap or single deployment
-          if [ "${{ github.event.inputs.mode }}" == "bootstrap-last-4" ]; then
-            echo ">>> MODE: BOOTSTRAP LAST 4 TAGS"
-            TAGS=$(git tag -l 'v*' --sort=-v:refname | head -n 4)
-            for TAG in $TAGS; do
-              echo ">>> Building Version: $TAG"
-              git checkout $TAG
-              npm install
-              npm run build
-              mkdir -p "deploy_root/$TAG"
-              cp -r dist/* "deploy_root/$TAG/"
-              
-              node -e "
-                const fs = require('fs');
-                const archiveDir = 'deploy_root/archive';
-                if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, {recursive: true});
-                const data = fs.existsSync(archiveDir + '/versions.json') ? JSON.parse(fs.readFileSync(archiveDir + '/versions.json')) : {versions: []};
-                if (!data.versions.find(v => v.tag === '$TAG')) {
-                  data.versions.push({ tag: '$TAG', date: new Date().toISOString() });
-                  fs.writeFileSync(archiveDir + '/versions.json', JSON.stringify(data, null, 2));
-                }
-              "
-            done
-            git checkout main
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          # 3. Build Logic
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo ">>> MODE: TAG DEPLOYMENT (${{ github.ref_name }})"
-            npm install
-            npm run build
-            if [ ! -d "dist" ]; then echo "Error: dist folder not found!"; exit 1; fi
+            npm install && npm run build
             mkdir -p "deploy_root/${{ github.ref_name }}"
             cp -r dist/* "deploy_root/${{ github.ref_name }}/"
             
@@ -98,20 +72,28 @@ jobs:
             "
           else
             echo ">>> MODE: MAIN/ROOT DEPLOYMENT"
-            npm install
-            npm run build
-            if [ ! -d "dist" ]; then echo "Error: dist folder not found!"; exit 1; fi
-            # Update the ROOT of the site
+            npm install && npm run build
+            
+            echo ">>> Verifying Build Output..."
+            ls -la dist/
+            # Check if our new Info icon is actually in the build
+            if grep -q "Project Info" dist/index.html; then
+              echo "✅ Info Icon verified in build!"
+            else
+              echo "❌ Error: Info Icon missing from build! Forcing failure."
+              exit 1
+            fi
+            
+            # Update the ROOT
             cp -r dist/* deploy_root/
           fi
           
-          # 4. Final Portal Update
-          echo "Updating version portal..."
+          echo ">>> 4. Updating Portal"
           mkdir -p deploy_root/archive
           cp portal/index.html deploy_root/archive/index.html
           
-          echo "Final deployment structure:"
-          ls -R deploy_root
+          echo ">>> 5. Final Structure Check"
+          ls -R deploy_root/archive
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
