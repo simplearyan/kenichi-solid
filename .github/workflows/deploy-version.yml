@@ -2,6 +2,8 @@ name: Deploy Multi-Version
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -20,7 +22,7 @@ permissions:
 
 jobs:
   build-and-deploy:
-    concurrency: ci-${{ github.ref }}
+    concurrency: ci-gh-pages # Prevent simultaneous deploys
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
@@ -68,9 +70,9 @@ jobs:
                 }
               "
             done
-            git checkout ${{ github.event.repository.default_branch }}
-          else
-            echo "Running Single Version Mode for ${{ github.ref_name }}..."
+            git checkout main
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "Running Tag Deployment for ${{ github.ref_name }}..."
             npm install
             npm run build
             mkdir -p "deploy_root/${{ github.ref_name }}"
@@ -84,9 +86,15 @@ jobs:
                 fs.writeFileSync('deploy_root/archive/versions.json', JSON.stringify(data, null, 2));
               }
             "
+          else
+            echo "Running Main/Root Deployment..."
+            npm install
+            npm run build
+            # Deploy to the ROOT of the site
+            cp -r dist/* deploy_root/
           fi
           
-          # Copy the portal landing page to the archive subfolder
+          # Always update the portal landing page
           cp portal/index.html deploy_root/archive/index.html
           
           echo "Final deployment structure:"
@@ -97,5 +105,5 @@ jobs:
         with:
           folder: deploy_root
           branch: gh-pages
-          clean: false # IMPORTANT: Do not delete previous versions
-          single-commit: true # Keep the history clean
+          clean: false # IMPORTANT: Preserve other versions and the archive
+          single-commit: false # Build history incrementally

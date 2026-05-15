@@ -1,5 +1,5 @@
 import { type Component, createSignal, For, onMount, Show } from 'solid-js';
-import { PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown } from 'lucide-solid';
+import { PanelLeft, PanelBottom, PanelRight, Download, GitBranch, ArrowRightFromLine, Heart, ChevronDown, Info, ExternalLink } from 'lucide-solid';
 import { projectStore, setProjectStore } from '../../store/projectStore';
 
 const HeaderSelect: Component<{
@@ -50,6 +50,8 @@ const HeaderSelect: Component<{
 };
 
 export const Header: Component = () => {
+  const [showInfo, setShowInfo] = createSignal(false);
+
   return (
     <header class="h-[44px] md:h-[48px] border-b border-border bg-surface flex items-center justify-between px-3 md:px-5 shrink-0 z-20 transition-colors duration-200">
       <div class="flex items-center gap-3 select-none group cursor-default">
@@ -127,11 +129,18 @@ export const Header: Component = () => {
       </div>
 
       <div class="flex items-center gap-3">
+        <button 
+          onClick={() => setShowInfo(true)}
+          class="text-textMuted hover:text-primary transition-colors p-1"
+          title="Project Info"
+        >
+          <Info class="w-4 h-4" />
+        </button>
         <a 
           href="https://github.com/simplearyan/kenichi-solid" 
           target="_blank" 
           rel="noopener noreferrer"
-          class="text-textMuted hover:text-textMain transition-colors"
+          class="text-textMuted hover:text-textMain transition-colors p-1"
           title="View on GitHub"
         >
           <GitBranch class="w-4 h-4" />
@@ -148,12 +157,67 @@ export const Header: Component = () => {
         </a>
         <button 
           onClick={() => setProjectStore('exportModalOpen', true)}
-          class="px-3 md:px-4 py-1.5 rounded-lg bg-primary hover:bg-primaryHover text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:shadow-[0_4px_15px_rgba(59,130,246,0.4)] active:scale-95"
+          class="px-3 md:px-4 py-1.5 rounded-lg bg-primary hover:bg-primaryHover text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-[0_4px_12px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_15px_rgba(16,185,129,0.4)] active:scale-95"
         >
           <Download class="w-3.5 h-3.5" /> 
           <span class="uppercase tracking-tight">Export</span>
         </button>
       </div>
+
+      {/* Info Modal */}
+      <Show when={showInfo()}>
+        <div 
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+          onClick={() => setShowInfo(false)}
+        >
+          <div 
+            class="w-full max-w-md bg-surface border border-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Background Glow */}
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 blur-[80px] pointer-events-none"></div>
+            
+            <div class="relative z-10 flex flex-col items-center text-center gap-6">
+              <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl">
+                <span class="text-black font-black text-2xl tracking-tighter">KS</span>
+              </div>
+              
+              <div class="space-y-2">
+                <h2 class="text-2xl font-black tracking-tight text-textMain">Kenichi Studio</h2>
+                <p class="text-textMuted text-xs font-bold uppercase tracking-[0.2em]">Professional Web Editor</p>
+              </div>
+
+              <p class="text-[13px] leading-relaxed text-textMuted font-medium">
+                A high-performance, professional web-based video editor prototype inspired by macOS aesthetics. 
+                Experience seamless multi-track editing, real-time effects, and professional-grade rendering directly in your browser.
+              </p>
+
+              <div class="w-full h-px bg-white/5 my-2"></div>
+
+              <div class="flex flex-col gap-3 w-full">
+                <a 
+                  href="https://simplearyan.github.io/kenichi-solid/archive/"
+                  target="_blank"
+                  class="flex items-center justify-between group p-4 rounded-2xl bg-white/5 hover:bg-primary/10 border border-white/5 hover:border-primary/20 transition-all"
+                >
+                  <div class="flex flex-col items-start gap-1">
+                    <span class="text-xs font-bold text-textMain group-hover:text-primary transition-colors">Version History</span>
+                    <span class="text-[10px] text-textMuted uppercase tracking-wider">Explore Selection Portal</span>
+                  </div>
+                  <ExternalLink class="w-4 h-4 text-textMuted group-hover:text-primary transition-all" />
+                </a>
+              </div>
+
+              <button 
+                onClick={() => setShowInfo(false)}
+                class="mt-4 px-6 py-2.5 rounded-full bg-surfaceHover text-textMain text-xs font-bold hover:bg-white/10 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </Show>
     </header>
   );
 };
