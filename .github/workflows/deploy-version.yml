@@ -38,18 +38,17 @@ jobs:
         run: |
           mkdir -p deploy_root
           
-          # Ensure all tags are available locally
+          # 1. Fetch all tags for versioning
           git fetch --tags --force
           
-          # Initialize versions.json in the archive folder
-          mkdir -p deploy_root/archive
-          git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages-branch || mkdir gh-pages-branch
-          if [ -f gh-pages-branch/archive/versions.json ]; then
-            cp gh-pages-branch/archive/versions.json deploy_root/archive/versions.json
-          else
-            echo '{"versions": []}' > deploy_root/archive/versions.json
-          fi
+          # 2. Clone the EXISTING gh-pages branch content to preserve archive and old versions
+          echo "Cloning existing deployment to preserve history..."
+          git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages-temp || mkdir gh-pages-temp
+          cp -r gh-pages-temp/* deploy_root/ 2>/dev/null || true
+          rm -rf gh-pages-temp
+          rm -rf deploy_root/.git
 
+          # 3. Handle bootstrap or single deployment
           if [ "${{ github.event.inputs.mode }}" == "bootstrap-last-4" ]; then
             echo "Running Bootstrap Mode for last 4 tags..."
             TAGS=$(git tag -l 'v*' --sort=-v:refname | head -n 4)
@@ -63,9 +62,10 @@ jobs:
               
               node -e "
                 const fs = require('fs');
-                const data = JSON.parse(fs.readFileSync('deploy_root/archive/versions.json'));
+                const data = fs.existsSync('deploy_root/archive/versions.json') ? JSON.parse(fs.readFileSync('deploy_root/archive/versions.json')) : {versions: []};
                 if (!data.versions.find(v => v.tag === '$TAG')) {
                   data.versions.push({ tag: '$TAG', date: new Date().toISOString() });
+                  if (!fs.existsSync('deploy_root/archive')) fs.mkdirSync('deploy_root/archive', {recursive: true});
                   fs.writeFileSync('deploy_root/archive/versions.json', JSON.stringify(data, null, 2));
                 }
               "
@@ -80,9 +80,10 @@ jobs:
             
             node -e "
               const fs = require('fs');
-              const data = JSON.parse(fs.readFileSync('deploy_root/archive/versions.json'));
+              const data = fs.existsSync('deploy_root/archive/versions.json') ? JSON.parse(fs.readFileSync('deploy_root/archive/versions.json')) : {versions: []};
               if (!data.versions.find(v => v.tag === '${{ github.ref_name }}')) {
                 data.versions.push({ tag: '${{ github.ref_name }}', date: new Date().toISOString() });
+                if (!fs.existsSync('deploy_root/archive')) fs.mkdirSync('deploy_root/archive', {recursive: true});
                 fs.writeFileSync('deploy_root/archive/versions.json', JSON.stringify(data, null, 2));
               }
             "
@@ -90,11 +91,12 @@ jobs:
             echo "Running Main/Root Deployment..."
             npm install
             npm run build
-            # Deploy to the ROOT of the site
+            # Deploy to the ROOT of the site (overwrites existing root files)
             cp -r dist/* deploy_root/
           fi
           
-          # Always update the portal landing page
+          # 4. Always update the portal landing page and metadata
+          mkdir -p deploy_root/archive
           cp portal/index.html deploy_root/archive/index.html
           
           echo "Final deployment structure:"
@@ -105,5 +107,5 @@ jobs:
         with:
           folder: deploy_root
           branch: gh-pages
-          clean: false # IMPORTANT: Preserve other versions and the archive
-          single-commit: false # Build history incrementally
+          clean: true # Safe now because we merged existing files into deploy_root
+          single-commit: true
