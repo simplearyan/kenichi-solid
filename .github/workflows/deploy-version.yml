@@ -38,13 +38,15 @@ jobs:
       - name: Process Versions 🔄
         run: |
           set -e
+          set -x # Show every command for debugging
           mkdir -p deploy_root
           
           echo ">>> 1. Fetching Tags"
           git fetch --tags --force
           
           echo ">>> 2. Cloning existing gh-pages"
-          git clone --depth 1 --branch gh-pages "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages-temp || mkdir gh-pages-temp
+          # Using actor-based auth for cleaner permissions
+          git clone --depth 1 --branch gh-pages "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages-temp || mkdir gh-pages-temp
           
           if [ -d "gh-pages-temp" ]; then
             echo "Merging existing archive and versions..."
@@ -75,10 +77,10 @@ jobs:
             npm install && npm run build
             
             echo ">>> Verifying Build Output..."
-            ls -la dist/
-            # Check if our new Info icon is actually in the build
-            if grep -q "Project Info" dist/index.html; then
-              echo "✅ Info Icon verified in build!"
+            ls -R dist/
+            # Check if our new Info icon is in the JS bundles (where it actually lives)
+            if grep -q "Project Info" dist/assets/index-*.js; then
+              echo "✅ Info Icon verified in Javascript bundles!"
             else
               echo "❌ Error: Info Icon missing from build! Forcing failure."
               exit 1
@@ -93,7 +95,7 @@ jobs:
           cp portal/index.html deploy_root/archive/index.html
           
           echo ">>> 5. Final Structure Check"
-          ls -R deploy_root/archive
+          ls -la deploy_root/archive/
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
