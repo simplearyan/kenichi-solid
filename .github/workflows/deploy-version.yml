@@ -7,22 +7,15 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      mode:
-        description: 'Deployment Mode'
-        required: true
-        default: 'single'
-        type: choice
-        options:
-          - single
-          - bootstrap-last-4
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
-    concurrency: ci-gh-pages # Prevent simultaneous deploys
+    concurrency: ci-gh-pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 🛎️
@@ -32,75 +25,74 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # Temporarily disable cache to force a fresh build of the new UI
-          # cache: 'npm'
 
       - name: Process Versions 🔄
         run: |
           set -e
-          set -x # Show every command for debugging
-          mkdir -p deploy_root
+          set -x
           
-          echo ">>> 1. Fetching Tags"
+          # 1. Fetch tags
           git fetch --tags --force
           
-          echo ">>> 2. Cloning existing gh-pages"
-          # Using actor-based auth for cleaner permissions
-          git clone --depth 1 --branch gh-pages "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages-temp || mkdir gh-pages-temp
+          # 2. Prepare the build directory
+          npm install
+          npm run build
           
-          if [ -d "gh-pages-temp" ]; then
-            echo "Merging existing archive and versions..."
-            cp -r gh-pages-temp/* deploy_root/ 2>/dev/null || true
-            rm -rf gh-pages-temp
+          # 3. Bring in old versions from the 'gh-pages' vault
+          echo "Fetching historical versions from gh-pages vault..."
+          git clone --depth 1 --branch gh-pages "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" vault || mkdir vault
+          
+          # Copy everything from vault to dist, BUT don't overwrite the NEW build
+          cp -rn vault/* dist/ 2>/dev/null || true
+          
+          # 4. Handle Archive Portal
+          mkdir -p dist/archive
+          cp portal/index.html dist/archive/index.html
+          
+          if [ -f vault/archive/versions.json ]; then
+            cp vault/archive/versions.json dist/archive/versions.json
           fi
-          rm -rf deploy_root/.git
 
-          # 3. Build Logic
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo ">>> MODE: TAG DEPLOYMENT (${{ github.ref_name }})"
-            npm install && npm run build
-            mkdir -p "deploy_root/${{ github.ref_name }}"
-            cp -r dist/* "deploy_root/${{ github.ref_name }}/"
+            echo ">>> Registering Tag: ${{ github.ref_name }}"
+            mkdir -p "dist/${{ github.ref_name }}"
+            cp -r dist/* "dist/${{ github.ref_name }}/" 2>/dev/null || true
             
             node -e "
               const fs = require('fs');
-              const archiveDir = 'deploy_root/archive';
-              if (!fs.existsSync(archiveDir)) fs.mkdirSync(archiveDir, {recursive: true});
-              const data = fs.existsSync(archiveDir + '/versions.json') ? JSON.parse(fs.readFileSync(archiveDir + '/versions.json')) : {versions: []};
+              const arch = 'dist/archive/versions.json';
+              const data = fs.existsSync(arch) ? JSON.parse(fs.readFileSync(arch)) : {versions: []};
               if (!data.versions.find(v => v.tag === '${{ github.ref_name }}')) {
                 data.versions.push({ tag: '${{ github.ref_name }}', date: new Date().toISOString() });
-                fs.writeFileSync(archiveDir + '/versions.json', JSON.stringify(data, null, 2));
+                fs.writeFileSync(arch, JSON.stringify(data, null, 2));
               }
             "
-          else
-            echo ">>> MODE: MAIN/ROOT DEPLOYMENT"
-            npm install && npm run build
-            
-            echo ">>> Verifying Build Output..."
-            ls -R dist/
-            # Check if our new Info icon is in the JS bundles (where it actually lives)
-            if grep -q "Project Info" dist/assets/index-*.js; then
-              echo "✅ Info Icon verified in Javascript bundles!"
-            else
-              echo "❌ Error: Info Icon missing from build! Forcing failure."
-              exit 1
-            fi
-            
-            # Update the ROOT
-            cp -r dist/* deploy_root/
           fi
-          
-          echo ">>> 4. Updating Portal"
-          mkdir -p deploy_root/archive
-          cp portal/index.html deploy_root/archive/index.html
-          
-          echo ">>> 5. Final Structure Check"
-          ls -la deploy_root/archive/
 
-      - name: Deploy to GitHub Pages 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+          # 5. Save the updated state back to the 'gh-pages' vault for next time
+          mkdir -p vault_update
+          cp -r dist/* vault_update/
+          cd vault_update
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "update vault from ${{ github.sha }}"
+          git push "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:gh-pages --force
+          cd ..
+
+      - name: Upload Artifact 📦
+        uses: actions/upload-pages-artifact@v3
         with:
-          folder: deploy_root
-          branch: gh-pages
-          clean: true # Safe now because we merged existing files into deploy_root
-          single-commit: true
+          path: './dist'
+
+  deploy:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v4
