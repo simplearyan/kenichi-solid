@@ -86,7 +86,6 @@ export interface LayerState {
   animLoopSpeed?: number;
 
   // Style & Effects
-  borderRadius?: number;
   shadowEnabled?: boolean;
   shadowBlur?: number;
   shadowColor?: string;
