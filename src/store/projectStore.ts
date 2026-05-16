@@ -72,6 +72,8 @@ export interface LayerState {
   fontWeight?: string;
   letterSpacing?: number;
   dropShadow?: boolean;
+  shapeType?: 'rect' | 'circle';
+  borderRadius?: number;
 
   animIn?: string;
   animInDuration?: number;
@@ -284,7 +286,20 @@ export const addLayer = (layer: Omit<LayerState, 'id' | 'trackId'>) => {
     );
   };
 
-  if (projectStore.rippleEnabled) {
+  if (layer.type === 'text') {
+    // Check if the TOP-MOST track is already a dedicated Text Track
+    const topTrack = projectStore.tracks[0];
+    if (topTrack && topTrack.name === 'Text Track') {
+      targetTrackId = topTrack.id;
+    } else {
+      // Create and INSERT a new Text Track at the absolute TOP (index 0)
+      targetTrackId = `track_${Date.now()}`;
+      setProjectStore('tracks', (t) => [
+        { id: targetTrackId as string, name: 'Text Track', hidden: false, locked: false, volume: 1, muted: false },
+        ...t
+      ]);
+    }
+  } else if (projectStore.rippleEnabled) {
     // RIPPLE MODE
     // Priority: Active track (if type matches) -> Existing track of same type -> New track
     if (targetTrackId) {

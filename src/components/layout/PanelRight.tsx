@@ -455,6 +455,72 @@ export const PanelRight: Component = () => {
               {/* Accordion List */}
               <div class="flex flex-col h-full">
                 
+                {/* Text Formatting Section - MOVED TO TOP FOR USER REQUEST */}
+                <Show when={activeLayer()?.type === 'text'}>
+                  <Section 
+                    title="Text Style" 
+                    icon={<Type class="w-3.5 h-3.5" />} 
+                    color="bg-indigo-500"
+                    isOpen={collapsed().text} 
+                    onToggle={() => toggleSection('text')}
+                    showOnMobile={activePropTab() === 'text'}
+                  >
+                    <div class="space-y-5">
+                      <div class="space-y-1.5">
+                        <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Content</label>
+                        <textarea value={activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('textContent', e.currentTarget.value)} class="w-full bg-surfaceHover border border-border rounded-xl px-3 py-3 text-sm text-textMain outline-none min-h-[80px] focus:border-primary/50 transition-colors" />
+                      </div>
+                      
+                      <div class="grid grid-cols-2 gap-4">
+                        <PropSelect 
+                          label="Font"
+                          value={activeLayer()?.fontFamily || 'Inter'}
+                          options={[
+                            { label: 'Inter', value: 'Inter' },
+                            { label: 'Outfit', value: 'Outfit' },
+                            { label: 'Rubik', value: 'Rubik' },
+                            { label: 'JetBrains Mono', value: 'JetBrains Mono' }
+                          ]}
+                          onChange={(v) => handlePropChange('fontFamily', v)}
+                        />
+                        <PropSelect 
+                          label="Weight"
+                          value={activeLayer()?.fontWeight || '700'}
+                          options={[
+                            { label: 'Light', value: '300' },
+                            { label: 'Regular', value: '400' },
+                            { label: 'Medium', value: '500' },
+                            { label: 'SemiBold', value: '600' },
+                            { label: 'Bold', value: '700' },
+                            { label: 'ExtraBold', value: '800' },
+                            { label: 'Black', value: '900' }
+                          ]}
+                          onChange={(v) => handlePropChange('fontWeight', v)}
+                        />
+                      </div>
+
+                      <div class="grid grid-cols-1 gap-4">
+                        <div class="space-y-1.5">
+                          <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Font Size</label>
+                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-surfaceHover border border-border rounded-xl px-3 text-xs text-textMain outline-none font-mono focus:border-primary/50" />
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between p-4 bg-background border border-border rounded-xl">
+                        <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Text Color</label>
+                        <input type="color" value={activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-surface border-none p-0.5" />
+                      </div>
+
+                      <PropSlider 
+                        label="Letter Spacing"
+                        value={activeLayer()?.letterSpacing || 0}
+                        min={-10} max={50} step={1}
+                        onChange={(v) => handlePropChange('letterSpacing', v)}
+                      />
+                    </div>
+                  </Section>
+                </Show>
+
                 {/* Transform Section */}
                 <Show when={activeLayer()?.type !== 'audio'}>
                   <Section 
@@ -507,7 +573,23 @@ export const PanelRight: Component = () => {
                     showOnMobile={activePropTab() === 'style'}
                   >
                     <div class="space-y-5">
-                      <Show when={activeLayer()?.type !== 'text'}>
+                      <Show when={activeLayer()?.type === 'shape'}>
+                        <div class="flex items-center justify-between p-4 bg-background border border-border rounded-xl">
+                          <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Fill Color</label>
+                          <input type="color" value={activeLayer()?.fillColor || '#10b981'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-surface border-none p-0.5" />
+                        </div>
+                      </Show>
+
+                      <Show when={activeLayer()?.type === 'shape' && activeLayer()?.shapeType === 'rect'}>
+                        <PropSlider 
+                          label="Corner Radius"
+                          value={activeLayer()?.borderRadius || 0}
+                          min={0} max={200} step={1}
+                          onChange={(v) => handlePropChange('borderRadius', v)}
+                        />
+                      </Show>
+
+                      <Show when={activeLayer()?.type === 'image' || activeLayer()?.type === 'video'}>
                         <PropSlider 
                           label="Border Radius"
                           value={activeLayer()?.borderRadius || 0}
@@ -714,72 +796,6 @@ export const PanelRight: Component = () => {
                         <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Clip Color</label>
                         <input type="color" value={activeLayer()?.clipColor || '#05d590'} onInput={(e) => handlePropChange('clipColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-surface border-none p-0.5" />
                       </div>
-                    </div>
-                  </Section>
-                </Show>
-
-                {/* Text Formatting Section */}
-                <Show when={activeLayer()?.type === 'text'}>
-                  <Section 
-                    title="Text Style" 
-                    icon={<Type class="w-3.5 h-3.5" />} 
-                    color="bg-indigo-500"
-                    isOpen={collapsed().text} 
-                    onToggle={() => toggleSection('text')}
-                    showOnMobile={activePropTab() === 'text'}
-                  >
-                    <div class="space-y-5">
-                      <div class="space-y-1.5">
-                        <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Content</label>
-                        <textarea value={activeLayer()?.textContent || ''} onInput={(e) => handlePropChange('textContent', e.currentTarget.value)} class="w-full bg-surfaceHover border border-border rounded-xl px-3 py-3 text-sm text-textMain outline-none min-h-[80px] focus:border-primary/50 transition-colors" />
-                      </div>
-                      
-                      <div class="grid grid-cols-2 gap-4">
-                        <PropSelect 
-                          label="Font"
-                          value={activeLayer()?.fontFamily || 'Inter'}
-                          options={[
-                            { label: 'Inter', value: 'Inter' },
-                            { label: 'Outfit', value: 'Outfit' },
-                            { label: 'Rubik', value: 'Rubik' },
-                            { label: 'JetBrains Mono', value: 'JetBrains Mono' }
-                          ]}
-                          onChange={(v) => handlePropChange('fontFamily', v)}
-                        />
-                        <PropSelect 
-                          label="Weight"
-                          value={activeLayer()?.fontWeight || '700'}
-                          options={[
-                            { label: 'Light', value: '300' },
-                            { label: 'Regular', value: '400' },
-                            { label: 'Medium', value: '500' },
-                            { label: 'SemiBold', value: '600' },
-                            { label: 'Bold', value: '700' },
-                            { label: 'ExtraBold', value: '800' },
-                            { label: 'Black', value: '900' }
-                          ]}
-                          onChange={(v) => handlePropChange('fontWeight', v)}
-                        />
-                      </div>
-
-                      <div class="grid grid-cols-1 gap-4">
-                        <div class="space-y-1.5">
-                          <label class="text-[10px] text-textMuted uppercase tracking-widest font-bold">Font Size</label>
-                          <input type="number" value={activeLayer()?.fontSize} onInput={(e) => handlePropChange('fontSize', parseFloat(e.currentTarget.value))} class="w-full h-10 bg-surfaceHover border border-border rounded-xl px-3 text-xs text-textMain outline-none font-mono focus:border-primary/50" />
-                        </div>
-                      </div>
-
-                      <div class="flex items-center justify-between p-4 bg-background border border-border rounded-xl">
-                        <label class="text-[10px] text-textMain font-black uppercase tracking-widest">Text Color</label>
-                        <input type="color" value={activeLayer()?.fillColor || '#ffffff'} onInput={(e) => handlePropChange('fillColor', e.currentTarget.value)} class="w-10 h-6 rounded cursor-pointer bg-surface border-none p-0.5" />
-                      </div>
-
-                      <PropSlider 
-                        label="Letter Spacing"
-                        value={activeLayer()?.letterSpacing || 0}
-                        min={-10} max={50} step={1}
-                        onChange={(v) => handlePropChange('letterSpacing', v)}
-                      />
                     </div>
                   </Section>
                 </Show>

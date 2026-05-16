@@ -212,10 +212,92 @@ export const PanelLeft: Component = () => {
 
         <Show when={projectStore.leftPanelTab === 'shapes'}>
           <div class="flex flex-col gap-3 h-full">
-            <button class="w-full py-2 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm">
+            <button 
+              onClick={() => {
+                addLayer({
+                  name: 'Rectangle',
+                  type: 'shape',
+                  shapeType: 'rect',
+                  mediaId: '',
+                  startTime: projectStore.currentTime,
+                  duration: 5.0,
+                  inPoint: 0,
+                  hidden: false,
+                  locked: false,
+                  scale: 1,
+                  rotation: 0,
+                  posX: 0,
+                  posY: 0,
+                  radius: 12,
+                  brightness: 1,
+                  contrast: 1,
+                  fillColor: '#10b981',
+                  chromaKey: false,
+                  chromaColor: '#00ff00',
+                  chromaTolerance: 0.1,
+                  colorReplace: false,
+                  replaceFromColor: '#ff0000',
+                  replaceToColor: '#0000ff',
+                  volume: 1,
+                  fadeIn: 0,
+                  fadeOut: 0,
+                  echo: false,
+                  echoDelay: 0.5,
+                  echoFeedback: 0.5,
+                  animIn: 'fade',
+                  animInDuration: 0.5,
+                  animOut: 'fade',
+                  animOutDuration: 0.5,
+                  animLoop: 'none',
+                  clipColor: '#6366f1'
+                });
+              }}
+              class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 border border-emerald-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm"
+            >
               <Square class="w-4 h-4" /> Add Rectangle
             </button>
-            <button class="w-full py-2 bg-pink-600 hover:bg-pink-500 border border-pink-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm">
+            <button 
+              onClick={() => {
+                addLayer({
+                  name: 'Circle',
+                  type: 'shape',
+                  shapeType: 'circle',
+                  mediaId: '',
+                  startTime: projectStore.currentTime,
+                  duration: 5.0,
+                  inPoint: 0,
+                  hidden: false,
+                  locked: false,
+                  scale: 1,
+                  rotation: 0,
+                  posX: 0,
+                  posY: 0,
+                  radius: 0,
+                  brightness: 1,
+                  contrast: 1,
+                  fillColor: '#10b981',
+                  chromaKey: false,
+                  chromaColor: '#00ff00',
+                  chromaTolerance: 0.1,
+                  colorReplace: false,
+                  replaceFromColor: '#ff0000',
+                  replaceToColor: '#0000ff',
+                  volume: 1,
+                  fadeIn: 0,
+                  fadeOut: 0,
+                  echo: false,
+                  echoDelay: 0.5,
+                  echoFeedback: 0.5,
+                  animIn: 'fade',
+                  animInDuration: 0.5,
+                  animOut: 'fade',
+                  animOutDuration: 0.5,
+                  animLoop: 'none',
+                  clipColor: '#6366f1'
+                });
+              }}
+              class="w-full py-2 bg-teal-600 hover:bg-teal-500 border border-teal-500 rounded-lg text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm"
+            >
               <Circle class="w-4 h-4" /> Add Circle
             </button>
             <div class="flex-1 flex flex-col items-center justify-center text-neutral-600 gap-2 text-center px-4 pointer-events-none">

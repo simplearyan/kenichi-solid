@@ -542,6 +542,45 @@ export class Renderer {
 
           ctx.restore();
         }
+
+        if (isVisible && layer.type === 'shape') {
+          ctx.save();
+          ctx.globalAlpha = animAlpha;
+
+          ctx.translate(W / 2 + layer.posX + animX, H / 2 + layer.posY + animY);
+          ctx.rotate((layer.rotation * Math.PI) / 180 + animRot);
+          ctx.scale(layer.scale * animScale, layer.scale * animScale);
+
+          const w = 400; // Standard base size for shapes
+          const h = 400;
+          const x = -w / 2;
+          const y = -h / 2;
+
+          if (layer.shadowEnabled) {
+            const resScale = targetWidth / 1920;
+            ctx.shadowColor = layer.shadowColor || 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = (layer.shadowBlur || 20) * resScale;
+            ctx.shadowOffsetX = (layer.shadowOffsetX || 0) * resScale;
+            ctx.shadowOffsetY = (layer.shadowOffsetY || 10) * resScale;
+          }
+
+          ctx.fillStyle = layer.fillColor || '#ffffff';
+          
+          if (layer.shapeType === 'circle') {
+            ctx.beginPath();
+            ctx.arc(0, 0, w / 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // Default: Rectangle
+            const r = layer.radius || 0;
+            ctx.beginPath();
+            if (r > 0) ctx.roundRect(x, y, w, h, r);
+            else ctx.rect(x, y, w, h);
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
       }
     }
 
