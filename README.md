@@ -78,12 +78,13 @@ The **Kenichi Export Engine** is designed for pro-grade background rendering:
 
 ## 📦 Version History
 
-### **v1.5.2 - Pro Pitch Black & Multi-Version Portal** (Current)
--   **Pro Pitch Black Aesthetic**: Solidified the "Kenichi Studio" identity with a high-contrast, deep black design language and Teal Green (#10b981) accent synchronization.
--   **Clips Panel Re-engineering**: Implemented a collapsible track hierarchy and unified global reorder controls for better project management.
--   **Multi-Version Deployment**: Automated GitHub Actions pipeline that deploys every tagged release to a versioned subfolder.
--   **Selection Portal**: A premium version selection landing page allowing users to preview and jump between different builds.
--   **Build & CSS Optimization**: Flattened design tokens and optimized the build pipeline, reducing production build times to under 5 seconds.
+### **v1.5.3 - Vector Shapes & Text-First Layering** (Current)
+-   **Text-First Layering System**: Implemented automated top-track routing for text clips with dedicated "Text Track" auto-insertion at the absolute top of the timeline (index 0).
+-   **Vector Shapes Engine**: Added high-performance rendering for Rectangle and Circle primitives with full support for transforms, animations, and hardware-accelerated shadows.
+-   **Contextual UX Optimization**: Reprioritized the properties panel to surface text and shape styling at the very top, eliminating scroll time for content and typography adjustments.
+-   **Timeline Identity System**: Integrated color-coded clip identities, using a distinct Indigo identity for vector shapes to visually differentiate them from media and text clips.
+
+### **v1.5.2 - Pro Pitch Black & Multi-Version Portal**
 
 ### **v1.5.1 - Cinematic Engine & Grading Suite** (Stable)
 -   **Professional Grading Suite**: Full control over Exposure, Whites, Blacks, Saturation, and white balance (Temperature & Tint).

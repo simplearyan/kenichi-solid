@@ -1,37 +1,24 @@
-import { createSignal, Show, type Component } from 'solid-js';
-import { X, Download, Loader2, Heart, Pause, Play, Square, ExternalLink, ShieldCheck } from 'lucide-solid';
+import { createSignal, Show, type Component, createEffect } from 'solid-js';
+import { X, Download, Loader2, Heart, Pause, Play, Square } from 'lucide-solid';
 import { setProjectStore } from '../../store/projectStore';
 import { exportProject, type ExportConfig } from '../../engine/ExportEngine';
 
 const NativeAd: Component = () => {
   return (
-    <div class="flex-1 flex flex-col bg-[#0d0d0d] rounded-xl border border-white/5 overflow-hidden group animate-in fade-in slide-in-from-right-4 duration-500">
-      <div class="relative h-40 sm:h-48 overflow-hidden">
-        <img 
-          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800&h=600" 
-          alt="Ad" 
-          class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-[#0d0d0d] via-transparent to-transparent"></div>
-        <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md border border-white/10 px-2 py-0.5 rounded text-[8px] font-black text-neutral-400 uppercase tracking-widest flex items-center gap-1">
-          <ShieldCheck class="w-2.5 h-2.5 text-primary" />
-          Sponsored
-        </div>
-      </div>
-      
-      <div class="p-5 flex flex-col gap-3 flex-1">
-        <div class="space-y-1">
-          <h3 class="text-sm font-black text-white uppercase tracking-tight">Level Up Your Workflow</h3>
-          <p class="text-[11px] text-neutral-500 leading-relaxed font-medium">
-            Discover premium assets and advanced motion presets designed for the next generation of creators.
-          </p>
-        </div>
+    <div class="flex-1 flex flex-col bg-[#0d0d0d] rounded-2xl border border-white/5 overflow-hidden group animate-in fade-in slide-in-from-right-4 duration-500 min-h-[400px] flex items-center justify-center p-8 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.3)]">
+      <div class="w-full flex flex-col items-center gap-6">
+        <p class="text-[10px] text-zinc-500 uppercase tracking-[0.5em] font-black opacity-40 text-center">Featured Advertisement</p>
         
-        <div class="mt-auto pt-2">
-          <button class="w-full h-10 bg-primary hover:bg-primaryHover text-background text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-2 active:scale-95 uppercase tracking-widest shadow-lg shadow-primary/10">
-            Learn More <ExternalLink class="w-3 h-3" />
-          </button>
+        <div class="w-full flex items-center justify-center bg-black/40 rounded-3xl p-6 border border-white/5 shadow-inner transition-all hover:border-white/10">
+          <ins class="adsbygoogle"
+               style={{ display: "block", width: "100%", "min-width": "250px", "max-width": "800px", "height": "auto", "min-height": "250px" }}
+               data-ad-client="ca-pub-7993314093599705"
+               data-ad-slot="9342323532"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
         </div>
+
+        <p class="text-[10px] text-zinc-600 font-medium italic tracking-wide">Supporting the Kenichi Engine</p>
       </div>
     </div>
   );
@@ -49,6 +36,21 @@ export const ExportModal: Component = () => {
   const [progress, setProgress] = createSignal(0);
   const [statusText, setStatusText] = createSignal('');
   const [exportError, setExportError] = createSignal('');
+
+  // Auto-push AdSense unit when export begins
+  createEffect(() => {
+    if (isExporting()) {
+      // Delay slightly to ensure DOM is ready
+      setTimeout(() => {
+        try {
+          (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+          (window as any).adsbygoogle.push({});
+        } catch (e) {
+          console.error("AdSense trigger error:", e);
+        }
+      }, 300);
+    }
+  });
 
   const handleExport = async () => {
     setIsExporting(true);
